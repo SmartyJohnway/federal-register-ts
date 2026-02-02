@@ -46,3 +46,8 @@ export { PresidentialDocumentType as PresidentialDocumentTypeFacet } from './fac
 
 // Aggregator
 export * from './aggregator';
+
+// Convenience Aliases (Matches README usage)
+// Assuming Document.search is the intended implementation for searchDocuments
+export const searchDocuments = Document.search;
+export const findDocument = Document.find;
