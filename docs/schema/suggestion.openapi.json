@@ -1,0 +1,19 @@
+openapi: 3.1.0
+info:
+  title: Suggestion Schema
+  version: '1.0.0'
+components:
+  schemas:
+    Suggestion:
+      type: object
+      properties:
+        text:
+          type: string
+          description: The suggested text.
+        url:
+          type: string
+          format: uri
+          description: The URL associated with the suggestion.
+      required:
+        - text
+        - url

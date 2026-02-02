@@ -1,0 +1,31 @@
+openapi: 3.1.0
+info:
+  title: Raw Agency Schema
+  version: '1.0.0'
+components:
+  schemas:
+    RawAgency:
+      type: object
+      properties:
+        id:
+          type: integer
+          nullable: true
+          description: Unique identifier for the raw agency.
+        name:
+          type: string
+          description: Name of the raw agency.
+        raw_name:
+          type: string
+          nullable: true
+          description: Raw name of the agency.
+        slug:
+          type: string
+          nullable: true
+          description: Slug for the raw agency.
+        url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL for the raw agency.
+      required:
+        - name

@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DocumentImage",
+  "description": "Represents an image associated with a document, with various sizes.",
+  "type": "array",
+  "minItems": 2,
+  "maxItems": 2,
+  "items": [
+    {
+      "type": "string",
+      "description": "The identifier for the image."
+    },
+    {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9_]+$": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL for a specific image size."
+        }
+      },
+      "additionalProperties": false,
+      "description": "A map of image sizes to their respective URLs."
+    }
+  ]
+}

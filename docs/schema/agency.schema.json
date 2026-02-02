@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Agency",
+  "description": "Represents a Federal Register agency, extending the Base model.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/components/schemas/Base"
+    }
+  ],
+  "properties": {
+    "agency_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the agency's page."
+    },
+    "child_ids": {
+      "type": "array",
+      "items": { "type": "integer" },
+      "description": "IDs of child agencies."
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the agency."
+    },
+    "json_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the JSON representation of the agency."
+    },
+    "logo": {
+      "type": "object",
+      "description": "Logo information for the agency, typically containing URLs for different sizes.",
+      "patternProperties": {
+        "^[a-zA-Z0-9_]+_url$": { "type": "string", "format": "uri" }
+      },
+      "additionalProperties": true
+    },
+    "name": {
+      "type": "string",
+      "description": "The name of the agency."
+    },
+    "raw_name": {
+      "type": "string",
+      "description": "The raw name of the agency."
+    },
+    "recent_articles_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to recent articles by the agency."
+    },
+    "short_name": {
+      "type": "string",
+      "description": "The short name or acronym of the agency."
+    },
+    "slug": {
+      "type": "string",
+      "description": "The URL-friendly identifier for the agency."
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "General URL for the agency."
+    },
+    "id": {
+      "type": "integer",
+      "description": "The unique ID of the agency."
+    },
+    "parent_id": {
+      "type": "integer",
+      "description": "The ID of the parent agency, if applicable."
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": true,
+  "components": {
+    "schemas": {
+      "Base": {
+        "$ref": "base.schema.json"
+      }
+    }
+  }
+}

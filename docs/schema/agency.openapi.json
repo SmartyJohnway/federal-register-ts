@@ -1,0 +1,68 @@
+openapi: 3.1.0
+info:
+  title: Agency Schema
+  version: '1.0.0'
+components:
+  schemas:
+    Agency:
+      type: object
+      properties:
+        agency_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL of the agency.
+        child_ids:
+          type: array
+          items:
+            type: integer
+          nullable: true
+          description: IDs of child agencies.
+        description:
+          type: string
+          nullable: true
+          description: Description of the agency.
+        json_url:
+          type: string
+          format: uri
+          nullable: true
+          description: JSON API URL for the agency.
+        logo:
+          type: object # Assuming logo can be a complex object, or a string URL
+          nullable: true
+          description: Logo information for the agency.
+        name:
+          type: string
+          description: Name of the agency.
+        raw_name:
+          type: string
+          nullable: true
+          description: Raw name of the agency.
+        recent_articles_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL for recent articles by the agency.
+        short_name:
+          type: string
+          nullable: true
+          description: Short name of the agency.
+        slug:
+          type: string
+          nullable: true
+          description: Slug for the agency.
+        url:
+          type: string
+          format: uri
+          nullable: true
+          description: Main URL for the agency.
+        id:
+          type: integer
+          nullable: true
+          description: Unique identifier for the agency.
+        parent_id:
+          type: integer
+          nullable: true
+          description: ID of the parent agency.
+      required:
+        - name

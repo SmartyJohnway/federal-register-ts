@@ -1,0 +1,233 @@
+openapi: 3.1.0
+info:
+  title: Document Schema
+  version: '1.0.0'
+components:
+  schemas:
+    Document:
+      type: object
+      properties:
+        document_number:
+          type: string
+          description: The unique document number.
+        title:
+          type: string
+          description: The title of the document.
+        type:
+          type: string
+          description: The type of the document (e.g., "RULE", "PRORULE").
+        publication_date:
+          type: string
+          format: date
+          description: The date the document was published.
+        agencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/RawAgency'
+          description: A list of agencies associated with the document.
+        html_url:
+          type: string
+          format: uri
+          description: URL to the HTML version of the document.
+        body_html_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the HTML body of the document.
+        abstract:
+          type: string
+          nullable: true
+          description: A brief abstract of the document.
+        action:
+          type: string
+          nullable: true
+          description: The action taken by the document (e.g., "Notice", "Final Rule").
+        agency_names:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: Names of agencies associated with the document.
+        cfr_references:
+          type: array
+          items:
+            type: object # Assuming a generic object for CFR references
+          nullable: true
+          description: References to the Code of Federal Regulations.
+        citation:
+          type: string
+          nullable: true
+          description: Citation for the document.
+        comment_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL for submitting comments on the document.
+        corrections:
+          type: array
+          items:
+            type: object # Assuming a generic object for corrections
+          nullable: true
+          description: List of corrections made to the document.
+        correction_of:
+          type: object # Assuming a generic object for correction_of
+          nullable: true
+          description: Information about what this document corrects.
+        dates:
+          type: array
+          items:
+            type: object # Assuming a generic object for dates
+          nullable: true
+          description: Important dates related to the document.
+        disposition_notes:
+          type: string
+          nullable: true
+          description: Notes on the disposition of the document.
+        docket_id:
+          type: string
+          nullable: true
+          description: Docket ID.
+        docket_ids:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: List of docket IDs.
+        end_page:
+          type: integer
+          nullable: true
+          description: The ending page number of the document.
+        excerpts:
+          type: string
+          nullable: true
+          description: Excerpts from the document.
+        executive_order_notes:
+          type: string
+          nullable: true
+          description: Notes related to an executive order.
+        executive_order_number:
+          type: integer
+          nullable: true
+          description: Executive order number.
+        full_text_xml_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the full text XML of the document.
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentImage' # Assuming DocumentImage schema will be created
+          nullable: true
+          description: Images associated with the document.
+        json_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the JSON representation of the document.
+        mods_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the MODS XML of the document.
+        page_views:
+          type: object
+          properties:
+            count:
+              type: integer
+              description: Number of page views.
+            last_updated:
+              type: string
+              format: date-time
+              nullable: true
+              description: Last updated date for page views.
+          nullable: true
+          description: Page view statistics.
+        pdf_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the PDF version of the document.
+        president:
+          type: string
+          nullable: true
+          description: The president associated with the document.
+        proclamation_number:
+          type: integer
+          nullable: true
+          description: Proclamation number.
+        public_inspection_pdf_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the public inspection PDF.
+        regulation_id_number_info:
+          type: object # Generic object
+          nullable: true
+          description: Information about regulation ID numbers.
+        regulation_id_numbers:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: List of regulation ID numbers.
+        regulations_dot_gov_info:
+          type: object # Generic object
+          nullable: true
+          description: Information from Regulations.gov.
+        regulations_dot_gov_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to Regulations.gov.
+        significant:
+          type: boolean
+          nullable: true
+          description: Indicates if the document is significant.
+        start_page:
+          type: integer
+          nullable: true
+          description: The starting page number of the document.
+        subtype:
+          type: string
+          nullable: true
+          description: Subtype of the document.
+        raw_text_url:
+          type: string
+          format: uri
+          nullable: true
+          description: URL to the raw text of the document.
+        toc_subject:
+          type: string
+          nullable: true
+          description: Table of Contents subject.
+        toc_doc:
+          type: string
+          nullable: true
+          description: Table of Contents document.
+        volume:
+          type: integer
+          nullable: true
+          description: Volume number.
+        comments_close_on:
+          type: string
+          format: date
+          nullable: true
+          description: Date when comments close.
+        effective_on:
+          type: string
+          format: date
+          nullable: true
+          description: Effective date of the document.
+        signing_date:
+          type: string
+          format: date
+          nullable: true
+          description: Signing date of the document.
+      required:
+        - document_number
+        - title
+        - type
+        - publication_date
+        - agencies
+        - html_url

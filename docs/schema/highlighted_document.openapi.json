@@ -1,0 +1,41 @@
+openapi: 3.1.0
+info:
+  title: Highlighted Document Schema
+  version: '1.0.0'
+components:
+  schemas:
+    HighlightedDocument:
+      type: object
+      description: Represents a document that is highlighted, potentially with a photo.
+      properties:
+        curated_abstract:
+          type: string
+          nullable: true
+          description: A curated abstract for the highlighted document.
+        curated_title:
+          type: string
+          nullable: true
+          description: A curated title for the highlighted document.
+        document_number:
+          type: string
+          nullable: true
+          description: The document number of the highlighted document.
+        html_url:
+          type: string
+          format: uri
+          nullable: true
+          description: The HTML URL of the highlighted document.
+        photo:
+          type: object
+          nullable: true
+          properties:
+            urls:
+              type: object
+              additionalProperties:
+                type: string
+                format: uri
+              description: URLs for different sizes of the photo.
+            credit:
+              $ref: '#/components/schemas/PhotoCredit'
+              description: Credit information for the photo.
+          description: Photo associated with the highlighted document.

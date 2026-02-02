@@ -1,0 +1,24 @@
+openapi: 3.1.0
+info:
+  title: Filter Schema
+  version: '1.0.0'
+components:
+  schemas:
+    Filter:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the filter.
+        type:
+          type: string
+          description: The type of the filter (e.g., 'agency', 'date').
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilterOption'
+          description: A list of filter options.
+      required:
+        - name
+        - type
+        - options

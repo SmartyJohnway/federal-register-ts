@@ -1,0 +1,19 @@
+openapi: 3.1.0
+info:
+  title: Document Image Schema
+  version: '1.0.0'
+components:
+  schemas:
+    DocumentImage:
+      type: array
+      minItems: 2
+      maxItems: 2
+      description: Represents an image associated with a document, with various sizes.
+      items:
+        - type: string
+          description: The identifier for the image.
+        - type: object
+          description: A map of image sizes to their respective URLs.
+          additionalProperties:
+            type: string
+            format: uri

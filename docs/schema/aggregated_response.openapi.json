@@ -1,0 +1,20 @@
+openapi: 3.1.0
+info:
+  title: Aggregated Response Schema
+  version: '1.0.0'
+components:
+  schemas:
+    AggregatedResponse:
+      type: object
+      properties:
+        documents:
+          $ref: '#/components/schemas/ResultSetDocument' # Assuming ResultSet for Document exists or will be created
+          description: A result set containing documents.
+        facets:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/FacetResultSetFacet' # Assuming FacetResultSet for Facet exists or will be created
+          description: A map of facet names to their corresponding facet result sets.
+      required:
+        - documents
+        - facets

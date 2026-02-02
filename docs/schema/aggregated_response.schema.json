@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AggregatedResponse",
+  "description": "Defines the structure for the combined response from an aggregated query.",
+  "type": "object",
+  "properties": {
+    "documents": {
+      "$ref": "#/components/schemas/ResultSet",
+      "description": "A ResultSet object containing document results and pagination information."
+    },
+    "facets": {
+      "type": "object",
+      "description": "An object where keys are facet names (e.g., 'agency') and values are FacetResultSet objects.",
+      "patternProperties": {
+        "^[a-zA-Z0-9_]+$": {
+          "$ref": "#/components/schemas/FacetResultSet"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "documents",
+    "facets"
+  ],
+  "additionalProperties": false,
+  "components": {
+    "schemas": {
+      "ResultSet": {
+        "type": "object",
+        "description": "Placeholder for ResultSet schema. Refer to result_set.schema.json for full definition.",
+        "additionalProperties": true
+      },
+      "FacetResultSet": {
+        "type": "object",
+        "description": "Placeholder for FacetResultSet schema. Refer to facet_result_set.schema.json for full definition.",
+        "additionalProperties": true
+      }
+    }
+  }
+}

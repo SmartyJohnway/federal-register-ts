@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: Photo Credit Schema
+  version: '1.0.0'
+components:
+  schemas:
+    PhotoCredit:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          description: The name of the photo credit.
+        url:
+          type: string
+          format: uri
+          nullable: true
+          description: The URL for the photo credit.

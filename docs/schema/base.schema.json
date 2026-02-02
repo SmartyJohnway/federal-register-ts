@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Base",
+  "description": "The foundational abstract class for all data models, providing a container for attributes.",
+  "type": "object",
+  "properties": {
+    "_full": {
+      "type": "boolean",
+      "description": "Indicates if the object has been fully loaded with all its attributes."
+    }
+  },
+  "required": [
+    "_full"
+  ],
+  "additionalProperties": true,
+  "patternProperties": {
+    "^[^_].*$": {
+      "description": "Any other attribute dynamically added to the model."
+    }
+  }
+}

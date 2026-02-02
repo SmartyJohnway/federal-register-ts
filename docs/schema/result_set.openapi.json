@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: Result Set Schema
+  version: '1.0.0'
+components:
+  schemas:
+    ResultSet:
+      type: object
+      description: A generic result set containing a list of items and pagination information.
+      properties:
+        count:
+          type: integer
+          description: The total number of results.
+        total_pages:
+          type: integer
+          description: The total number of pages available.
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Base' # Reference to the Base schema, as T extends Base
+          description: An array of result items.
+        errors:
+          type: object # Can be more specific if error structure is known
+          nullable: true
+          description: Any errors encountered during the request.
+        description:
+          type: string
+          nullable: true
+          description: A description related to the result set.
+      required:
+        - count
+        - total_pages
+        - results

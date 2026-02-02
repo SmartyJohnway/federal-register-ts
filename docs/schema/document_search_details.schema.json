@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DocumentSearchDetails",
+  "description": "Details about a document search, including filters and suggestions.",
+  "type": "object",
+  "properties": {
+    "filters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/Filter"
+      },
+      "description": "A list of filter objects provided by the API."
+    },
+    "suggestions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/Suggestion"
+      },
+      "description": "A list of suggestion objects provided by the API."
+    }
+  },
+  "required": [
+    "filters",
+    "suggestions"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FilterOption",
+  "type": "object",
+  "properties": {
+    "value": {
+      "type": "string",
+      "description": "The value of the filter option."
+    },
+    "count": {
+      "type": "integer",
+      "description": "The number of results for this filter option."
+    }
+  },
+  "required": [
+    "value",
+    "count"
+  ]
+}

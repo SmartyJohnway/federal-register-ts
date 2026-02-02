@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AggregatedQuery",
+  "description": "Defines the structure for a complex, aggregated query to the Federal Register API.",
+  "type": "object",
+  "properties": {
+    "term": {
+      "type": "string",
+      "description": "A general search term."
+    },
+    "conditions": {
+      "type": "object",
+      "description": "An object containing various search conditions. The structure can be nested.",
+      "additionalProperties": true
+    },
+    "facets": {
+      "type": "array",
+      "description": "An array of strings specifying which facets to include in the response (e.g., ['agency', 'daily']).",
+      "items": {
+        "type": "string"
+      }
+    },
+    "per_page": {
+      "type": "integer",
+      "description": "The number of results to return per page.",
+      "minimum": 1
+    },
+    "page": {
+      "type": "integer",
+      "description": "The page number of the results to return.",
+      "minimum": 1
+    },
+    "order": {
+      "type": "string",
+      "description": "The order in which to sort the results (e.g., 'newest', 'oldest')."
+    }
+  },
+  "additionalProperties": false
+}

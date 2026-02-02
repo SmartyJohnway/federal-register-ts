@@ -1,0 +1,44 @@
+openapi: 3.1.0
+info:
+  title: Suggested Search Schema
+  version: '1.0.0'
+components:
+  schemas:
+    SuggestedSearch:
+      type: object
+      description: Represents a suggested search.
+      properties:
+        description:
+          type: string
+          nullable: true
+          description: A description of the suggested search.
+        documents_in_last_year:
+          type: integer
+          nullable: true
+          description: The number of documents found in the last year for this search.
+        documents_with_open_comment_periods:
+          type: integer
+          nullable: true
+          description: The number of documents with open comment periods for this search.
+        position:
+          type: integer
+          nullable: true
+          description: The display position of the suggested search.
+        search_conditions:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: The conditions used for this suggested search.
+        section:
+          type: string
+          nullable: true
+          description: The section this suggested search belongs to.
+        slug:
+          type: string
+          description: The URL-friendly slug for the suggested search.
+        title:
+          type: string
+          description: The title of the suggested search.
+      required:
+        - slug
+        - title

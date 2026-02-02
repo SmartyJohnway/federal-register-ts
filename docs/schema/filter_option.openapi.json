@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: Filter Option Schema
+  version: '1.0.0'
+components:
+  schemas:
+    FilterOption:
+      type: object
+      properties:
+        value:
+          type: string
+          description: The value of the filter option.
+        count:
+          type: integer
+          description: The number of results for this filter option.
+      required:
+        - value
+        - count

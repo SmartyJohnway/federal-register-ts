@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HighlightedDocument",
+  "description": "Represents a document that is highlighted, potentially with a photo.",
+  "type": "object",
+  "properties": {
+    "curated_abstract": {
+      "type": "string",
+      "nullable": true,
+      "description": "A curated abstract for the highlighted document."
+    },
+    "curated_title": {
+      "type": "string",
+      "nullable": true,
+      "description": "A curated title for the highlighted document."
+    },
+    "document_number": {
+      "type": "string",
+      "nullable": true,
+      "description": "The document number of the highlighted document."
+    },
+    "html_url": {
+      "type": "string",
+      "format": "uri",
+      "nullable": true,
+      "description": "The HTML URL of the highlighted document."
+    },
+    "photo": {
+      "type": "object",
+      "nullable": true,
+      "properties": {
+        "urls": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          "additionalProperties": false,
+          "description": "URLs for different sizes of the photo."
+        },
+        "credit": {
+          "$ref": "#/components/schemas/PhotoCredit",
+          "description": "Credit information for the photo."
+        }
+      },
+      "description": "Photo associated with the highlighted document."
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Facet",
+  "description": "The base class for all facet-related models, representing a statistical aggregation item.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/components/schemas/Base"
+    }
+  ],
+  "properties": {
+    "count": {
+      "type": "integer",
+      "description": "The count of items associated with this facet."
+    },
+    "name": {
+      "type": "string",
+      "description": "The human-readable name of the facet item."
+    },
+    "slug": {
+      "type": "string",
+      "description": "The URL-friendly identifier for the facet item."
+    }
+  },
+  "required": [
+    "count",
+    "name",
+    "slug"
+  ],
+  "additionalProperties": true,
+  "components": {
+    "schemas": {
+      "Base": {
+        "$ref": "base.schema.json"
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+openapi: 3.1.0
+info:
+  title: Section Schema
+  version: '1.0.0'
+components:
+  schemas:
+    Section:
+      type: object
+      description: Represents a section, potentially containing highlighted documents.
+      properties:
+        name:
+          type: string
+          description: The name of the section.
+        slug:
+          type: string
+          nullable: true
+          description: The URL-friendly slug for the section.
+        highlighted_documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/HighlightedDocument'
+          nullable: true
+          description: A list of highlighted documents within this section.
+      required:
+        - name

@@ -1,0 +1,252 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Document",
+  "description": "Represents a Federal Register document, extending the Base model.",
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/components/schemas/Base"
+    }
+  ],
+  "properties": {
+    "document_number": {
+      "type": "string",
+      "description": "The unique document number."
+    },
+    "title": {
+      "type": "string",
+      "description": "The title of the document."
+    },
+    "type": {
+      "type": "string",
+      "description": "The type of the document (e.g., 'RULE', 'PRORULE')."
+    },
+    "publication_date": {
+      "type": "string",
+      "format": "date",
+      "description": "The date the document was published."
+    },
+    "agencies": {
+      "type": "array",
+      "description": "An array of agencies associated with the document.",
+      "items": {
+        "$ref": "#/components/schemas/Agency"
+      }
+    },
+    "html_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "The URL to the HTML version of the document."
+    },
+    "body_html_url": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "The URL to the HTML body of the document, if available."
+    },
+    "abstract": {
+      "type": "string",
+      "description": "A brief abstract of the document."
+    },
+    "action": {
+      "type": "string",
+      "description": "The action taken by the document (e.g., 'Final Rule')."
+    },
+    "agency_names": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Names of agencies associated with the document."
+    },
+    "cfr_references": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "References to the Code of Federal Regulations."
+    },
+    "citation": {
+      "type": "string",
+      "description": "The citation for the document."
+    },
+    "comment_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL for submitting comments on the document."
+    },
+    "corrections": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Details of any corrections made to the document."
+    },
+    "correction_of": {
+      "type": "object",
+      "description": "Reference to the document being corrected.",
+      "additionalProperties": true
+    },
+    "dates": {
+      "type": "array",
+      "items": { "type": "object" },
+      "description": "Important dates related to the document."
+    },
+    "disposition_notes": {
+      "type": "string",
+      "description": "Notes on the disposition of the document."
+    },
+    "docket_id": {
+      "type": "string",
+      "description": "The docket ID associated with the document."
+    },
+    "docket_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "A list of docket IDs associated with the document."
+    },
+    "end_page": {
+      "type": "integer",
+      "description": "The ending page number of the document in the Federal Register."
+    },
+    "excerpts": {
+      "type": "string",
+      "description": "Excerpts from the document."
+    },
+    "executive_order_notes": {
+      "type": "string",
+      "description": "Notes related to an executive order."
+    },
+    "executive_order_number": {
+      "type": "integer",
+      "description": "The executive order number, if applicable."
+    },
+    "full_text_xml_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the full text XML version of the document."
+    },
+    "images": {
+      "type": "array",
+      "description": "An array of images associated with the document.",
+      "items": {
+        "$ref": "#/components/schemas/DocumentImage"
+      }
+    },
+    "json_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the JSON representation of the document."
+    },
+    "mods_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the MODS XML representation of the document."
+    },
+    "page_views": {
+      "type": "object",
+      "properties": {
+        "count": { "type": "integer" },
+        "last_updated": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "description": "Page view statistics for the document."
+    },
+    "pdf_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the PDF version of the document."
+    },
+    "president": {
+      "type": "string",
+      "description": "The president associated with the document, if applicable."
+    },
+    "proclamation_number": {
+      "type": "integer",
+      "description": "The proclamation number, if applicable."
+    },
+    "public_inspection_pdf_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the public inspection PDF version of the document."
+    },
+    "regulation_id_number_info": {
+      "type": "object",
+      "description": "Information about regulation ID numbers.",
+      "additionalProperties": true
+    },
+    "regulation_id_numbers": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "A list of regulation ID numbers."
+    },
+    "regulations_dot_gov_info": {
+      "type": "object",
+      "description": "Information from Regulations.gov.",
+      "additionalProperties": true
+    },
+    "regulations_dot_gov_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to Regulations.gov for the document."
+    },
+    "significant": {
+      "type": "boolean",
+      "description": "Indicates if the document is significant."
+    },
+    "start_page": {
+      "type": "integer",
+      "description": "The starting page number of the document in the Federal Register."
+    },
+    "subtype": {
+      "type": "string",
+      "description": "The subtype of the document."
+    },
+    "raw_text_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the raw text version of the document."
+    },
+    "toc_subject": {
+      "type": "string",
+      "description": "Table of Contents subject."
+    },
+    "toc_doc": {
+      "type": "string",
+      "description": "Table of Contents document."
+    },
+    "volume": {
+      "type": "integer",
+      "description": "The volume number of the Federal Register."
+    },
+    "comments_close_on": {
+      "type": "string",
+      "format": "date",
+      "description": "The date comments close on the document."
+    },
+    "effective_on": {
+      "type": "string",
+      "format": "date",
+      "description": "The effective date of the document."
+    },
+    "signing_date": {
+      "type": "string",
+      "format": "date",
+      "description": "The signing date of the document."
+    }
+  },
+  "required": [
+    "document_number",
+    "title",
+    "type",
+    "publication_date",
+    "agencies",
+    "html_url"
+  ],
+  "additionalProperties": true,
+  "components": {
+    "schemas": {
+      "Base": {
+        "$ref": "base.schema.json"
+      },
+      "Agency": {
+        "$ref": "agency.schema.json"
+      },
+      "DocumentImage": {
+        "$ref": "document_image.schema.json"
+      }
+    }
+  }
+}

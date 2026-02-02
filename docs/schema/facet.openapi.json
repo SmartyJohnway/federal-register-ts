@@ -1,0 +1,23 @@
+openapi: 3.1.0
+info:
+  title: Facet Schema
+  version: '1.0.0'
+components:
+  schemas:
+    Facet:
+      type: object
+      description: Represents a single facet in a search result.
+      properties:
+        count:
+          type: integer
+          description: The number of documents matching this facet.
+        name:
+          type: string
+          description: The display name of the facet.
+        slug:
+          type: string
+          description: The URL-friendly slug for the facet.
+      required:
+        - count
+        - name
+        - slug

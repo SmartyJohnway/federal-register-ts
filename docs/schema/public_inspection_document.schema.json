@@ -1,0 +1,106 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PublicInspectionDocument",
+  "description": "Represents a public inspection document.",
+  "type": "object",
+  "properties": {
+    "agencies": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "nullable": true,
+      "description": "A list of agencies associated with the document."
+    },
+    "docket_numbers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "nullable": true,
+      "description": "A list of docket numbers for the document."
+    },
+    "document_number": {
+      "type": "string",
+      "description": "The unique document number."
+    },
+    "editorial_note": {
+      "type": "string",
+      "nullable": true,
+      "description": "An editorial note for the document."
+    },
+    "excerpts": {
+      "type": "string",
+      "nullable": true,
+      "description": "Excerpts from the document."
+    },
+    "html_url": {
+      "type": "string",
+      "format": "uri",
+      "nullable": true,
+      "description": "URL to the HTML version of the document."
+    },
+    "filing_type": {
+      "type": "string",
+      "nullable": true,
+      "description": "The filing type of the document."
+    },
+    "pdf_url": {
+      "type": "string",
+      "format": "uri",
+      "nullable": true,
+      "description": "URL to the PDF version of the document."
+    },
+    "pdf_file_size": {
+      "type": "integer",
+      "nullable": true,
+      "description": "The size of the PDF file in bytes."
+    },
+    "num_pages": {
+      "type": "integer",
+      "nullable": true,
+      "description": "The number of pages in the document."
+    },
+    "title": {
+      "type": "string",
+      "description": "The title of the document."
+    },
+    "toc_doc": {
+      "type": "string",
+      "nullable": true,
+      "description": "Table of Contents document."
+    },
+    "toc_subject": {
+      "type": "string",
+      "nullable": true,
+      "description": "Table of Contents subject."
+    },
+    "type": {
+      "type": "string",
+      "description": "The type of the document."
+    },
+    "publication_date": {
+      "type": "string",
+      "format": "date",
+      "nullable": true,
+      "description": "The date the document was published."
+    },
+    "filed_at": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true,
+      "description": "The date and time the document was filed."
+    },
+    "pdf_update_at": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true,
+      "description": "The date and time the PDF was last updated."
+    }
+  },
+  "required": [
+    "document_number",
+    "title",
+    "type"
+  ]
+}

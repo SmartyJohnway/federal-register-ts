@@ -1,0 +1,36 @@
+openapi: 3.1.0
+info:
+  title: Aggregated Query Schema
+  version: '1.0.0'
+components:
+  schemas:
+    AggregatedQuery:
+      type: object
+      properties:
+        term:
+          type: string
+          nullable: true
+          description: Search term for the query.
+        conditions:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Additional conditions for filtering results.
+        facets:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: List of facet names to include in the response (e.g., ['agency', 'daily']).
+        per_page:
+          type: integer
+          nullable: true
+          description: Number of results per page.
+        page:
+          type: integer
+          nullable: true
+          description: Page number for pagination.
+        order:
+          type: string
+          nullable: true
+          description: Order of results (e.g., 'newest', 'oldest').

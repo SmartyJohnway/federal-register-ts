@@ -1,0 +1,14 @@
+openapi: 3.1.0
+info:
+  title: Base Schema
+  version: '1.0.0'
+components:
+  schemas:
+    Base:
+      type: object
+      description: Base class for all data models, providing common attributes and methods.
+      properties:
+        attributes:
+          type: object
+          description: A collection of key-value attributes for the entity.
+          additionalProperties: true

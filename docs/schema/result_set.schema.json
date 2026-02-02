@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ResultSet",
+  "description": "Represents a paginated set of results from an API query.",
+  "type": "object",
+  "properties": {
+    "count": {
+      "type": "integer",
+      "description": "The total number of items matching the query."
+    },
+    "total_pages": {
+      "type": "integer",
+      "description": "The total number of pages available for the query."
+    },
+    "results": {
+      "type": "array",
+      "description": "An array of result items. The actual schema of items depends on the context (e.g., Document, Agency).",
+      "items": {
+        "$ref": "#/components/schemas/Base" 
+      }
+    },
+    "errors": {
+      "type": "object",
+      "description": "Optional: An object containing error details if the query resulted in errors.",
+      "additionalProperties": true
+    },
+    "description": {
+      "type": "string",
+      "description": "Optional: A human-readable description of the result set."
+    },
+    "previous_page_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional: URL for the previous page of results."
+    },
+    "next_page_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional: URL for the next page of results."
+    }
+  },
+  "required": [
+    "count",
+    "total_pages",
+    "results"
+  ],
+  "additionalProperties": false,
+  "components": {
+    "schemas": {
+      "Base": {
+        "type": "object",
+        "description": "Placeholder for Base schema. All data models inherit from Base.",
+        "additionalProperties": true
+      }
+    }
+  }
+}

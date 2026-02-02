@@ -1,0 +1,22 @@
+openapi: 3.1.0
+info:
+  title: Facet Result Set Schema
+  version: '1.0.0'
+components:
+  schemas:
+    FacetResultSet:
+      type: object
+      description: A generic result set for facets.
+      properties:
+        conditions:
+          type: object
+          additionalProperties: true
+          description: Conditions used to filter the facet results.
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Facet' # Reference to the Facet schema
+          description: An array of facet results.
+      required:
+        - conditions
+        - results
