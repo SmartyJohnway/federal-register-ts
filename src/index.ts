@@ -8,7 +8,8 @@ export * from './result_set';
 export * from './facet_result_set';
 
 // Main Adapters / Models
-export { Document } from './document';
+import { Document } from './document';
+export { Document };
 export { Agency } from './agency';
 export { PublicInspectionDocument } from './public_inspection_document';
 export { Section } from './section';
