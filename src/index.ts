@@ -79,8 +79,8 @@ export type {
   AgencyNotFoundError,
   EffectiveDateRangeError,
   EmptyJsonObject,
-  EmptyBody,
   MultiLookupNotFoundErrors,
   PublicInspectionIssueConditionErrorPayload,
 } from './core/errors';
+
 

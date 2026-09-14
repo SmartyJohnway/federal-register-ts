@@ -10,11 +10,9 @@
 import {
   decodeResponse,
   decodeJsonResponse,
-  decodeTextResponse,
   DecodedResponse,
   OperationScopedDecoder,
 } from "./transport";
-export { DecodedResponse, OperationScopedDecoder } from "./transport";
 
 /**
  * Exact frozen public client configuration interface.
@@ -26,8 +24,14 @@ export interface FederalRegisterClientOptions {
 }
 
 /**
+ * Internal default base URL.
+ * Retained internally; not exported publicly.
+ */
+const DEFAULT_BASE_URL = "https://www.federalregister.gov/api/v1";
+
+/**
  * Internal request execution options passed by namespaces or navigation.
- * Never exposed as an arbitrary public get/request method.
+ * Internal to the SDK; not part of public package-root export.
  */
 export interface InternalExecuteOptions {
   readonly pathOrUrl: string;
@@ -35,15 +39,21 @@ export interface InternalExecuteOptions {
   readonly decoder?: OperationScopedDecoder;
 }
 
-export class FederalRegisterClient {
-  public static readonly DEFAULT_BASE_URL = "https://www.federalregister.gov/api/v1";
+/**
+ * Internal symbols for SDK internal operations and navigation.
+ * Not exposed on public client type surface.
+ */
+export const kExecuteInternal = Symbol("kExecuteInternal");
+export const kFetchOpaqueUrl = Symbol("kFetchOpaqueUrl");
+export const kGetBaseUrl = Symbol("kGetBaseUrl");
+export const kGetFetch = Symbol("kGetFetch");
 
+export class FederalRegisterClient {
   private readonly _baseUrl: string;
   private readonly _fetch: typeof globalThis.fetch;
 
-
   constructor(options?: FederalRegisterClientOptions) {
-    const rawBase = options?.baseUrl || FederalRegisterClient.DEFAULT_BASE_URL;
+    const rawBase = options?.baseUrl || DEFAULT_BASE_URL;
     // Normalize trailing slash
     this._baseUrl = rawBase.endsWith("/")
       ? rawBase.slice(0, -1)
@@ -52,16 +62,11 @@ export class FederalRegisterClient {
     this._fetch = options?.fetch || globalThis.fetch;
   }
 
-  public get baseUrl(): string {
-    return this._baseUrl;
-  }
-
   /**
-   * Internal request execution boundary.
-   * Establishes resolved URL, executes via instance-scoped fetch, decodes response,
-   * and applies operation-scoped or default JSON decoder.
+   * Internal-only execution implementation invoked via internal symbol or internal method.
+   * Not part of public client typing/autocomplete for package consumers.
    */
-  public async executeInternal<T=any>(opts: InternalExecuteOptions): Promise<T> {
+  public async [kExecuteInternal]<T = any>(opts: InternalExecuteOptions): Promise<T> {
     let finalUrl: string;
 
     if (opts.pathOrUrl.startsWith("http://") || opts.pathOrUrl.startsWith("https://")) {
@@ -89,17 +94,27 @@ export class FederalRegisterClient {
   }
 
   /**
-   * Rawpath helper for navigation opaque server URLs.
-   * Ensures that opaque next_page_url / previous_page_url are executed safely
-   * through the originating client's instance-scoped fetch without query reconstruction.
+   * Internal-only server navigation URL execution invoked via internal symbol.
    */
-  public async fetchOpaqueUrl<T=any>(opaqueUrl: string, decoder?: OperationScopedDecoder): Promise<T> {
+  public async [kFetchOpaqueUrl]<T = any>(opaqueUrl: string, decoder?: OperationScopedDecoder): Promise<T> {
     if (!opaqueUrl || typeof opaqueUrl !== "string") {
       throw new Error("server navigation URL must be a non-empty string");
     }
-    return this.executeInternal<T>({
+    return this[kExecuteInternal]<T>({
       pathOrUrl: opaqueUrl,
       decoder,
     });
   }
+
+  /**
+   * Internal-only getters for test/internal validation.
+   */
+  public [kGetBaseUrl](): string {
+    return this._baseUrl;
+  }
+
+  public [kGetFetch](): typeof globalThis.fetch {
+    return this._fetch;
+  }
 }
+

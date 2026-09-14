@@ -27,10 +27,6 @@ export interface EffectiveDateRangeError {
 
 export type EmptyJsonObject = Record<string, never>;
 
-export interface EmptyBody {
-  readonly kind: "empty-body";
-}
-
 export interface MultiLookupNotFoundErrors {
   readonly not_found: string[];
 }
@@ -44,7 +40,7 @@ export interface PublicInspectionIssueConditionErrorPayload {
  * Base class for all thrown SDK failures.
  * Partial-success envelopes do NOT throw or inherit from this class.
  */
-export class FederalRegisterError extends Error {
+export abstract class FederalRegisterError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "FederalRegisterError";
@@ -54,21 +50,22 @@ export class FederalRegisterError extends Error {
 /**
  * Base class for non-2xx HTTP transport failures.
  * Preserves status, contentType, bodyKind, parsed body (if available), and rawText.
+ * Absences are strictly represented by null.
  */
 export class FederalRegisterHttpError<TBody = unknown> extends FederalRegisterError {
   public readonly status: number;
   public readonly contentType: string | null;
   public readonly bodyKind: BodyKind;
-  public readonly body: TBody | undefined;
-  public readonly rawText: string | undefined;
+  public readonly body: TBody | null;
+  public readonly rawText: string | null;
 
   constructor(
     message: string,
     status: number,
     contentType: string | null,
     bodyKind: BodyKind,
-    body?: TBody,
-    rawText?: string
+    body: TBody | null,
+    rawText: string | null
   ) {
     super(message);
     this.name = "FederalRegisterHttpError";
@@ -87,7 +84,7 @@ export class FederalRegisterStatusMessageError extends FederalRegisterHttpError<
     contentType: string | null,
     bodyKind: BodyKind,
     body: ApiStatusMessageError,
-    rawText?: string
+    rawText: string | null
   ) {
     super(message, status, contentType, bodyKind, body, rawText);
     this.name = "FederalRegisterStatusMessageError";
@@ -101,7 +98,7 @@ export class FederalRegisterSearchValidationError extends FederalRegisterHttpErr
     contentType: string | null,
     bodyKind: BodyKind,
     body: SearchValidationError,
-    rawText?: string
+    rawText: string | null
   ) {
     super(message, status, contentType, bodyKind, body, rawText);
     this.name = "FederalRegisterSearchValidationError";
@@ -115,7 +112,7 @@ export class FederalRegisterAgencyNotFoundError extends FederalRegisterHttpError
     contentType: string | null,
     bodyKind: BodyKind,
     body: AgencyNotFoundError,
-    rawText?: string
+    rawText: string | null
   ) {
     super(message, status, contentType, bodyKind, body, rawText);
     this.name = "FederalRegisterAgencyNotFoundError";
@@ -129,7 +126,7 @@ export class FederalRegisterEffectiveDateRangeError extends FederalRegisterHttpE
     contentType: string | null,
     bodyKind: BodyKind,
     body: EffectiveDateRangeError,
-    rawText?: string
+    rawText: string | null
   ) {
     super(message, status, contentType, bodyKind, body, rawText);
     this.name = "FederalRegisterEffectiveDateRangeError";
@@ -143,28 +140,28 @@ export class FederalRegisterEmptyJsonError extends FederalRegisterHttpError<Empt
     contentType: string | null,
     bodyKind: BodyKind,
     body: EmptyJsonObject,
-    rawText?: string
+    rawText: string | null
   ) {
     super(message, status, contentType, bodyKind, body, rawText);
     this.name = "FederalRegisterEmptyJsonError";
   }
 }
 
-export class FederalRegisterEmptyBodyError extends FederalRegisterHttpError<EmptyBody> {
+export class FederalRegisterEmptyBodyError extends FederalRegisterHttpError<never> {
   constructor(
     message: string,
     status: number,
     contentType: string | null,
     bodyKind: BodyKind,
-    body?: EmptyBody,
-    rawText?: string
+    body: null = null,
+    rawText: null = null
   ) {
-    super(message, status, contentType, bodyKind, body || { kind: "empty-body" }, rawText);
+    super(message, status, contentType, bodyKind, null as never, null);
     this.name = "FederalRegisterEmptyBodyError";
   }
 }
 
-export class FederalRegisterRawResponseError extends FederalRegisterHttpError<string> {
+export class FederalRegisterRawResponseError extends FederalRegisterHttpError<never> {
   constructor(
     message: string,
     status: number,
@@ -172,7 +169,7 @@ export class FederalRegisterRawResponseError extends FederalRegisterHttpError<st
     bodyKind: BodyKind,
     rawText: string
   ) {
-    super(message, status, contentType, bodyKind, rawText, rawText);
+    super(message, status, contentType, bodyKind, null as never, rawText);
     this.name = "FederalRegisterRawResponseError";
   }
 }
@@ -183,7 +180,7 @@ export class FederalRegisterRawResponseError extends FederalRegisterHttpError<st
  * Not thrown by global body heuristic.
  */
 export class PublicInspectionIssueConditionError extends FederalRegisterError {
-  public readonly status = 200;
+  public readonly httpStatus: 200 = 200;
   public readonly payload: PublicInspectionIssueConditionErrorPayload;
 
   constructor(payload: PublicInspectionIssueConditionErrorPayload) {
@@ -192,3 +189,4 @@ export class PublicInspectionIssueConditionError extends FederalRegisterError {
     this.payload = payload;
   }
 }
+
