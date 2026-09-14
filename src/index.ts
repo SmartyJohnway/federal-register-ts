@@ -52,3 +52,6 @@ export * from './aggregator';
 // Assuming Document.search is the intended implementation for searchDocuments
 export const searchDocuments = Document.search;
 export const findDocument = Document.find;
+
+// R0-07C / R2-02 Request Core
+export * from './request';
