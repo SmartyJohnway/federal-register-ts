@@ -57,3 +57,30 @@ export const findDocument = Document.find;
 export * from './request/types';
 export { RequestValidationError } from './request/validation';
 
+// R0-07A/B/D / R2-03 Client, Configuration, and Error Core
+export { FederalRegisterClient } from './core/client';
+export type { FederalRegisterClientOptions } from './core/client';
+export {
+  FederalRegisterError,
+  FederalRegisterHttpError,
+  FederalRegisterStatusMessageError,
+  FederalRegisterSearchValidationError,
+  FederalRegisterAgencyNotFoundError,
+  FederalRegisterEffectiveDateRangeError,
+  FederalRegisterEmptyJsonError,
+  FederalRegisterEmptyBodyError,
+  FederalRegisterRawResponseError,
+  PublicInspectionIssueConditionError,
+} from './core/errors';
+export type {
+  BodyKind,
+  ApiStatusMessageError,
+  SearchValidationError,
+  AgencyNotFoundError,
+  EffectiveDateRangeError,
+  EmptyJsonObject,
+  EmptyBody,
+  MultiLookupNotFoundErrors,
+  PublicInspectionIssueConditionErrorPayload,
+} from './core/errors';
+
