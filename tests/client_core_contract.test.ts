@@ -22,21 +22,29 @@ import {
   classifyGenericHttpError,
 } from "../src/core/transport";
 import {
-  kExecuteInternal,
-  kFetchOpaqueUrl,
-  kGetBaseUrl,
+  executeInternal,
+  fetchOpaqueUrl,
+  getClientBaseUrl,
 } from "../src/core/client";
 
 describe("R2-03 Canonical Client & Core Contract Tests", () => {
   describe("Client Configuration & Isolation (F-CLIENT-01 / Blocker C)", () => {
     test("CLIENT-01: Default instance uses default baseUrl internally and globalThis.fetch", () => {
       const client = new FederalRegisterClient();
-      expect((client as any)[kGetBaseUrl]()).toBe("https://www.federalregister.gov/api/v1");
+      expect(getClientBaseUrl(client)).toBe("https://www.federalregister.gov/api/v1");
       // Public low-level transport escapes MUST be undefined on consumer type surface
       expect((client as any).executeInternal).toBeUndefined();
       expect((client as any).fetchOpaqueUrl).toBeUndefined();
       expect((client as any).baseUrl).toBeUndefined();
       expect((FederalRegisterClient as any).DEFAULT_BASE_URL).toBeUndefined();
+
+      // Zero consumer-reachable arbitrary transport executor on prototype
+      const protoKeys = Reflect.ownKeys(FederalRegisterClient.prototype);
+      expect(protoKeys).toEqual(["constructor"]);
+      const instanceKeys = Reflect.ownKeys(client);
+      expect(instanceKeys).toEqual([]);
+      expect(Object.getOwnPropertySymbols(FederalRegisterClient.prototype)).toEqual([]);
+      expect(Object.getOwnPropertySymbols(client)).toEqual([]);
     });
 
     test("CLIENT-02: Instances A and B with different configurations remain completely isolated", async () => {
@@ -63,11 +71,11 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
         fetch: fetchB,
       });
 
-      expect((clientA as any)[kGetBaseUrl]()).toBe("https://api-a.example.com/v1");
-      expect((clientB as any)[kGetBaseUrl]()).toBe("https://api-b.example.org/api");
+      expect(getClientBaseUrl(clientA)).toBe("https://api-a.example.com/v1");
+      expect(getClientBaseUrl(clientB)).toBe("https://api-b.example.org/api");
 
-      const resA = await (clientA as any)[kExecuteInternal]({ pathOrUrl: "documents" });
-      const resB = await (clientB as any)[kExecuteInternal]({ pathOrUrl: "public-inspection", queryString: "page=1" });
+      const resA = await executeInternal(clientA, { pathOrUrl: "documents" });
+      const resB = await executeInternal(clientB, { pathOrUrl: "public-inspection", queryString: "page=1" });
 
       expect(resA.client).toBe("A");
       expect(resB.client).toBe("B");
@@ -122,9 +130,9 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
       );
       const client = new FederalRegisterClient({ fetch: mockFetch });
 
-      await expect((client as any)[kExecuteInternal]({ pathOrUrl: "test" })).rejects.toThrow(FederalRegisterStatusMessageError);
+      await expect(executeInternal(client, { pathOrUrl: "test" })).rejects.toThrow(FederalRegisterStatusMessageError);
       try {
-        await (client as any)[kExecuteInternal]({ pathOrUrl: "test" });
+        await executeInternal(client, { pathOrUrl: "test" });
       } catch (err: any) {
         expect(err).toBeInstanceOf(FederalRegisterStatusMessageError);
         expect(err).toBeInstanceOf(FederalRegisterHttpError);
@@ -218,14 +226,14 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
         })
       );
       const client = new FederalRegisterClient({ fetch: mockFetch });
-      await expect((client as any)[kExecuteInternal]({ pathOrUrl: "unknown" })).rejects.toThrow(FederalRegisterEmptyJsonError);
+      await expect(executeInternal(client, { pathOrUrl: "unknown" })).rejects.toThrow(FederalRegisterEmptyJsonError);
     });
 
     test("ERR-06: Throws FederalRegisterEmptyBodyError for non-2xx empty body with body=null and rawText=null", async () => {
       const mockFetch: typeof fetch = jest.fn().mockResolvedValue(new Response("", { status: 404 }));
       const client = new FederalRegisterClient({ fetch: mockFetch });
       try {
-        await (client as any)[kExecuteInternal]({ pathOrUrl: "empty" });
+        await executeInternal(client, { pathOrUrl: "empty" });
         fail("Expected error");
       } catch (err: any) {
         expect(err).toBeInstanceOf(FederalRegisterEmptyBodyError);
@@ -246,7 +254,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
       );
       const client = new FederalRegisterClient({ fetch: mockFetch });
       try {
-        await (client as any)[kExecuteInternal]({ pathOrUrl: "gateway" });
+        await executeInternal(client, { pathOrUrl: "gateway" });
         fail("Expected error to be thrown");
       } catch (err: any) {
         expect(err).toBeInstanceOf(FederalRegisterRawResponseError);
@@ -267,7 +275,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
       );
       const client = new FederalRegisterClient({ fetch: mockFetch });
       try {
-        await (client as any)[kExecuteInternal]({ pathOrUrl: "method" });
+        await executeInternal(client, { pathOrUrl: "method" });
         fail("Expected error to be thrown");
       } catch (err: any) {
         expect(err).toBeInstanceOf(FederalRegisterStatusMessageError);
@@ -296,7 +304,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
         })
       );
       const client = new FederalRegisterClient({ fetch: mockFetch });
-      const res = await (client as any)[kExecuteInternal]({ pathOrUrl: "standard-op" });
+      const res = await executeInternal(client, { pathOrUrl: "standard-op" });
       expect(res).toEqual({ status: 400, error: "Some notice" });
     });
 
@@ -309,7 +317,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
       );
       const client = new FederalRegisterClient({ fetch: mockFetch });
       await expect(
-        (client as any)[kExecuteInternal]({
+        executeInternal(client, {
           pathOrUrl: "public-inspection-issues/daily",
           decoder: decodePublicInspectionIssueFacetResponse,
         })
@@ -324,7 +332,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
         })
       );
       const client = new FederalRegisterClient({ fetch: mockFetch });
-      const res = await (client as any)[kExecuteInternal]({ pathOrUrl: "site_notifications/banner" });
+      const res = await executeInternal(client, { pathOrUrl: "site_notifications/banner" });
       expect(res).toEqual({});
     });
   });
@@ -339,7 +347,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
         })
       );
       const client = new FederalRegisterClient({ fetch: mockFetch });
-      const res = await (client as any)[kExecuteInternal]({
+      const res = await executeInternal(client, {
         pathOrUrl: "documents.csv",
         decoder: decodeTextResponse,
       });
@@ -355,7 +363,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
         })
       );
       const client = new FederalRegisterClient({ fetch: mockFetch });
-      const res = await (client as any)[kExecuteInternal]({
+      const res = await executeInternal(client, {
         pathOrUrl: "documents.rss",
         decoder: decodeTextResponse,
       });
@@ -371,7 +379,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
         })
       );
       const client = new FederalRegisterClient({ fetch: mockFetch });
-      const res = await (client as any)[kExecuteInternal]({
+      const res = await executeInternal(client, {
         pathOrUrl: "suggested_searches.jsonp",
         decoder: decodeTextResponse,
       });
@@ -390,7 +398,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
       );
       const client = new FederalRegisterClient({ fetch: mockFetch });
 
-      const page2 = await (client as any)[kFetchOpaqueUrl](serverNextUrl);
+      const page2 = await fetchOpaqueUrl(client, serverNextUrl);
       expect(page2).toEqual({ count: 100, results: [] });
       expect(mockFetch).toHaveBeenCalledWith(serverNextUrl);
     });
