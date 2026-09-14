@@ -90,16 +90,40 @@ describe("R0-07C / R2-02 P0 Request Serializer - Negative & Rejection Contract T
     expect(() => QuerySerializer.serializeDocumentSearchCsvParams(invalidLow)).toThrow(RequestValidationError);
   });
 
-  test("R-11: Rejection of invalid ISO date string", () => {
-    const invalidDate: any = {
+  test("R-11: Rejection of invalid ISO date string and semantic calendar dates", () => {
+    const invalidFormat: any = {
       conditions: { publicationDate: { is: "2026/09/14" } },
     };
-    expect(() => QuerySerializer.serializeDocumentSearchParams(invalidDate)).toThrow(RequestValidationError);
+    expect(() => QuerySerializer.serializeDocumentSearchParams(invalidFormat)).toThrow(RequestValidationError);
 
     const invalidMonth: any = {
       conditions: { publicationDate: { is: "2026-13-01" } },
     };
     expect(() => QuerySerializer.serializeDocumentSearchParams(invalidMonth)).toThrow(RequestValidationError);
+
+    // Semantic calendar rejection: Feb 30 does not exist
+    const feb30: any = {
+      conditions: { publicationDate: { is: "2026-02-30" } },
+    };
+    expect(() => QuerySerializer.serializeDocumentSearchParams(feb30)).toThrow(RequestValidationError);
+
+    // Semantic calendar rejection: April 31 does not exist (30 days in April)
+    const apr31: any = {
+      conditions: { publicationDate: { is: "2026-04-31" } },
+    };
+    expect(() => QuerySerializer.serializeDocumentSearchParams(apr31)).toThrow(RequestValidationError);
+
+    // Semantic calendar rejection: 2025 is not a leap year (Feb 29 rejected)
+    const nonLeapFeb29: any = {
+      conditions: { publicationDate: { is: "2025-02-29" } },
+    };
+    expect(() => QuerySerializer.serializeDocumentSearchParams(nonLeapFeb29)).toThrow(RequestValidationError);
+
+    // Semantic calendar acceptance: 2024 is a leap year (Feb 29 accepted)
+    const leapFeb29: DocumentSearchParams = {
+      conditions: { publicationDate: { is: "2024-02-29" } },
+    };
+    expect(() => QuerySerializer.serializeDocumentSearchParams(leapFeb29)).not.toThrow();
   });
 
   test("R-12: Rejection of conflicting DateCondition selector modes", () => {

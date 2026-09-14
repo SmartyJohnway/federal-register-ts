@@ -53,5 +53,7 @@ export * from './aggregator';
 export const searchDocuments = Document.search;
 export const findDocument = Document.find;
 
-// R0-07C / R2-02 Request Core
-export * from './request';
+// R0-07C / R2-02 Request Core (Types and validation error only; serializer machinery is internal)
+export * from './request/types';
+export { RequestValidationError } from './request/validation';
+
