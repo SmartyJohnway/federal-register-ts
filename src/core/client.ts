@@ -5,7 +5,10 @@
  * - R0-07A_Canonical_SDK_Architecture_and_Naming_Policy_2026-09-12.md
  * - R0-07B_Operation_Namespace_and_Export_Surface_2026-09-12.md
  * - R2-03 Public Client Configuration Contract Clarification v1.0
+ * - R2-03_Internal_Transport_Architecture_Contract_Adjudication_Clarification_v1.0
  */
+
+import { initializeClientRuntime } from "./internal/runtime";
 
 /**
  * Exact frozen public client configuration interface.
@@ -33,10 +36,14 @@ export class FederalRegisterClient {
       ? rawBase.slice(0, -1)
       : rawBase;
 
-    const fetch = options?.fetch || globalThis.fetch;
+    const fetchFn = options?.fetch || globalThis.fetch;
 
     this.#baseUrl = baseUrl;
-    this.#fetch = fetch;
+    this.#fetch = fetchFn;
+
+    // Register this instance's transport in the internal runtime bridge.
+    // The runtime closure captures baseUrl and fetchFn by value —
+    // no process-global mutable state is involved.
+    initializeClientRuntime(this, { baseUrl, fetch: fetchFn });
   }
 }
-
