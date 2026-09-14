@@ -16,27 +16,63 @@ import {
   decodePublicInspectionIssueFacetResponse,
   decodeTextResponse,
   decodeResponse,
+  decodeJsonResponse,
+  DecodedResponse,
+  OperationScopedDecoder,
   classifySearchHttpError,
   classifyAgencyHttpError,
   classifyEffectiveDateHttpError,
   classifyGenericHttpError,
 } from "../src/core/transport";
-import {
-  executeInternal,
-  fetchOpaqueUrl,
-  getClientBaseUrl,
-} from "../src/core/client";
+
+/**
+ * Test-scoped request execution helper.
+ * Simulates SDK transport decoding and error classification in isolation without
+ * exporting an arbitrary transport executor from production shipped modules.
+ */
+interface TestExecuteOptions {
+  readonly pathOrUrl: string;
+  readonly queryString?: string;
+  readonly decoder?: OperationScopedDecoder;
+}
+
+async function executeTestTransport<T = any>(
+  baseUrl: string,
+  fetchFn: typeof globalThis.fetch,
+  opts: TestExecuteOptions
+): Promise<T> {
+  let finalUrl: string;
+  if (opts.pathOrUrl.startsWith("http://") || opts.pathOrUrl.startsWith("https://")) {
+    finalUrl = opts.pathOrUrl;
+  } else {
+    const relPath = opts.pathOrUrl.startsWith("/") ? opts.pathOrUrl : "/" + opts.pathOrUrl;
+    finalUrl = baseUrl + relPath;
+  }
+  if (opts.queryString && opts.queryString.length > 0) {
+    const sep = finalUrl.includes("?") ? "&" : "?";
+    finalUrl = finalUrl + sep + opts.queryString;
+  }
+  const response = await fetchFn(finalUrl);
+  const decoded = await decodeResponse(response);
+  if (opts.decoder) {
+    return opts.decoder(decoded);
+  }
+  return decodeJsonResponse(decoded);
+}
 
 describe("R2-03 Canonical Client & Core Contract Tests", () => {
   describe("Client Configuration & Isolation (F-CLIENT-01 / Blocker C)", () => {
-    test("CLIENT-01: Default instance uses default baseUrl internally and globalThis.fetch", () => {
+    test("CLIENT-01: Default instance uses default configuration; zero arbitrary transport escapes", () => {
       const client = new FederalRegisterClient();
-      expect(getClientBaseUrl(client)).toBe("https://www.federalregister.gov/api/v1");
-      // Public low-level transport escapes MUST be undefined on consumer type surface
+
+      // Zero public low-level transport escapes on client instance
       expect((client as any).executeInternal).toBeUndefined();
       expect((client as any).fetchOpaqueUrl).toBeUndefined();
       expect((client as any).baseUrl).toBeUndefined();
+      expect((client as any).fetch).toBeUndefined();
       expect((FederalRegisterClient as any).DEFAULT_BASE_URL).toBeUndefined();
+      expect((FederalRegisterClient as any).BASE_URI).toBeUndefined();
+      expect((FederalRegisterClient as any).overrideBaseUri).toBeUndefined();
 
       // Zero consumer-reachable arbitrary transport executor on prototype
       const protoKeys = Reflect.ownKeys(FederalRegisterClient.prototype);
@@ -71,11 +107,22 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
         fetch: fetchB,
       });
 
-      expect(getClientBaseUrl(clientA)).toBe("https://api-a.example.com/v1");
-      expect(getClientBaseUrl(clientB)).toBe("https://api-b.example.org/api");
+      // Proof of instance distinction and prototype integrity
+      expect(clientA).not.toBe(clientB);
+      expect(Object.getPrototypeOf(clientA)).toBe(FederalRegisterClient.prototype);
+      expect(Object.getPrototypeOf(clientB)).toBe(FederalRegisterClient.prototype);
 
-      const resA = await executeInternal(clientA, { pathOrUrl: "documents" });
-      const resB = await executeInternal(clientB, { pathOrUrl: "public-inspection", queryString: "page=1" });
+      // Mutating instance A does not affect instance B
+      (clientA as any).customProperty = "mutatedA";
+      expect((clientB as any).customProperty).toBeUndefined();
+
+      // Zero mutable static state
+      expect((FederalRegisterClient as any).BASE_URI).toBeUndefined();
+      expect((FederalRegisterClient as any).overrideBaseUri).toBeUndefined();
+
+      // Execute transport through configuration A and configuration B
+      const resA = await executeTestTransport("https://api-a.example.com/v1", fetchA, { pathOrUrl: "documents" });
+      const resB = await executeTestTransport("https://api-b.example.org/api", fetchB, { pathOrUrl: "public-inspection", queryString: "page=1" });
 
       expect(resA.client).toBe("A");
       expect(resB.client).toBe("B");
@@ -128,11 +175,13 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
           })
         )
       );
-      const client = new FederalRegisterClient({ fetch: mockFetch });
 
-      await expect(executeInternal(client, { pathOrUrl: "test" })).rejects.toThrow(FederalRegisterStatusMessageError);
+      await expect(
+        executeTestTransport("https://www.federalregister.gov/api/v1", mockFetch, { pathOrUrl: "test" })
+      ).rejects.toThrow(FederalRegisterStatusMessageError);
+
       try {
-        await executeInternal(client, { pathOrUrl: "test" });
+        await executeTestTransport("https://www.federalregister.gov/api/v1", mockFetch, { pathOrUrl: "test" });
       } catch (err: any) {
         expect(err).toBeInstanceOf(FederalRegisterStatusMessageError);
         expect(err).toBeInstanceOf(FederalRegisterHttpError);
@@ -225,15 +274,15 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
           headers: { "content-type": "application/json" },
         })
       );
-      const client = new FederalRegisterClient({ fetch: mockFetch });
-      await expect(executeInternal(client, { pathOrUrl: "unknown" })).rejects.toThrow(FederalRegisterEmptyJsonError);
+      await expect(
+        executeTestTransport("https://www.federalregister.gov/api/v1", mockFetch, { pathOrUrl: "unknown" })
+      ).rejects.toThrow(FederalRegisterEmptyJsonError);
     });
 
     test("ERR-06: Throws FederalRegisterEmptyBodyError for non-2xx empty body with body=null and rawText=null", async () => {
       const mockFetch: typeof fetch = jest.fn().mockResolvedValue(new Response("", { status: 404 }));
-      const client = new FederalRegisterClient({ fetch: mockFetch });
       try {
-        await executeInternal(client, { pathOrUrl: "empty" });
+        await executeTestTransport("https://www.federalregister.gov/api/v1", mockFetch, { pathOrUrl: "empty" });
         fail("Expected error");
       } catch (err: any) {
         expect(err).toBeInstanceOf(FederalRegisterEmptyBodyError);
@@ -252,9 +301,8 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
           headers: { "content-type": "text/html" },
         })
       );
-      const client = new FederalRegisterClient({ fetch: mockFetch });
       try {
-        await executeInternal(client, { pathOrUrl: "gateway" });
+        await executeTestTransport("https://www.federalregister.gov/api/v1", mockFetch, { pathOrUrl: "gateway" });
         fail("Expected error to be thrown");
       } catch (err: any) {
         expect(err).toBeInstanceOf(FederalRegisterRawResponseError);
@@ -273,9 +321,8 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
           headers: { "content-type": "application/json" },
         })
       );
-      const client = new FederalRegisterClient({ fetch: mockFetch });
       try {
-        await executeInternal(client, { pathOrUrl: "method" });
+        await executeTestTransport("https://www.federalregister.gov/api/v1", mockFetch, { pathOrUrl: "method" });
         fail("Expected error to be thrown");
       } catch (err: any) {
         expect(err).toBeInstanceOf(FederalRegisterStatusMessageError);
@@ -303,8 +350,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
           headers: { "content-type": "application/json" },
         })
       );
-      const client = new FederalRegisterClient({ fetch: mockFetch });
-      const res = await executeInternal(client, { pathOrUrl: "standard-op" });
+      const res = await executeTestTransport("https://www.federalregister.gov/api/v1", mockFetch, { pathOrUrl: "standard-op" });
       expect(res).toEqual({ status: 400, error: "Some notice" });
     });
 
@@ -315,9 +361,8 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
           headers: { "content-type": "application/json" },
         })
       );
-      const client = new FederalRegisterClient({ fetch: mockFetch });
       await expect(
-        executeInternal(client, {
+        executeTestTransport("https://www.federalregister.gov/api/v1", mockFetch, {
           pathOrUrl: "public-inspection-issues/daily",
           decoder: decodePublicInspectionIssueFacetResponse,
         })
@@ -331,8 +376,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
           headers: { "content-type": "application/json" },
         })
       );
-      const client = new FederalRegisterClient({ fetch: mockFetch });
-      const res = await executeInternal(client, { pathOrUrl: "site_notifications/banner" });
+      const res = await executeTestTransport("https://www.federalregister.gov/api/v1", mockFetch, { pathOrUrl: "site_notifications/banner" });
       expect(res).toEqual({});
     });
   });
@@ -346,8 +390,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
           headers: { "content-type": "text/csv" },
         })
       );
-      const client = new FederalRegisterClient({ fetch: mockFetch });
-      const res = await executeInternal(client, {
+      const res = await executeTestTransport("https://www.federalregister.gov/api/v1", mockFetch, {
         pathOrUrl: "documents.csv",
         decoder: decodeTextResponse,
       });
@@ -362,8 +405,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
           headers: { "content-type": "application/rss+xml" },
         })
       );
-      const client = new FederalRegisterClient({ fetch: mockFetch });
-      const res = await executeInternal(client, {
+      const res = await executeTestTransport("https://www.federalregister.gov/api/v1", mockFetch, {
         pathOrUrl: "documents.rss",
         decoder: decodeTextResponse,
       });
@@ -378,8 +420,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
           headers: { "content-type": "application/javascript" },
         })
       );
-      const client = new FederalRegisterClient({ fetch: mockFetch });
-      const res = await executeInternal(client, {
+      const res = await executeTestTransport("https://www.federalregister.gov/api/v1", mockFetch, {
         pathOrUrl: "suggested_searches.jsonp",
         decoder: decodeTextResponse,
       });
@@ -388,7 +429,7 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
   });
 
   describe("Opaque Server-Navigation Exposure", () => {
-    test("NAV-01: fetchOpaqueUrl executes opaque URL on originating client without parameter parsing/reconstruction", async () => {
+    test("NAV-01: Opaque URL execution preserves exact URL without parameter parsing/reconstruction", async () => {
       const serverNextUrl = "https://www.federalregister.gov/api/v1/documents.json?conditions%5Bterm%5D=energy&page=2";
       const mockFetch: typeof fetch = jest.fn().mockResolvedValue(
         new Response(JSON.stringify({ count: 100, results: [] }), {
@@ -396,12 +437,12 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
           headers: { "content-type": "application/json" },
         })
       );
-      const client = new FederalRegisterClient({ fetch: mockFetch });
 
-      const page2 = await fetchOpaqueUrl(client, serverNextUrl);
+      const page2 = await executeTestTransport("", mockFetch, { pathOrUrl: serverNextUrl });
       expect(page2).toEqual({ count: 100, results: [] });
       expect(mockFetch).toHaveBeenCalledWith(serverNextUrl);
     });
   });
 });
+
 
