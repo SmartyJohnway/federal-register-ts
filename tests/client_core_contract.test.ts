@@ -50,7 +50,8 @@ describe("R2-03 Canonical Client & Core Contract Tests", () => {
       const protoKeys = Reflect.ownKeys(FederalRegisterClient.prototype);
       expect(protoKeys).toEqual(["constructor"]);
       const instanceKeys = Reflect.ownKeys(client);
-      expect(instanceKeys).toEqual([]);
+      // R2-04: Exactly authorized core resource service namespaces
+      expect(instanceKeys.sort()).toEqual(["agencies", "documents", "publicInspection"]);
       expect(Object.getOwnPropertySymbols(FederalRegisterClient.prototype)).toEqual([]);
       expect(Object.getOwnPropertySymbols(client)).toEqual([]);
     });
