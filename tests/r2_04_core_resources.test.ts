@@ -516,10 +516,10 @@ describe("R2-04 Core Resource Families (17 Operations) Suite", () => {
     test("Prohibits unauthorized facet or alternate-format methods in R2-04", () => {
       const client = new FederalRegisterClient();
 
-      // Facets are deferred to R2-05
-      expect((client.documents as any).facets).toBeUndefined();
-      expect((client.publicInspection as any).facets).toBeUndefined();
-      expect((client.publicInspection as any).issues).toBeUndefined();
+      // Facets are authorized in R2-05
+      expect(client.documents.facets).toBeDefined();
+      expect(client.publicInspection.facets).toBeDefined();
+      expect(client.publicInspection.issues).toBeDefined();
 
       // CSV and RSS are deferred to R2-06
       expect((client.documents as any).findCsv).toBeUndefined();

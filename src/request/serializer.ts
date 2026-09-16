@@ -708,6 +708,14 @@ export class QuerySerializer {
     return entries;
   }
 
+  public static serializePublicInspectionFacetParams(params: PublicInspectionFacetParams): SerializedQueryEntry[] {
+    const entries: SerializedQueryEntry[] = [];
+    if (params.conditions !== undefined) {
+      QuerySerializer.serializePublicInspectionConditions(params.conditions, entries);
+    }
+    return entries;
+  }
+
   public static serializePublicInspectionIssueDailyFacetParams(
     params: PublicInspectionIssueDailyFacetParams
   ): SerializedQueryEntry[] {

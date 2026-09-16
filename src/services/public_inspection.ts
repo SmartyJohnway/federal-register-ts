@@ -37,6 +37,10 @@ import type {
   PublicInspectionSearchDetails,
   PublicInspectionShowDefaultField,
 } from "./models";
+import {
+  PublicInspectionFacetsService,
+  PublicInspectionIssuesService,
+} from "./facets";
 
 /**
  * Operation-aware search decoder using classifySearchHttpError.
@@ -51,9 +55,22 @@ function searchDecoder<T>(decoded: DecodedResponse): T {
 export class PublicInspectionService {
   readonly #client: FederalRegisterClient;
 
+  /**
+   * Public Inspection Document Facets sub-namespace (fr.publicInspection.facets.*)
+   */
+  readonly facets: PublicInspectionFacetsService;
+
+  /**
+   * Public Inspection Issues presenter (fr.publicInspection.issues.*)
+   */
+  readonly issues: PublicInspectionIssuesService;
+
   constructor(client: FederalRegisterClient) {
     this.#client = client;
+    this.facets = new PublicInspectionFacetsService(client);
+    this.issues = new PublicInspectionIssuesService(client);
   }
+
 
   /**
    * 1. Public Inspection search with structured conditions and full-text search.

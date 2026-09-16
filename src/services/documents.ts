@@ -39,6 +39,7 @@ import type {
   DocumentSearchDefaultField,
   DocumentShowDefaultField,
 } from "./models";
+import { DocumentFacetsService } from "./facets";
 
 /**
  * Operation-aware search decoder using classifySearchHttpError.
@@ -53,8 +54,14 @@ function searchDecoder<T>(decoded: DecodedResponse): T {
 export class DocumentsService {
   readonly #client: FederalRegisterClient;
 
+  /**
+   * Document Facets sub-namespace (fr.documents.facets.*)
+   */
+  readonly facets: DocumentFacetsService;
+
   constructor(client: FederalRegisterClient) {
     this.#client = client;
+    this.facets = new DocumentFacetsService(client);
   }
 
   /**

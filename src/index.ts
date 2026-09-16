@@ -144,4 +144,37 @@ export type {
   AgencyFieldMap,
   AgencyProjection,
   AgencyIndexItem,
+  FacetEntry,
+  FieldFacetMap,
+  DateFacetEntry,
+  DateFacetMap,
+  DocumentAgencyFacetMap,
+  DocumentTopicFacetMap,
+  DocumentSectionFacetMap,
+  DocumentTypeFacetMap,
+  DocumentSubtypeFacetMap,
+  DocumentDailyFacetMap,
+  DocumentWeeklyFacetMap,
+  DocumentMonthlyFacetMap,
+  DocumentQuarterlyFacetMap,
+  DocumentYearlyFacetMap,
+  PublicInspectionTypeFacetMap,
+  PublicInspectionAgencyIdFacetMap,
+  PublicInspectionAgencySlugFacetMap,
+  PublicInspectionIssueDailyCounts,
+  PublicInspectionIssueDailyBucket,
+  PublicInspectionIssueDailyFacetMap,
+  PublicInspectionIssueTypeEntry,
+  PublicInspectionIssueTypeGroup,
+  PublicInspectionIssueTypeBucket,
+  PublicInspectionIssueTypeFacetMap,
 } from './services/models';
+
+// R0-07B / R2-05 Facet Service Types
+export type {
+  DocumentFacetsService,
+  PublicInspectionFacetsService,
+  PublicInspectionIssueFacetsService,
+  PublicInspectionIssuesService,
+} from './services/facets';
+

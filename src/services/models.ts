@@ -450,3 +450,72 @@ export type AgencyProjection<K extends AgencyField = AgencyField> = Pick<AgencyF
 export type AgencyIndexItem<K extends AgencyField = AgencyField> = AgencyProjection<K> & {
   readonly json_url: string;
 };
+
+// ---------------------------------------------------------------------------
+// 9. Facet & Aggregation Models (R0-02E / R0-07D § 3.6 / R2-05)
+// ---------------------------------------------------------------------------
+
+export interface FacetEntry {
+  readonly count: number;
+  readonly name: string;
+}
+
+export type FieldFacetMap = Record<string, FacetEntry>;
+
+export interface DateFacetEntry {
+  readonly count: number;
+  readonly name: string;
+}
+
+export type DateFacetMap = Record<string, DateFacetEntry>;
+
+// Document Field Facets (5)
+export type DocumentAgencyFacetMap = FieldFacetMap;
+export type DocumentTopicFacetMap = FieldFacetMap;
+export type DocumentSectionFacetMap = FieldFacetMap;
+export type DocumentTypeFacetMap = FieldFacetMap;
+export type DocumentSubtypeFacetMap = FieldFacetMap;
+
+// Document Date Facets (5)
+export type DocumentDailyFacetMap = DateFacetMap;
+export type DocumentWeeklyFacetMap = DateFacetMap;
+export type DocumentMonthlyFacetMap = DateFacetMap;
+export type DocumentQuarterlyFacetMap = DateFacetMap;
+export type DocumentYearlyFacetMap = DateFacetMap;
+
+// Public Inspection Document Facets (3)
+export type PublicInspectionTypeFacetMap = FieldFacetMap;
+export type PublicInspectionAgencyIdFacetMap = Record<string /* Agency ID */, FacetEntry>;
+export type PublicInspectionAgencySlugFacetMap = Record<string /* Agency slug */, FacetEntry>;
+
+// Public Inspection Issue Facets (2)
+export interface PublicInspectionIssueDailyCounts {
+  readonly last_updated_at: string | null;
+  readonly documents: number;
+  readonly agencies: number;
+}
+
+export interface PublicInspectionIssueDailyBucket {
+  readonly special_filings: PublicInspectionIssueDailyCounts;
+  readonly regular_filings: PublicInspectionIssueDailyCounts;
+}
+
+export type PublicInspectionIssueDailyFacetMap =
+  Record<IsoDateString, PublicInspectionIssueDailyBucket>;
+
+export interface PublicInspectionIssueTypeEntry {
+  readonly count: number;
+  readonly name: string;
+}
+
+export type PublicInspectionIssueTypeGroup =
+  Record<string, PublicInspectionIssueTypeEntry>;
+
+export interface PublicInspectionIssueTypeBucket {
+  readonly special_filings: PublicInspectionIssueTypeGroup;
+  readonly regular_filings: PublicInspectionIssueTypeGroup;
+}
+
+export type PublicInspectionIssueTypeFacetMap =
+  Record<IsoDateString, PublicInspectionIssueTypeBucket>;
+
