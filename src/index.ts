@@ -88,6 +88,18 @@ export type { DocumentsService } from './services/documents';
 export type { PublicInspectionService } from './services/public_inspection';
 export type { AgenciesService } from './services/agencies';
 export type {
+  JsonValue,
+  JsonObject,
+  RegulatoryPlanInfo,
+  RegulationIdNumberInfo,
+  RegulationsGovSupportingDocument,
+  RegulationsGovCommentDocument,
+  RegulatoryPlanRef,
+  RegulationsGovDocket,
+  RegulationsGovInfo,
+  DocumentTypeName,
+  PresidentialDocumentSubtype,
+  ExplanatorySuggestion,
   SearchMetadataEnvelope,
   NonEmptySearchResultEnvelope,
   SearchResultEnvelope,

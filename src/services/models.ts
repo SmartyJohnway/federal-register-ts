@@ -111,7 +111,7 @@ export interface PageViewStats {
 export interface ImageVariantMetadata {
   readonly content_type: string | null;
   readonly height: number | null;
-  readonly identifier: string | null;
+  readonly identifier: string;
   readonly sha: string | null;
   readonly size: number | null;
   readonly url: string;
@@ -132,13 +132,78 @@ export interface AgencyLetterRef {
   readonly url: string;
 }
 
+export type JsonValue =
+  | null
+  | boolean
+  | number
+  | string
+  | readonly JsonValue[]
+  | { readonly [key: string]: JsonValue };
+
+export type JsonObject = { readonly [key: string]: JsonValue };
+
+export interface RegulatoryPlanInfo {
+  readonly xml_url: string;
+  readonly issue: string | null;
+  readonly title: string | null;
+  readonly priority_category: string | null;
+  readonly html_url: string;
+}
+
+export type RegulationIdNumberInfo = Record<string, RegulatoryPlanInfo | null>;
+
+export interface RegulationsGovSupportingDocument {
+  readonly title: string | null;
+  readonly document_id: string;
+}
+
+export interface RegulationsGovCommentDocument {
+  readonly allow_late_comments: boolean | null;
+  readonly comment_count: number | null;
+  readonly comment_end_date: IsoDateString | null;
+  readonly comment_start_date: IsoDateString | null;
+  readonly comment_url: string | null;
+  readonly id: string;
+  readonly regulations_dot_gov_open_for_comment: boolean | null;
+  readonly updated_at: string | null;
+}
+
+export interface RegulatoryPlanRef {
+  readonly html_url: string;
+  readonly title: string | null;
+}
+
+export interface RegulationsGovDocket {
+  readonly agency_name: string | null;
+  readonly id: string;
+  readonly title: string | null;
+  readonly supporting_documents: readonly RegulationsGovSupportingDocument[];
+  readonly supporting_documents_count: number | null;
+  readonly documents: readonly RegulationsGovCommentDocument[];
+}
+
+export interface RegulationsGovInfo {
+  readonly document_id?: string;
+  readonly comments_count?: number;
+  readonly agency_id?: string;
+  readonly checked_regulationsdotgov_at?: string;
+  readonly docket_id?: string;
+  readonly regulation_id_number?: string | null;
+  readonly title?: string | null;
+  readonly comments_url?: string;
+  readonly supporting_documents_count?: number | null;
+  readonly supporting_documents?: readonly RegulationsGovSupportingDocument[];
+  readonly regulatory_plan?: RegulatoryPlanRef;
+  readonly dockets?: readonly RegulationsGovDocket[];
+}
+
 // ---------------------------------------------------------------------------
 // 5. Search Details Models (R0-02E § 3, § 4)
 // ---------------------------------------------------------------------------
 
 export interface SearchFilterEntry {
   readonly name: string;
-  readonly value: any;
+  readonly value: JsonValue;
   readonly label: string;
 }
 
@@ -146,7 +211,7 @@ export type SearchFilterMap = Record<string, SearchFilterEntry | readonly Search
 
 export interface SearchRefinementSuggestion {
   readonly count: number;
-  readonly search_conditions: Record<string, any>;
+  readonly search_conditions: JsonObject;
   readonly search_summary: string;
 }
 
@@ -166,22 +231,28 @@ export interface PublicInspectionSearchSuggestion {
 
 export interface FrCitationSuggestion {
   readonly document_numbers: readonly string[];
-  readonly volume?: string | number;
-  readonly page?: string | number;
+  readonly volume?: number;
+  readonly page?: number;
 }
 
 export interface CfrCitationSuggestion {
   readonly title: string;
   readonly part: string;
-  readonly section: string;
+  readonly section: string | null;
 }
 
 export interface DocumentNumberSuggestion {
   readonly document_number: string;
 }
 
+export interface ExplanatorySuggestion {
+  readonly link_url: string;
+  readonly text: string;
+  readonly citation?: string;
+}
+
 export interface DocumentSearchSuggestions {
-  readonly explanatory?: Record<string, any>;
+  readonly explanatory?: ExplanatorySuggestion;
   readonly search_refinement?: SearchRefinementSuggestion;
   readonly agency?: AgencySearchSuggestion;
   readonly issue?: IssueSearchSuggestion;
@@ -211,6 +282,24 @@ export interface DocumentAutocompleteSuggestion {
 // 6. Complete Document Field Map & Projections (53 fields)
 // ---------------------------------------------------------------------------
 
+export type DocumentTypeName =
+  | "Rule"
+  | "Proposed Rule"
+  | "Notice"
+  | "Presidential Document"
+  | "Correction"
+  | "Uncategorized Document"
+  | "Sunshine Act Document";
+
+export type PresidentialDocumentSubtype =
+  | "Determination"
+  | "Executive Order"
+  | "Memorandum"
+  | "Notice"
+  | "Proclamation"
+  | "Presidential Order"
+  | "Other";
+
 export interface DocumentFieldMap {
   abstract: string | null;
   action: string | null;
@@ -222,19 +311,19 @@ export interface DocumentFieldMap {
   comment_url: string | null;
   comments_close_on: IsoDateString | null;
   correction_of: string | null;
-  corrections: readonly any[];
+  corrections: readonly string[];
   dates: string | null;
   disposition_notes: string | null;
   docket_id: string | null;
   docket_ids: readonly string[];
-  dockets: readonly string[];
+  dockets: readonly RegulationsGovDocket[] | readonly string[] | null;
   document_number: string;
   effective_on: IsoDateString | null;
   end_page: number;
   excerpts: string | null;
   executive_order_notes: string | null;
   executive_order_number: string | null;
-  explanation: string | null;
+  explanation: JsonObject | { readonly value: number } | string | null;
   full_text_xml_url: string | null;
   html_url: string;
   images: DocumentImageMap | null;
@@ -243,7 +332,7 @@ export interface DocumentFieldMap {
   mods_url: string | null;
   not_received_for_publication: boolean | null;
   page_length: number;
-  page_views: PageViewStats | null;
+  page_views: PageViewStats;
   pdf_url: string | null;
   president: DocumentPresidentRef | null;
   presidential_document_number: string | null;
@@ -251,19 +340,19 @@ export interface DocumentFieldMap {
   public_inspection_pdf_url: string | null;
   publication_date: IsoDateString;
   raw_text_url: string | null;
-  regulation_id_number_info: Record<string, any> | null;
+  regulation_id_number_info: RegulationIdNumberInfo | null;
   regulation_id_numbers: readonly string[];
-  regulations_dot_gov_info: Record<string, any>;
+  regulations_dot_gov_info: RegulationsGovInfo;
   regulations_dot_gov_url: string | null;
   significant: boolean | null;
   signing_date: IsoDateString | null;
   start_page: number;
-  subtype: string | null;
+  subtype: PresidentialDocumentSubtype | string | null;
   title: string;
   toc_doc: string | null;
   toc_subject: string | null;
   topics: readonly string[];
-  type: string;
+  type: DocumentTypeName | string;
   volume: number;
 }
 
@@ -286,8 +375,8 @@ export type DocumentShowDefaultField = Exclude<
   "explanation" | "not_received_for_publication" | "page_views" | "regulation_id_number_info"
 >;
 
-export type DocumentSearchItem<K extends DocumentField = DocumentField> = DocumentProjection<K>;
-export type DocumentShow<K extends DocumentField = DocumentField> = DocumentProjection<K>;
+export type DocumentSearchItem<K extends DocumentField = DocumentSearchDefaultField> = DocumentProjection<K>;
+export type DocumentShow<K extends DocumentField = DocumentShowDefaultField> = DocumentProjection<K>;
 
 // ---------------------------------------------------------------------------
 // 7. Complete Public Inspection Field Map & Projections (27 fields)
@@ -331,7 +420,7 @@ export type PublicInspectionSearchItem<K extends PublicInspectionField = PublicI
 
 export type PublicInspectionShowDefaultField = Exclude<PublicInspectionField, "json_url" | "excerpts">;
 
-export type PublicInspectionShow<K extends PublicInspectionField = PublicInspectionField> =
+export type PublicInspectionShow<K extends PublicInspectionField = PublicInspectionShowDefaultField> =
   PublicInspectionProjection<K>;
 
 export type PublicInspectionIssueItem<K extends PublicInspectionField = PublicInspectionField> =

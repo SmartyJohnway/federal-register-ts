@@ -35,6 +35,7 @@ import type {
   PublicInspectionShow,
   MultiLookupEnvelope,
   PublicInspectionSearchDetails,
+  PublicInspectionShowDefaultField,
 } from "./models";
 
 /**
@@ -56,7 +57,7 @@ export class PublicInspectionService {
 
   /**
    * 1. Public Inspection search with structured conditions and full-text search.
-   * Path: /public-inspection-documents.json
+   * Path: /public-inspection-documents
    */
   async search<K extends PublicInspectionField = PublicInspectionField>(
     params?: PublicInspectionSearchParams
@@ -65,7 +66,7 @@ export class PublicInspectionService {
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<SearchResultEnvelope<PublicInspectionSearchItem<K>>>(
-      "/public-inspection-documents.json",
+      "/public-inspection-documents",
       qs,
       searchDecoder
     );
@@ -73,7 +74,7 @@ export class PublicInspectionService {
 
   /**
    * 2. Available-on exact issue-date retrieval.
-   * Path: /public-inspection-documents.json?conditions[available_on]=YYYY-MM-DD
+   * Path: /public-inspection-documents?conditions[available_on]=YYYY-MM-DD
    * Returns PublicInspectionIssueDocumentsEnvelope.
    */
   async availableOn<K extends PublicInspectionField = PublicInspectionField>(
@@ -83,7 +84,7 @@ export class PublicInspectionService {
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<PublicInspectionIssueDocumentsEnvelope<PublicInspectionIssueItem<K>>>(
-      "/public-inspection-documents.json",
+      "/public-inspection-documents",
       qs,
       decodeJsonResponse
     );
@@ -91,7 +92,7 @@ export class PublicInspectionService {
 
   /**
    * 3. Current Public Inspection documents.
-   * Path: /public-inspection-documents/current.json
+   * Path: /public-inspection-documents/current
    * Returns PublicInspectionIssueDocumentsEnvelope.
    */
   async current<K extends PublicInspectionField = PublicInspectionField>(
@@ -101,7 +102,7 @@ export class PublicInspectionService {
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<PublicInspectionIssueDocumentsEnvelope<PublicInspectionIssueItem<K>>>(
-      "/public-inspection-documents/current.json",
+      "/public-inspection-documents/current",
       qs,
       decodeJsonResponse
     );
@@ -109,9 +110,9 @@ export class PublicInspectionService {
 
   /**
    * 4. Single Public Inspection document lookup by document number.
-   * Path: /public-inspection-documents/{documentNumber}.json
+   * Path: /public-inspection-documents/{documentNumber}
    */
-  async find<K extends PublicInspectionField = PublicInspectionField>(
+  async find<K extends PublicInspectionField = PublicInspectionShowDefaultField>(
     params: PublicInspectionFindParams
   ): Promise<PublicInspectionShow<K>> {
     const entries = QuerySerializer.serializePublicInspectionFindQuery(params);
@@ -119,7 +120,7 @@ export class PublicInspectionService {
     const encodedDocNumber = encodeURIComponent(params.documentNumber);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<PublicInspectionShow<K>>(
-      `/public-inspection-documents/${encodedDocNumber}.json`,
+      `/public-inspection-documents/${encodedDocNumber}`,
       qs,
       decodeJsonResponse
     );
@@ -127,10 +128,10 @@ export class PublicInspectionService {
 
   /**
    * 5. Multiple Public Inspection document lookup by comma-separated numbers.
-   * Path: /public-inspection-documents/{documentNumbers}.json
+   * Path: /public-inspection-documents/{documentNumbers}
    * Returns MultiLookupEnvelope. Partial success with not_found errors is resolved, NOT thrown.
    */
-  async findMany<K extends PublicInspectionField = PublicInspectionField>(
+  async findMany<K extends PublicInspectionField = PublicInspectionShowDefaultField>(
     params: PublicInspectionFindManyParams
   ): Promise<MultiLookupEnvelope<PublicInspectionShow<K>>> {
     const { pathSegment, entries } = QuerySerializer.serializePublicInspectionFindMany(params);
@@ -141,7 +142,7 @@ export class PublicInspectionService {
       .join(",");
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<MultiLookupEnvelope<PublicInspectionShow<K>>>(
-      `/public-inspection-documents/${encodedPathSegment}.json`,
+      `/public-inspection-documents/${encodedPathSegment}`,
       qs,
       decodeJsonResponse
     );
@@ -160,7 +161,7 @@ export class PublicInspectionService {
     return runtime.execute<PublicInspectionSearchDetails>(
       "/public-inspection-documents/search-details",
       qs,
-      decodeJsonResponse
+      searchDecoder
     );
   }
 }

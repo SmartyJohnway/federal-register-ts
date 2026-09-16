@@ -48,7 +48,7 @@ export class AgenciesService {
 
   /**
    * 1. List all agencies.
-   * Path: /agencies.json
+   * Path: /agencies
    * Note: Always augmented with json_url on each agency index item.
    */
   async list<K extends AgencyField = AgencyField>(
@@ -58,7 +58,7 @@ export class AgenciesService {
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<AgencyIndexItem<K>[]>(
-      "/agencies.json",
+      "/agencies",
       qs,
       decodeJsonResponse
     );
@@ -66,7 +66,7 @@ export class AgenciesService {
 
   /**
    * 2. Single agency lookup by numeric ID or slug.
-   * Path: /agencies/{idOrSlug}.json
+   * Path: /agencies/{idOrSlug}
    * Throws FederalRegisterAgencyNotFoundError on 404 { error: 404 }.
    */
   async find<K extends AgencyField = AgencyField>(
@@ -77,7 +77,7 @@ export class AgenciesService {
     const encodedPath = encodeURIComponent(pathSegment);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<AgencyProjection<K>>(
-      `/agencies/${encodedPath}.json`,
+      `/agencies/${encodedPath}`,
       qs,
       agencyFindDecoder
     );
@@ -85,7 +85,7 @@ export class AgenciesService {
 
   /**
    * 3. Multiple agency lookup by comma-separated numeric IDs.
-   * Path: /agencies/{ids}.json
+   * Path: /agencies/{ids}
    * Upstream returns plain AgencyProjection<K>[] omitting missing IDs.
    * Does NOT return a MultiLookupEnvelope.
    */
@@ -100,7 +100,7 @@ export class AgenciesService {
       .join(",");
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<AgencyProjection<K>[]>(
-      `/agencies/${encodedPath}.json`,
+      `/agencies/${encodedPath}`,
       qs,
       decodeJsonResponse
     );

@@ -36,6 +36,8 @@ import type {
   MultiLookupEnvelope,
   DocumentAutocompleteSuggestion,
   DocumentSearchDetails,
+  DocumentSearchDefaultField,
+  DocumentShowDefaultField,
 } from "./models";
 
 /**
@@ -57,16 +59,16 @@ export class DocumentsService {
 
   /**
    * 1. Search documents with structured conditions and full-text search.
-   * Path: /documents.json
+   * Path: /documents
    */
-  async search<K extends DocumentField = DocumentField>(
+  async search<K extends DocumentField = DocumentSearchDefaultField>(
     params?: DocumentSearchParams
   ): Promise<SearchResultEnvelope<DocumentSearchItem<K>>> {
     const entries = params ? QuerySerializer.serializeDocumentSearchParams(params) : [];
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<SearchResultEnvelope<DocumentSearchItem<K>>>(
-      "/documents.json",
+      "/documents",
       qs,
       searchDecoder
     );
@@ -74,9 +76,9 @@ export class DocumentsService {
 
   /**
    * 2. Single document lookup by document number.
-   * Path: /documents/{documentNumber}.json
+   * Path: /documents/{documentNumber}
    */
-  async find<K extends DocumentField = DocumentField>(
+  async find<K extends DocumentField = DocumentShowDefaultField>(
     params: DocumentFindParams
   ): Promise<DocumentShow<K>> {
     const entries = QuerySerializer.serializeDocumentFindQuery(params);
@@ -84,7 +86,7 @@ export class DocumentsService {
     const encodedDocNumber = encodeURIComponent(params.documentNumber);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<DocumentShow<K>>(
-      `/documents/${encodedDocNumber}.json`,
+      `/documents/${encodedDocNumber}`,
       qs,
       decodeJsonResponse
     );
@@ -92,10 +94,10 @@ export class DocumentsService {
 
   /**
    * 3. Multiple document lookup by comma-separated document numbers.
-   * Path: /documents/{documentNumbers}.json
+   * Path: /documents/{documentNumbers}
    * Returns MultiLookupEnvelope. Partial success with not_found errors is resolved, NOT thrown.
    */
-  async findMany<K extends DocumentField = DocumentField>(
+  async findMany<K extends DocumentField = DocumentShowDefaultField>(
     params: DocumentFindManyParams
   ): Promise<MultiLookupEnvelope<DocumentShow<K>>> {
     const { pathSegment, entries } = QuerySerializer.serializeDocumentFindMany(params);
@@ -107,7 +109,7 @@ export class DocumentsService {
       .join(",");
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<MultiLookupEnvelope<DocumentShow<K>>>(
-      `/documents/${encodedPathSegment}.json`,
+      `/documents/${encodedPathSegment}`,
       qs,
       decodeJsonResponse
     );
@@ -115,16 +117,16 @@ export class DocumentsService {
 
   /**
    * 4. Single citation lookup.
-   * Path: /documents/{volume}%20FR%20{page}.json
+   * Path: /documents/{volume}%20FR%20{page}
    * Upstream returns MultiLookupEnvelope for citation lookups.
    */
-  async findByCitation<K extends DocumentField = DocumentField>(
+  async findByCitation<K extends DocumentField = DocumentShowDefaultField>(
     params: DocumentCitationFindParams
   ): Promise<MultiLookupEnvelope<DocumentShow<K | "citation">>> {
     const { volume, page, entries } = QuerySerializer.serializeDocumentCitationFind(params);
     const qs = QuerySerializer.toQueryString(entries);
-    // Wire format observed in R0-05 LP-DOC-01: {volume}%20FR%20{page}.json
-    const path = `/documents/${encodeURIComponent(`${volume} FR ${page}`)}.json`;
+    // Wire format: /documents/{volume}%20FR%20{page}
+    const path = `/documents/${encodeURIComponent(`${volume} FR ${page}`)}`;
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<MultiLookupEnvelope<DocumentShow<K | "citation">>>(
       path,
@@ -135,23 +137,20 @@ export class DocumentsService {
 
   /**
    * 5. Multiple citation lookup.
-   * Path: /documents/{citations}.json
-   * Supports comma-separated volume/page or volume FR page citations.
+   * Path: /documents/{citations}
+   * Wire format: comma-separated {volume}%20FR%20{page} citations
    */
-  async findManyByCitation<K extends DocumentField = DocumentField>(
+  async findManyByCitation<K extends DocumentField = DocumentShowDefaultField>(
     params: DocumentCitationFindManyParams
   ): Promise<MultiLookupEnvelope<DocumentShow<K | "citation">>> {
-    const { pathSegment, entries } = QuerySerializer.serializeDocumentCitationFindMany(params);
+    const { entries } = QuerySerializer.serializeDocumentCitationFindMany(params);
     const qs = QuerySerializer.toQueryString(entries);
-    // QuerySerializer produces e.g. "91/58007,99/99999"
-    // Also encode each segment appropriately
-    const encodedPathSegment = pathSegment
-      .split(",")
-      .map((seg) => encodeURIComponent(seg))
+    const pathSegment = params.citations
+      .map((c) => encodeURIComponent(`${c.volume} FR ${c.page}`))
       .join(",");
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<MultiLookupEnvelope<DocumentShow<K | "citation">>>(
-      `/documents/${encodedPathSegment}.json`,
+      `/documents/${pathSegment}`,
       qs,
       decodeJsonResponse
     );
@@ -187,7 +186,7 @@ export class DocumentsService {
     return runtime.execute<DocumentSearchDetails>(
       "/documents/search-details",
       qs,
-      decodeJsonResponse
+      searchDecoder
     );
   }
 }
