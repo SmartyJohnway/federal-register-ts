@@ -63,7 +63,7 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
   describe("1. Document Facets (10 operations)", () => {
     test("1.1 fr.documents.facets.agency - suffixless route and condition serialization", async () => {
       const mockResult: DocumentAgencyFacetMap = {
-        "123": { count: 42, name: "Environmental Protection Agency" },
+        "environmental-protection-agency": { count: 42, name: "Environmental Protection Agency" },
       };
       const client = createClient(mockResult);
 
@@ -76,6 +76,28 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
         "https://www.federalregister.gov/api/v1/documents/facets/agency?conditions%5Bterm%5D=clean%20air&conditions%5Btype%5D%5B%5D=RULE"
       );
       expect(capturedUrls[0]).not.toContain(".json");
+      expect(res).toEqual(mockResult);
+    });
+
+    test("1.1b fr.documents.facets.agency - self-filter retained and cross-field condition serialization", async () => {
+      const mockResult: DocumentAgencyFacetMap = {
+        "national-archives-records-administration": { count: 12, name: "National Archives and Records Administration" },
+      };
+      const client = createClient(mockResult);
+
+      const res = await client.documents.facets.agency({
+        conditions: {
+          agencies: ["national-archives-records-administration"],
+          term: "records",
+        },
+      });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(capturedUrls[0]).toBe(
+        "https://www.federalregister.gov/api/v1/documents/facets/agency?conditions%5Bterm%5D=records&conditions%5Bagencies%5D%5B%5D=national-archives-records-administration"
+      );
+      expect(capturedUrls[0]).toContain("conditions%5Bagencies%5D%5B%5D=national-archives-records-administration");
+      expect(capturedUrls[0]).toContain("conditions%5Bterm%5D=records");
       expect(res).toEqual(mockResult);
     });
 
@@ -106,21 +128,26 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
       expect(res).toEqual(mockResult);
     });
 
-    test("1.4 fr.documents.facets.type - suffixless route", async () => {
+    test("1.4 fr.documents.facets.type - suffixless route and self-filter retained", async () => {
       const mockResult: DocumentTypeFacetMap = {
         RULE: { count: 120, name: "Rule" },
         PRORULE: { count: 45, name: "Proposed Rule" },
       };
       const client = createClient(mockResult);
 
-      const res = await client.documents.facets.type();
-      expect(capturedUrls[0]).toBe("https://www.federalregister.gov/api/v1/documents/facets/type");
+      const res = await client.documents.facets.type({
+        conditions: { types: ["RULE"] },
+      });
+      expect(capturedUrls[0]).toBe(
+        "https://www.federalregister.gov/api/v1/documents/facets/type?conditions%5Btype%5D%5B%5D=RULE"
+      );
       expect(res).toEqual(mockResult);
     });
 
-    test("1.5 fr.documents.facets.subtype - suffixless route", async () => {
+    test("1.5 fr.documents.facets.subtype - suffixless route and frozen subtype key", async () => {
       const mockResult: DocumentSubtypeFacetMap = {
-        "executive-order": { count: 12, name: "Executive Order" },
+        executive_order: { count: 12, name: "Executive Order" },
+        proclamation: { count: 5, name: "Proclamation" },
       };
       const client = createClient(mockResult);
 
@@ -133,20 +160,22 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
       expect(res).toEqual(mockResult);
     });
 
-    test("1.6 fr.documents.facets.daily - suffixless route and DateFacetMap return", async () => {
+    test("1.6 fr.documents.facets.daily - suffixless route and DateFacetMap return with zero count bucket", async () => {
       const mockResult: DocumentDailyFacetMap = {
-        "2024-01-15": { count: 25, name: "2024-01-15" },
+        "2026-09-15": { count: 25, name: "09/15/2026" },
+        "2026-09-16": { count: 0, name: "09/16/2026" },
       };
       const client = createClient(mockResult);
 
       const res = await client.documents.facets.daily();
       expect(capturedUrls[0]).toBe("https://www.federalregister.gov/api/v1/documents/facets/daily");
       expect(res).toEqual(mockResult);
+      expect(res["2026-09-16"].count).toBe(0);
     });
 
-    test("1.7 fr.documents.facets.weekly - suffixless route", async () => {
+    test("1.7 fr.documents.facets.weekly - suffixless route and Monday-oriented format", async () => {
       const mockResult: DocumentWeeklyFacetMap = {
-        "2024-W03": { count: 110, name: "Week 3, 2024" },
+        "2026-09-14": { count: 110, name: "2026 Week 37" },
       };
       const client = createClient(mockResult);
 
@@ -155,9 +184,9 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
       expect(res).toEqual(mockResult);
     });
 
-    test("1.8 fr.documents.facets.monthly - suffixless route", async () => {
+    test("1.8 fr.documents.facets.monthly - suffixless route and anchor date format", async () => {
       const mockResult: DocumentMonthlyFacetMap = {
-        "2024-01": { count: 450, name: "January 2024" },
+        "2026-01-15": { count: 450, name: "January 2026" },
       };
       const client = createClient(mockResult);
 
@@ -166,9 +195,9 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
       expect(res).toEqual(mockResult);
     });
 
-    test("1.9 fr.documents.facets.quarterly - suffixless route", async () => {
+    test("1.9 fr.documents.facets.quarterly - suffixless route and quarter-start format", async () => {
       const mockResult: DocumentQuarterlyFacetMap = {
-        "2024-Q1": { count: 1250, name: "Q1 2024" },
+        "2026-07-01": { count: 1250, name: "Q3 2026" },
       };
       const client = createClient(mockResult);
 
@@ -177,9 +206,9 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
       expect(res).toEqual(mockResult);
     });
 
-    test("1.10 fr.documents.facets.yearly - suffixless route", async () => {
+    test("1.10 fr.documents.facets.yearly - suffixless route and Jan 1 format", async () => {
       const mockResult: DocumentYearlyFacetMap = {
-        "2024": { count: 5200, name: "2024" },
+        "2026-01-01": { count: 5200, name: "2026" },
       };
       const client = createClient(mockResult);
 
@@ -188,7 +217,13 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
       expect(res).toEqual(mockResult);
     });
 
-    test("Document facets propagate SearchValidationError on HTTP 400 with errors payload", async () => {
+    test("1.11 Valid empty map resolves without error for Document field facet", async () => {
+      const client = createClient({});
+      const res = await client.documents.facets.agency();
+      expect(res).toEqual({});
+    });
+
+    test("1.12 Document facets propagate SearchValidationError on HTTP 400 with errors payload", async () => {
       const mockErrorPayload = {
         errors: { "conditions[term]": "Unmatched quote" },
       };
@@ -197,6 +232,17 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
       await expect(
         client.documents.facets.agency({ conditions: { term: '"unclosed quote' } })
       ).rejects.toThrow(FederalRegisterSearchValidationError);
+    });
+
+    test("1.13 Document ordinary facet does NOT throw PublicInspectionIssueConditionError on HTTP 200 { status: 400, error }", async () => {
+      const quirkLikePayload = {
+        status: 400,
+        error: "Some condition error string",
+      };
+      const client = createClient(quirkLikePayload, 200);
+
+      const res = await client.documents.facets.type();
+      expect(res).toEqual(quirkLikePayload);
     });
   });
 
@@ -217,39 +263,48 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
       expect(res).toEqual(mockResult);
     });
 
-    test("2.2 fr.publicInspection.facets.agency - Agency ID-based key domain", async () => {
+    test("2.2 fr.publicInspection.facets.agency - Agency ID-based key domain and self-filter retained", async () => {
       const mockResult: PublicInspectionAgencyIdFacetMap = {
         "42": { count: 3, name: "Department of Agriculture" },
       };
       const client = createClient(mockResult);
 
       const res = await client.publicInspection.facets.agency({
-        conditions: { specialFiling: true },
+        conditions: { agencyIds: [123], specialFiling: true },
       });
 
       expect(capturedUrls[0]).toBe(
-        "https://www.federalregister.gov/api/v1/public-inspection-documents/facets/agency?conditions%5Bspecial_filing%5D=1"
+        "https://www.federalregister.gov/api/v1/public-inspection-documents/facets/agency?conditions%5Bagency_ids%5D%5B%5D=123&conditions%5Bspecial_filing%5D=1"
       );
       expect(res).toEqual(mockResult);
     });
 
-    test("2.3 fr.publicInspection.facets.agencies - Agency slug-based key domain", async () => {
+    test("2.3 fr.publicInspection.facets.agencies - Agency slug-based key domain and self-filter retained", async () => {
       const mockResult: PublicInspectionAgencySlugFacetMap = {
-        "agriculture-department": { count: 3, name: "Department of Agriculture" },
+        "environmental-protection-agency": { count: 5, name: "Environmental Protection Agency" },
       };
       const client = createClient(mockResult);
 
       const res = await client.publicInspection.facets.agencies({
-        conditions: { specialFiling: false },
+        conditions: {
+          agencies: ["environmental-protection-agency"],
+          specialFiling: false,
+        },
       });
 
       expect(capturedUrls[0]).toBe(
-        "https://www.federalregister.gov/api/v1/public-inspection-documents/facets/agencies?conditions%5Bspecial_filing%5D=0"
+        "https://www.federalregister.gov/api/v1/public-inspection-documents/facets/agencies?conditions%5Bagencies%5D%5B%5D=environmental-protection-agency&conditions%5Bspecial_filing%5D=0"
       );
       expect(res).toEqual(mockResult);
     });
 
-    test("PI Document facets propagate SearchValidationError on HTTP 400 with errors payload", async () => {
+    test("2.4 Valid empty map resolves without error for PI Document field facet", async () => {
+      const client = createClient({});
+      const res = await client.publicInspection.facets.type();
+      expect(res).toEqual({});
+    });
+
+    test("2.5 PI Document facets propagate SearchValidationError on HTTP 400 with errors payload", async () => {
       const mockErrorPayload = {
         errors: { "conditions[term]": "Invalid query syntax" },
       };
@@ -259,6 +314,17 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
         client.publicInspection.facets.agencies({ conditions: { term: "bad" } })
       ).rejects.toThrow(FederalRegisterSearchValidationError);
     });
+
+    test("2.6 PI Document ordinary facet does NOT throw PublicInspectionIssueConditionError on HTTP 200 { status: 400, error }", async () => {
+      const quirkLikePayload = {
+        status: 400,
+        error: "Some condition error string",
+      };
+      const client = createClient(quirkLikePayload, 200);
+
+      const res = await client.publicInspection.facets.agency();
+      expect(res).toEqual(quirkLikePayload);
+    });
   });
 
   // =========================================================================
@@ -267,14 +333,14 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
   describe("3. Public Inspection Issue Facets (2 operations)", () => {
     test("3.1 fr.publicInspection.issues.facets.daily - requires publicationDate.gte and serializes correctly", async () => {
       const mockResult: PublicInspectionIssueDailyFacetMap = {
-        "2024-01-15": {
+        "2026-09-15": {
           special_filings: {
-            last_updated_at: "2024-01-15T08:45:00Z",
+            last_updated_at: "2026-09-15T08:45:00Z",
             documents: 2,
             agencies: 1,
           },
           regular_filings: {
-            last_updated_at: "2024-01-15T08:45:00Z",
+            last_updated_at: "2026-09-15T08:45:00Z",
             documents: 15,
             agencies: 8,
           },
@@ -283,11 +349,11 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
       const client = createClient(mockResult);
 
       const res = await client.publicInspection.issues.facets.daily({
-        publicationDate: { gte: "2024-01-01" },
+        publicationDate: { gte: "2026-09-01" },
       });
 
       expect(capturedUrls[0]).toBe(
-        "https://www.federalregister.gov/api/v1/public-inspection-issues/facets/daily?conditions%5Bpublication_date%5D%5Bgte%5D=2024-01-01"
+        "https://www.federalregister.gov/api/v1/public-inspection-issues/facets/daily?conditions%5Bpublication_date%5D%5Bgte%5D=2026-09-01"
       );
       expect(capturedUrls[0]).not.toContain(".json");
       expect(res).toEqual(mockResult);
@@ -302,14 +368,14 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
 
       await expect(
         client.publicInspection.issues.facets.daily({
-          publicationDate: { gte: "2024-01-01" },
+          publicationDate: { gte: "2026-09-01" },
         })
       ).rejects.toThrow(PublicInspectionIssueConditionError);
     });
 
     test("3.2 fr.publicInspection.issues.facets.type - requires publicationDate.is and serializes correctly", async () => {
       const mockResult: PublicInspectionIssueTypeFacetMap = {
-        "2024-01-15": {
+        "2026-09-15": {
           special_filings: {
             RULE: { count: 1, name: "Rule" },
           },
@@ -322,11 +388,11 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
       const client = createClient(mockResult);
 
       const res = await client.publicInspection.issues.facets.type({
-        publicationDate: { is: "2024-01-15" },
+        publicationDate: { is: "2026-09-15" },
       });
 
       expect(capturedUrls[0]).toBe(
-        "https://www.federalregister.gov/api/v1/public-inspection-issues/facets/type?conditions%5Bpublication_date%5D%5Bis%5D=2024-01-15"
+        "https://www.federalregister.gov/api/v1/public-inspection-issues/facets/type?conditions%5Bpublication_date%5D%5Bis%5D=2026-09-15"
       );
       expect(capturedUrls[0]).not.toContain(".json");
       expect(res).toEqual(mockResult);
@@ -341,7 +407,7 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
 
       try {
         await client.publicInspection.issues.facets.type({
-          publicationDate: { is: "2024-01-15" },
+          publicationDate: { is: "2026-09-15" },
         });
         fail("Expected PublicInspectionIssueConditionError to be thrown");
       } catch (err: any) {
@@ -352,27 +418,74 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
       }
     });
 
-    test("3.3 Standard HTTP non-2xx errors throw FederalRegisterHttpError", async () => {
+    test("3.3 Valid empty map resolves without error for PI Issue type facet (no-matching-issue case)", async () => {
+      const client = createClient({});
+      const res = await client.publicInspection.issues.facets.type({
+        publicationDate: { is: "2026-09-15" },
+      });
+      expect(res).toEqual({});
+    });
+
+    test("3.4 Standard HTTP non-2xx errors throw FederalRegisterHttpError", async () => {
       const client = createClient("Internal Server Error", 500, { "content-type": "text/plain" });
 
       await expect(
         client.publicInspection.issues.facets.daily({
-          publicationDate: { gte: "2024-01-01" },
+          publicationDate: { gte: "2026-09-01" },
         })
       ).rejects.toThrow(FederalRegisterHttpError);
     });
   });
 
   // =========================================================================
-  // 4. Negative Phase-Leak Verification for R2-05
+  // 4. Negative Boundaries and Forbidden Control Leakage Verification
   // =========================================================================
-  describe("4. Negative Phase-Leak Verification for R2-05", () => {
-    test("Prohibits unauthorized future alternate formats and resources in R2-05", () => {
+  describe("4. Negative Boundaries and Forbidden Control Leakage Verification", () => {
+    test("Compile-time / type boundary contracts forbid page, perPage, fields, size in facet params", () => {
+      // Type-level assertion checks ensuring invalid fields produce type errors if attempted:
+      type DocFacetHasPage = "page" extends keyof DocumentFacetParams ? true : false;
+      type DocFacetHasPerPage = "perPage" extends keyof DocumentFacetParams ? true : false;
+      type DocFacetHasFields = "fields" extends keyof DocumentFacetParams ? true : false;
+      type DocFacetHasSize = "size" extends keyof DocumentFacetParams ? true : false;
+      type DocFacetHasFacetSize = "facetSize" extends keyof DocumentFacetParams ? true : false;
+
+      const docPage: DocFacetHasPage = false;
+      const docPerPage: DocFacetHasPerPage = false;
+      const docFields: DocFacetHasFields = false;
+      const docSize: DocFacetHasSize = false;
+      const docFacetSize: DocFacetHasFacetSize = false;
+
+      expect(docPage).toBe(false);
+      expect(docPerPage).toBe(false);
+      expect(docFields).toBe(false);
+      expect(docSize).toBe(false);
+      expect(docFacetSize).toBe(false);
+
+      type PIFacetHasPage = "page" extends keyof PublicInspectionFacetParams ? true : false;
+      type PIFacetHasPerPage = "perPage" extends keyof PublicInspectionFacetParams ? true : false;
+      type PIFacetHasFields = "fields" extends keyof PublicInspectionFacetParams ? true : false;
+      type PIFacetHasSize = "size" extends keyof PublicInspectionFacetParams ? true : false;
+
+      const piPage: PIFacetHasPage = false;
+      const piPerPage: PIFacetHasPerPage = false;
+      const piFields: PIFacetHasFields = false;
+      const piSize: PIFacetHasSize = false;
+
+      expect(piPage).toBe(false);
+      expect(piPerPage).toBe(false);
+      expect(piFields).toBe(false);
+      expect(piSize).toBe(false);
+    });
+
+    test("Prohibits unauthorized future alternate formats, generic facet escapes, and resources in R2-05", () => {
       const client = new FederalRegisterClient();
 
-      // Generic facet(name) method prohibited
+      // Generic facet(name) method prohibited on services and sub-namespaces
       expect((client.documents as any).facet).toBeUndefined();
       expect((client.publicInspection as any).facet).toBeUndefined();
+      expect((client.documents.facets as any).facet).toBeUndefined();
+      expect((client.publicInspection.facets as any).facet).toBeUndefined();
+      expect((client.publicInspection.issues.facets as any).facet).toBeUndefined();
 
       // Alternate formats (CSV/RSS) deferred to R2-06
       expect((client.documents as any).findCsv).toBeUndefined();
