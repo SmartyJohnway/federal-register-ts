@@ -456,7 +456,7 @@ export function validateEffectiveDatesRange(startDate: any, endDate: any): void 
   validateIsoDateString(endDate, "endDate");
   const d1 = new Date(startDate);
   const d2 = new Date(endDate);
-  const diffDays = Math.round(Math.abs((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
+  const diffDays = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays > 120) {
     throw new RequestValidationError(
       `EffectiveDates range (${startDate} to ${endDate}) spans ${diffDays} days, exceeding the 120-day maximum supported range.`,

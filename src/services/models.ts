@@ -535,6 +535,8 @@ export type RssXmlText = string;
 export type DocumentRssXmlText = RssXmlText;
 export type PublicInspectionRssXmlText = RssXmlText;
 
+export type JsonpText = string;
+
 // ---------------------------------------------------------------------------
 // 9. Topics (R0-02E § 12)
 // ---------------------------------------------------------------------------
@@ -567,7 +569,7 @@ export type SectionMap = Record<string, SectionSummary>;
 export interface SuggestedSearchDetail {
   readonly description: string;
   readonly slug: string;
-  readonly search_conditions: Record<string, any>;
+  readonly search_conditions: JsonObject;
   readonly section: string;
   readonly title: string;
 }
@@ -692,22 +694,22 @@ export type InactiveSiteNotification = Record<string, never>;
 // ---------------------------------------------------------------------------
 
 export interface FederalRegisterOpenApiDocument {
-  readonly openapi: string;
+  readonly openapi: "3.0.0";
   readonly info: {
     readonly title: string;
     readonly version: string;
-    readonly [key: string]: any;
+    readonly [key: string]: JsonValue;
   };
   readonly servers: ReadonlyArray<{
     readonly url: string;
-    readonly [key: string]: any;
+    readonly [key: string]: JsonValue;
   }>;
-  readonly paths: Record<string, any>;
-  readonly components?: {
-    readonly schemas?: Record<string, any>;
-    readonly [key: string]: any;
+  readonly paths: Record<string, JsonObject>;
+  readonly components: {
+    readonly schemas: Record<string, JsonObject>;
+    readonly [key: string]: JsonValue;
   };
-  readonly [key: string]: any;
+  readonly [key: string]: JsonValue;
 }
 
 // ---------------------------------------------------------------------------

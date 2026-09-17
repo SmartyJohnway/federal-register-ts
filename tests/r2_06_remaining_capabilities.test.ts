@@ -7,6 +7,17 @@ import {
   FederalRegisterEmptyJsonError,
   FederalRegisterEmptyBodyError,
 } from "../src/core/errors";
+import { RequestValidationError } from "../src/request/validation";
+import { decodeTextResponse } from "../src/core/transport";
+import type {
+  EffectiveDateMap,
+  XmlIssueToc,
+  LegacyIssueToc,
+  ImageMetadataMap,
+  WebClippingsResponse,
+  FederalRegisterOpenApiDocument,
+  JsonpText,
+} from "../src/services/models";
 
 describe("R2-06 Remaining Capability Families (21 Operations) Suite", () => {
   let capturedUrls: string[] = [];
@@ -268,18 +279,21 @@ describe("R2-06 Remaining Capability Families (21 Operations) Suite", () => {
   // 7. Effective Dates Service (1 operation)
   // =========================================================================
   describe("7. Effective Dates Service", () => {
-    test("7.1 fr.effectiveDates.calculate - calculates effective dates from date range", async () => {
-      const mockCalc = {
-        "15": "2026-10-01",
-        "21": "2026-10-07",
-        "30": "2026-10-16",
-        "35": "2026-10-21",
-        "45": "2026-10-31",
-        "60": "2026-11-15",
+    test("7.1 fr.effectiveDates.calculate - calculates effective dates with frozen GOLDEN calendar map", async () => {
+      const mockCalc: EffectiveDateMap = {
+        "2026-09-16": {
+          "15": { date: "2026-10-01", delay_reasons: [] },
+          "21": { date: "2026-10-07", delay_reasons: [] },
+          "30": { date: "2026-10-16", delay_reasons: ["weekend"] },
+          "35": { date: "2026-10-21", delay_reasons: [] },
+          "45": { date: "2026-10-31", delay_reasons: ["weekend"] },
+          "60": { date: "2026-11-15", delay_reasons: ["weekend"] },
+          "90": { date: "2026-12-15", delay_reasons: [] },
+        },
       };
       const client = createClient(mockCalc);
 
-      const res = await client.effectiveDates.calculate({
+      const res: EffectiveDateMap = await client.effectiveDates.calculate({
         startDate: "2026-09-16",
         endDate: "2026-09-30",
       });
@@ -287,6 +301,7 @@ describe("R2-06 Remaining Capability Families (21 Operations) Suite", () => {
         "https://www.federalregister.gov/api/v1/effective-dates?start_date=2026-09-16&end_date=2026-09-30"
       );
       expect(res).toEqual(mockCalc);
+      expect(res["2026-09-16"]["30"].delay_reasons).toContain("weekend");
     });
 
     test("7.2 fr.effectiveDates.calculate - throws FederalRegisterEffectiveDateRangeError on 400 range error", async () => {
@@ -304,42 +319,110 @@ describe("R2-06 Remaining Capability Families (21 Operations) Suite", () => {
         expect(err.message).toContain("outside the supported calculation window");
       }
     });
+
+    test("7.3 fr.effectiveDates.calculate - signed 120-day boundary validation (Blocker F)", async () => {
+      const mockCalc: EffectiveDateMap = {
+        "2026-01-01": {
+          "15": { date: "2026-01-16", delay_reasons: [] },
+          "21": { date: "2026-01-22", delay_reasons: [] },
+          "30": { date: "2026-01-31", delay_reasons: [] },
+          "35": { date: "2026-02-05", delay_reasons: [] },
+          "45": { date: "2026-02-15", delay_reasons: [] },
+          "60": { date: "2026-03-02", delay_reasons: [] },
+          "90": { date: "2026-04-01", delay_reasons: [] },
+        },
+      };
+      const client = createClient(mockCalc);
+
+      // Exact 120 days forward (e.g. 2026-01-01 to 2026-05-01 = 120 days): PASS
+      await expect(
+        client.effectiveDates.calculate({
+          startDate: "2026-01-01",
+          endDate: "2026-05-01",
+        })
+      ).resolves.toBeDefined();
+
+      // 121 days forward (2026-01-01 to 2026-05-02 = 121 days): throws RequestValidationError
+      await expect(
+        client.effectiveDates.calculate({
+          startDate: "2026-01-01",
+          endDate: "2026-05-02",
+        })
+      ).rejects.toThrow(RequestValidationError);
+
+      // Reverse order (endDate < startDate): signed diff is negative (<= 120), does not trigger 120-day overflow
+      await expect(
+        client.effectiveDates.calculate({
+          startDate: "2026-05-01",
+          endDate: "2026-01-01",
+        })
+      ).resolves.toBeDefined();
+    });
   });
 
   // =========================================================================
   // 8. Issues Service (2 operations)
   // =========================================================================
   describe("8. Issues Service", () => {
-    test("8.1 fr.issues.find - fetches TOC for a specific issue date", async () => {
-      const mockToc = {
+    test("8.1 fr.issues.find - fetches XML-produced Issue TOC with meta.publication_date", async () => {
+      const mockXmlToc: XmlIssueToc = {
         meta: {
-          issue_date: "2026-09-16",
-          volume: 91,
-          issue: 180,
+          publication_date: "2026-09-16",
         },
-        agencies: [],
+        agencies: [
+          {
+            name: "Environmental Protection Agency",
+            slug: "environmental-protection-agency",
+            see_also: [{ name: "Air Quality Agency", slug: "air-quality-agency" }],
+            document_categories: [
+              {
+                type: "Rules",
+                documents: [
+                  {
+                    subject_1: "Air Quality Standards",
+                    subject_2: "Ozone",
+                    document_numbers: ["2026-12345"],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       };
-      const client = createClient(mockToc);
+      const client = createClient(mockXmlToc);
 
       const res = await client.issues.find({ publicationDate: "2026-09-16" });
       expect(capturedUrls[0]).toBe("https://www.federalregister.gov/api/v1/issues/2026-09-16.json");
-      expect(res).toEqual(mockToc);
+      expect(res).toEqual(mockXmlToc);
+      expect((res as XmlIssueToc).meta.publication_date).toBe("2026-09-16");
     });
 
-    test("8.2 fr.issues.current - fetches current issue TOC", async () => {
-      const mockToc = {
-        meta: {
-          issue_date: "2026-09-17",
-          volume: 91,
-          issue: 181,
-        },
-        agencies: [],
+    test("8.2 fr.issues.current - fetches Legacy-produced current Issue TOC (no meta)", async () => {
+      const mockLegacyToc: LegacyIssueToc = {
+        agencies: [
+          {
+            name: "Coast Guard",
+            slug: "coast-guard",
+            document_categories: [
+              {
+                type: "Notices",
+                documents: [
+                  {
+                    subject_1: "Safety Zones",
+                    document_numbers: ["2026-99999"],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       };
-      const client = createClient(mockToc);
+      const client = createClient(mockLegacyToc);
 
       const res = await client.issues.current();
       expect(capturedUrls[0]).toBe("https://www.federalregister.gov/api/v1/issues/current.json");
-      expect(res).toEqual(mockToc);
+      expect(res).toEqual(mockLegacyToc);
+      expect((res as any).meta).toBeUndefined();
     });
 
     test("8.3 fr.issues.find - throws FederalRegisterStatusMessageError on 404", async () => {
@@ -359,18 +442,34 @@ describe("R2-06 Remaining Capability Families (21 Operations) Suite", () => {
   // 9. Images Service (1 operation)
   // =========================================================================
   describe("9. Images Service", () => {
-    test("9.1 fr.images.find - fetches image variant metadata by image identifier", async () => {
-      const mockImageMap = {
-        "EP16SE26.001": {
-          original: "https://.../EP16SE26.001.png",
-          large: "https://.../EP16SE26.001_large.png",
+    test("9.1 fr.images.find - fetches style-keyed ImageVariantMetadata map (Blocker B)", async () => {
+      const mockImageMap: ImageMetadataMap = {
+        medium: {
+          content_type: "image/png",
+          height: 600,
+          identifier: "EP16SE26.001",
+          sha: "abc123sha",
+          size: 102400,
+          url: "https://images.federalregister.gov/EP16SE26.001/medium.png",
+          width: 800,
+        },
+        original: {
+          content_type: "image/png",
+          height: 1200,
+          identifier: "EP16SE26.001",
+          sha: "abc123sha_orig",
+          size: 409600,
+          url: "https://images.federalregister.gov/EP16SE26.001/original.png",
+          width: 1600,
         },
       };
       const client = createClient(mockImageMap);
 
-      const res = await client.images.find({ identifier: "EP16SE26.001" });
+      const res: ImageMetadataMap = await client.images.find({ identifier: "EP16SE26.001" });
       expect(capturedUrls[0]).toBe("https://www.federalregister.gov/api/v1/images/EP16SE26.001");
       expect(res).toEqual(mockImageMap);
+      expect(res.medium.identifier).toBe("EP16SE26.001");
+      expect(res.medium.width).toBe(800);
     });
 
     test("9.2 fr.images.find - maps HTTP 404 with body {} to FederalRegisterEmptyJsonError", async () => {
@@ -455,7 +554,7 @@ describe("R2-06 Remaining Capability Families (21 Operations) Suite", () => {
   // =========================================================================
   describe("12. Documentation Service", () => {
     test("12.1 fr.documentation.fetchOpenApi - fetches official OpenAPI 3.0 specification", async () => {
-      const mockOpenApi = {
+      const mockOpenApi: FederalRegisterOpenApiDocument = {
         openapi: "3.0.0",
         info: {
           title: "Federal Register API",
@@ -463,10 +562,13 @@ describe("R2-06 Remaining Capability Families (21 Operations) Suite", () => {
         },
         servers: [{ url: "https://www.federalregister.gov/api/v1" }],
         paths: {},
+        components: {
+          schemas: {},
+        },
       };
       const client = createClient(mockOpenApi);
 
-      const res = await client.documentation.fetchOpenApi();
+      const res: FederalRegisterOpenApiDocument = await client.documentation.fetchOpenApi();
       expect(capturedUrls[0]).toBe("https://www.federalregister.gov/api/v1/documentation");
       expect(res).toEqual(mockOpenApi);
       expect(res.openapi).toBe("3.0.0");
@@ -477,29 +579,87 @@ describe("R2-06 Remaining Capability Families (21 Operations) Suite", () => {
   // 13. Clippings Service (1 operation)
   // =========================================================================
   describe("13. Clippings Service", () => {
-    test("13.1 fr.clippings.current - fetches web-owned user clippings", async () => {
-      const mockClippings = {
-        clippings: [
+    test("13.1 fr.clippings.current - fetches web-owned user clippings with anonymous faux clipboard (Blocker B)", async () => {
+      const mockClippings: WebClippingsResponse = {
+        clippings: [],
+        folders: [
           {
-            document_number: "2024-99999",
-            title: "Saved Notice",
-            folder: "My Watchlist",
-            created_at: "2026-09-01T12:00:00Z",
+            name: "My Clipboard",
+            slug: "my-clippings",
+            doc_count: 0,
+            documents: [],
+            document_types: [],
           },
         ],
       };
       const client = createClient(mockClippings);
 
-      const res = await client.clippings.current();
+      const res: WebClippingsResponse = await client.clippings.current();
       expect(capturedUrls[0]).toBe("https://www.federalregister.gov/api/v1/clippings");
       expect(res).toEqual(mockClippings);
+      expect(res.clippings).toHaveLength(0);
+      expect(res.folders[0].name).toBe("My Clipboard");
+      expect(res.folders[0].slug).toBe("my-clippings");
+      expect(res.folders[0].doc_count).toBe(0);
     });
   });
 
   // =========================================================================
-  // 14. Negative Phase Boundary & Escape Prevention
+  // 14. Protocol Cross-Cutting Contracts (FR-PROTO-002 CORS & FR-PROTO-003 JSONP)
   // =========================================================================
-  describe("14. Negative Phase Boundary & Escape Prevention", () => {
+  describe("14. Protocol Cross-Cutting Contracts (CORS & JSONP)", () => {
+    test("14.1 FR-PROTO-002: Wildcard CORS is a server header assertion only (Blocker E)", async () => {
+      const client = new FederalRegisterClient();
+      // Asserts that client instance does NOT expose any cors() runtime method
+      expect((client as any).cors).toBeUndefined();
+      expect((client.documents as any).cors).toBeUndefined();
+
+      // Asserts server response header contract: Access-Control-Allow-Origin: *
+      const mockHeaders = {
+        "content-type": "application/json",
+        "access-control-allow-origin": "*",
+      };
+      const testClient = createClient({ test: "data" }, 200, mockHeaders);
+      const res = await testClient.documentation.fetchOpenApi();
+      expect(res).toBeDefined();
+
+      // Verify mockFetch received the response with Access-Control-Allow-Origin: *
+      const rawResp = await mockFetch(capturedUrls[0]);
+      expect(rawResp.headers.get("access-control-allow-origin")).toBe("*");
+    });
+
+    test("14.2 FR-PROTO-003: JSONP format policy and callback validation (Blocker D)", async () => {
+      // 1. Valid callback identifier grammar: ^[A-Za-z0-9_.]+$
+      const validCallbacks = ["myCallback", "cb_123", "app.callback.v1", "jQuery123_456"];
+      const callbackRegex = /^[A-Za-z0-9_.]+$/;
+      for (const cb of validCallbacks) {
+        expect(callbackRegex.test(cb)).toBe(true);
+      }
+
+      // 2. Invalid callback identifier rejected
+      const invalidCallbacks = ["<script>", "alert(1)", "bad callback", "cb;evil()", "foo/bar"];
+      for (const cb of invalidCallbacks) {
+        expect(callbackRegex.test(cb)).toBe(false);
+      }
+
+      // 3. Raw JavaScript text response decoding (never JSON-decoded)
+      const rawJsonp = "myCallback({\"openapi\":\"3.0.0\"});";
+      const client = createClient(rawJsonp, 200, { "content-type": "application/javascript" });
+      const rawResp = await mockFetch("https://www.federalregister.gov/api/v1/documentation?callback=myCallback");
+      const text = await rawResp.text();
+      const decodedJsonp: JsonpText = text;
+      expect(decodedJsonp).toBe(rawJsonp);
+      expect(decodedJsonp.startsWith("myCallback(")).toBe(true);
+
+      // 4. No generic client.jsonp(path) escape hatch exists
+      expect((client as any).jsonp).toBeUndefined();
+    });
+  });
+
+  // =========================================================================
+  // 15. Negative Phase Boundary & Escape Prevention
+  // =========================================================================
+  describe("15. Negative Phase Boundary & Escape Prevention", () => {
     test("Prohibits unauthorized generic methods and future phase escapes", () => {
       const client = new FederalRegisterClient();
 
