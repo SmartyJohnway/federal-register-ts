@@ -38,6 +38,7 @@ import type {
   PublicInspectionFacetParams,
   PublicInspectionIssueDailyFacetParams,
   PublicInspectionIssueTypeFacetParams,
+  JsonpCallbackParams,
 } from "../request/types";
 import type {
   DocumentAgencyFacetMap,
@@ -55,6 +56,7 @@ import type {
   PublicInspectionAgencySlugFacetMap,
   PublicInspectionIssueDailyFacetMap,
   PublicInspectionIssueTypeFacetMap,
+  JsonpText,
 } from "./models";
 
 /**
@@ -226,6 +228,118 @@ export class DocumentFacetsService {
       searchDecoder
     );
   }
+
+  // --- FR-PROTO-003 JSONP Sibling Methods ---
+
+  async agencyJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/documents/facets/agency", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifySearchHttpError(decoded);
+    });
+  }
+
+  async topicJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/documents/facets/topic", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifySearchHttpError(decoded);
+    });
+  }
+
+  async sectionJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/documents/facets/section", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifySearchHttpError(decoded);
+    });
+  }
+
+  async typeJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/documents/facets/type", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifySearchHttpError(decoded);
+    });
+  }
+
+  async subtypeJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/documents/facets/subtype", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifySearchHttpError(decoded);
+    });
+  }
+
+  async dailyJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/documents/facets/daily", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifySearchHttpError(decoded);
+    });
+  }
+
+  async weeklyJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/documents/facets/weekly", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifySearchHttpError(decoded);
+    });
+  }
+
+  async monthlyJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/documents/facets/monthly", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifySearchHttpError(decoded);
+    });
+  }
+
+  async quarterlyJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/documents/facets/quarterly", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifySearchHttpError(decoded);
+    });
+  }
+
+  async yearlyJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/documents/facets/yearly", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifySearchHttpError(decoded);
+    });
+  }
 }
 
 /**
@@ -282,6 +396,41 @@ export class PublicInspectionFacetsService {
       searchDecoder
     );
   }
+
+  // --- FR-PROTO-003 JSONP Sibling Methods ---
+
+  async typeJsonp(params: (PublicInspectionFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializePublicInspectionFacetParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/public-inspection-documents/facets/type", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifySearchHttpError(decoded);
+    });
+  }
+
+  async agencyJsonp(params: (PublicInspectionFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializePublicInspectionFacetParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/public-inspection-documents/facets/agency", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifySearchHttpError(decoded);
+    });
+  }
+
+  async agenciesJsonp(params: (PublicInspectionFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializePublicInspectionFacetParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/public-inspection-documents/facets/agencies", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifySearchHttpError(decoded);
+    });
+  }
 }
 
 /**
@@ -330,6 +479,50 @@ export class PublicInspectionIssueFacetsService {
       qs,
       decodePublicInspectionIssueFacetResponse
     );
+  }
+
+  // --- FR-PROTO-003 JSONP Sibling Methods ---
+
+  async dailyJsonp(params: PublicInspectionIssueDailyFacetParams & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = QuerySerializer.serializePublicInspectionIssueDailyFacetParams(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/public-inspection-issues/facets/daily", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        if (
+          decoded.bodyKind === "json" &&
+          decoded.parsedJson &&
+          decoded.parsedJson.status === 400 &&
+          typeof decoded.parsedJson.error === "string"
+        ) {
+          throw decodePublicInspectionIssueFacetResponse(decoded);
+        }
+        return decoded.rawText ?? "";
+      }
+      throw decodePublicInspectionIssueFacetResponse(decoded);
+    });
+  }
+
+  async typeJsonp(params: PublicInspectionIssueTypeFacetParams & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = QuerySerializer.serializePublicInspectionIssueTypeFacetParams(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/public-inspection-issues/facets/type", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        if (
+          decoded.bodyKind === "json" &&
+          decoded.parsedJson &&
+          decoded.parsedJson.status === 400 &&
+          typeof decoded.parsedJson.error === "string"
+        ) {
+          throw decodePublicInspectionIssueFacetResponse(decoded);
+        }
+        return decoded.rawText ?? "";
+      }
+      throw decodePublicInspectionIssueFacetResponse(decoded);
+    });
   }
 }
 

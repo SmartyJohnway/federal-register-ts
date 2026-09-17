@@ -66,6 +66,7 @@ import {
   validateNearCondition,
   validateEffectiveDatesRange,
   validateNonEmptyArray,
+  validateJsonpCallback,
 } from "./validation";
 
 export interface SerializedQueryEntry {
@@ -841,5 +842,10 @@ export class QuerySerializer {
 
   public static serializeSiteNotificationFind(params: SiteNotificationFindParams): string {
     return validateNonBlankString(params.identifier, "identifier");
+  }
+
+  public static serializeJsonpCallback(callback: any, entries: SerializedQueryEntry[]): void {
+    const validCb = validateJsonpCallback(callback, "callback");
+    entries.push({ key: "callback", value: validCb });
   }
 }

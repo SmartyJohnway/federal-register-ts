@@ -18,10 +18,11 @@ import {
   type DecodedResponse,
 } from "../core/transport";
 import { QuerySerializer } from "../request/serializer";
-import type { SiteNotificationFindParams } from "../request/types";
+import type { SiteNotificationFindParams, JsonpCallbackParams } from "../request/types";
 import type {
   ActiveSiteNotification,
   InactiveSiteNotification,
+  JsonpText,
 } from "./models";
 
 export class SiteNotificationsService {
@@ -61,4 +62,30 @@ export class SiteNotificationsService {
       }
     );
   }
+
+  // --- FR-PROTO-003 JSONP Sibling Method ---
+
+  /**
+   * Site notification lookup JSONP format companion (FR-PROTO-003 companion to FR-SITENOTIF-001).
+   */
+  async findJsonp(
+    params: SiteNotificationFindParams & JsonpCallbackParams
+  ): Promise<JsonpText> {
+    const identifier = QuerySerializer.serializeSiteNotificationFind(params);
+    const entries: { key: string; value: string }[] = [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>(
+      `/site_notifications/${encodeURIComponent(identifier)}`,
+      qs,
+      (decoded: DecodedResponse) => {
+        if (decoded.status >= 200 && decoded.status < 300) {
+          return decoded.rawText ?? "";
+        }
+        throw classifyGenericHttpError(decoded);
+      }
+    );
+  }
 }
+

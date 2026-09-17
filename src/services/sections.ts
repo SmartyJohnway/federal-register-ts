@@ -9,7 +9,9 @@
 import type { FederalRegisterClient } from "../core/client";
 import { getInternalClientRuntime } from "../core/internal/runtime";
 import { decodeJsonResponse } from "../core/transport";
-import type { SectionMap } from "./models";
+import { QuerySerializer } from "../request/serializer";
+import type { JsonpCallbackParams } from "../request/types";
+import type { SectionMap, JsonpText } from "./models";
 
 export class SectionsService {
   readonly #client: FederalRegisterClient;
@@ -29,5 +31,21 @@ export class SectionsService {
       undefined,
       decodeJsonResponse
     );
+  }
+
+  // --- FR-PROTO-003 JSONP Sibling Method ---
+
+  /**
+   * List Federal Register sections JSONP format companion (FR-PROTO-003 companion to FR-SECTION-001).
+   */
+  async listJsonp(params: JsonpCallbackParams): Promise<JsonpText> {
+    const entries: { key: string; value: string }[] = [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/sections", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw decodeJsonResponse(decoded);
+    });
   }
 }

@@ -594,3 +594,17 @@ export interface ImageFindParams {
 export interface SiteNotificationFindParams {
   identifier: string;
 }
+
+/**
+ * 4.60 JsonpCallback
+ * Identifier conforming to /^[A-Za-z0-9_.]+$/ per FR-PROTO-003.
+ */
+export type JsonpCallback = string;
+
+/**
+ * 4.61 JsonpCallbackParams
+ * Standard parameter mixin for JSONP companion methods.
+ */
+export interface JsonpCallbackParams {
+  readonly callback: JsonpCallback;
+}

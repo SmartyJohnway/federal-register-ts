@@ -32,6 +32,7 @@ import type {
   DocumentSearchRssParams,
   DocumentSearchCsvParams,
   DocumentField,
+  JsonpCallbackParams,
 } from "../request/types";
 import type {
   SearchResultEnvelope,
@@ -44,6 +45,7 @@ import type {
   DocumentShowDefaultField,
   DocumentCsvText,
   DocumentRssXmlText,
+  JsonpText,
 } from "./models";
 import { DocumentFacetsService } from "./facets";
 
@@ -261,6 +263,129 @@ export class DocumentsService {
         throw classifySearchHttpError(decoded);
       }
     );
+  }
+
+  // --- FR-PROTO-003 JSONP Sibling Methods ---
+
+  /**
+   * Document search JSONP format companion (FR-PROTO-003 companion to FR-DOC-001).
+   */
+  async searchJsonp(params: (DocumentSearchParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializeDocumentSearchParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/documents", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        return decoded.rawText ?? "";
+      }
+      throw classifySearchHttpError(decoded);
+    });
+  }
+
+  /**
+   * Single document lookup JSONP format companion (FR-PROTO-003 companion to FR-DOC-002).
+   */
+  async findJsonp(params: DocumentFindParams & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = QuerySerializer.serializeDocumentFindQuery(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const encodedDocNumber = encodeURIComponent(params.documentNumber);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>(`/documents/${encodedDocNumber}`, qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        return decoded.rawText ?? "";
+      }
+      throw classifyGenericHttpError(decoded);
+    });
+  }
+
+  /**
+   * Multiple document lookup JSONP format companion (FR-PROTO-003 companion to FR-DOC-003).
+   */
+  async findManyJsonp(params: DocumentFindManyParams & JsonpCallbackParams): Promise<JsonpText> {
+    const { pathSegment, entries } = QuerySerializer.serializeDocumentFindMany(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const encodedPathSegment = pathSegment
+      .split(",")
+      .map((d) => encodeURIComponent(d))
+      .join(",");
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>(`/documents/${encodedPathSegment}`, qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        return decoded.rawText ?? "";
+      }
+      throw classifyGenericHttpError(decoded);
+    });
+  }
+
+  /**
+   * Single citation lookup JSONP format companion (FR-PROTO-003 companion to FR-DOC-004).
+   */
+  async findByCitationJsonp(params: DocumentCitationFindParams & JsonpCallbackParams): Promise<JsonpText> {
+    const { volume, page, entries } = QuerySerializer.serializeDocumentCitationFind(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const path = `/documents/${encodeURIComponent(`${volume} FR ${page}`)}`;
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>(path, qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        return decoded.rawText ?? "";
+      }
+      throw classifyGenericHttpError(decoded);
+    });
+  }
+
+  /**
+   * Multiple citation lookup JSONP format companion (FR-PROTO-003 companion to FR-DOC-005).
+   */
+  async findManyByCitationJsonp(params: DocumentCitationFindManyParams & JsonpCallbackParams): Promise<JsonpText> {
+    const { entries } = QuerySerializer.serializeDocumentCitationFindMany(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const pathSegment = params.citations
+      .map((c) => encodeURIComponent(`${c.volume} FR ${c.page}`))
+      .join(",");
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>(`/documents/${pathSegment}`, qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        return decoded.rawText ?? "";
+      }
+      throw classifyGenericHttpError(decoded);
+    });
+  }
+
+  /**
+   * Document autocomplete JSONP format companion (FR-PROTO-003 companion to FR-DOC-010).
+   */
+  async autocompleteJsonp(params: DocumentAutocompleteParams & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = QuerySerializer.serializeDocumentAutocompleteParams(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/documents/autocomplete-suggestions", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        return decoded.rawText ?? "";
+      }
+      throw classifyGenericHttpError(decoded);
+    });
+  }
+
+  /**
+   * Document search details JSONP format companion (FR-PROTO-003 companion to FR-DOC-011).
+   */
+  async searchDetailsJsonp(params: (DocumentSearchDetailsParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializeDocumentSearchDetailsParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/documents/search-details", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        return decoded.rawText ?? "";
+      }
+      throw classifySearchHttpError(decoded);
+    });
   }
 }
 

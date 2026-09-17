@@ -17,10 +17,12 @@ import { QuerySerializer } from "../request/serializer";
 import type {
   SuggestedSearchSectionsParams,
   SuggestedSearchFindParams,
+  JsonpCallbackParams,
 } from "../request/types";
 import type {
   SuggestedSearchIndexMap,
   SuggestedSearchDetail,
+  JsonpText,
 } from "./models";
 
 export class SuggestedSearchesService {
@@ -73,4 +75,58 @@ export class SuggestedSearchesService {
       decodeJsonResponse
     );
   }
+
+  // --- FR-PROTO-003 JSONP Sibling Methods ---
+
+  /**
+   * List suggested searches JSONP format companion (FR-PROTO-003 companion to FR-SUGGEST-001).
+   */
+  async listJsonp(params: JsonpCallbackParams): Promise<JsonpText> {
+    const entries: { key: string; value: string }[] = [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/suggested_searches", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw decodeJsonResponse(decoded);
+    });
+  }
+
+  /**
+   * Filter suggested searches by sections JSONP format companion (FR-PROTO-003 companion to FR-SUGGEST-002).
+   */
+  async listBySectionsJsonp(
+    params: SuggestedSearchSectionsParams & JsonpCallbackParams
+  ): Promise<JsonpText> {
+    const entries = QuerySerializer.serializeSuggestedSearchSectionsParams(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/suggested_searches", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw decodeJsonResponse(decoded);
+    });
+  }
+
+  /**
+   * Find suggested search by slug JSONP format companion (FR-PROTO-003 companion to FR-SUGGEST-003).
+   */
+  async findJsonp(
+    params: SuggestedSearchFindParams & JsonpCallbackParams
+  ): Promise<JsonpText> {
+    const slug = QuerySerializer.serializeSuggestedSearchFind(params);
+    const entries: { key: string; value: string }[] = [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>(
+      `/suggested_searches/${encodeURIComponent(slug)}`,
+      qs,
+      (decoded) => {
+        if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+        throw decodeJsonResponse(decoded);
+      }
+    );
+  }
 }
+

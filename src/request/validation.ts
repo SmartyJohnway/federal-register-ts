@@ -485,3 +485,16 @@ export function validateNonEmptyArray<T>(arr: any, fieldName: string): NonEmptyR
   }
   return arr as unknown as NonEmptyReadonlyArray<T>;
 }
+
+const JSONP_CALLBACK_REGEX = /^[A-Za-z0-9_.]+$/;
+
+export function validateJsonpCallback(callback: any, fieldName: string = "callback"): string {
+  if (typeof callback !== "string" || !JSONP_CALLBACK_REGEX.test(callback)) {
+    throw new RequestValidationError(
+      `JSONP callback must be a non-empty string matching /^[A-Za-z0-9_.]+$/. Received: ${JSON.stringify(callback)}`,
+      fieldName,
+      callback
+    );
+  }
+  return callback;
+}

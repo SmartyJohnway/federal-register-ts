@@ -10,8 +10,8 @@ import type { FederalRegisterClient } from "../core/client";
 import { getInternalClientRuntime } from "../core/internal/runtime";
 import { decodeJsonResponse } from "../core/transport";
 import { QuerySerializer } from "../request/serializer";
-import type { TopicSuggestionsParams, TopicField } from "../request/types";
-import type { TopicProjection } from "./models";
+import type { TopicSuggestionsParams, TopicField, JsonpCallbackParams } from "../request/types";
+import type { TopicProjection, JsonpText } from "./models";
 
 export class TopicsService {
   readonly #client: FederalRegisterClient;
@@ -35,5 +35,23 @@ export class TopicsService {
       qs,
       decodeJsonResponse
     );
+  }
+
+  // --- FR-PROTO-003 JSONP Sibling Method ---
+
+  /**
+   * Topic suggestions JSONP format companion (FR-PROTO-003 companion to FR-TOPIC-001).
+   */
+  async suggestionsJsonp(
+    params: TopicSuggestionsParams & JsonpCallbackParams
+  ): Promise<JsonpText> {
+    const entries = QuerySerializer.serializeTopicSuggestionsParams(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/topics/suggestions", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw decodeJsonResponse(decoded);
+    });
   }
 }

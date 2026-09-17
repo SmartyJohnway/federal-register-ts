@@ -30,6 +30,7 @@ import type {
   PublicInspectionSearchCsvParams,
   PublicInspectionSearchRssParams,
   PublicInspectionField,
+  JsonpCallbackParams,
 } from "../request/types";
 import type {
   SearchResultEnvelope,
@@ -42,6 +43,7 @@ import type {
   PublicInspectionShowDefaultField,
   PublicInspectionCsvText,
   PublicInspectionRssXmlText,
+  JsonpText,
 } from "./models";
 import {
   PublicInspectionFacetsService,
@@ -252,6 +254,109 @@ export class PublicInspectionService {
         throw classifySearchHttpError(decoded);
       }
     );
+  }
+
+  // --- FR-PROTO-003 JSONP Sibling Methods ---
+
+  /**
+   * Public inspection search JSONP format companion (FR-PROTO-003 companion to FR-PI-001).
+   */
+  async searchJsonp(params: (PublicInspectionSearchParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializePublicInspectionSearchParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/public-inspection-documents", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        return decoded.rawText ?? "";
+      }
+      throw classifySearchHttpError(decoded);
+    });
+  }
+
+  /**
+   * Available on date JSONP format companion (FR-PROTO-003 companion to FR-PI-002).
+   */
+  async availableOnJsonp(params: PublicInspectionAvailableOnParams & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = QuerySerializer.serializePublicInspectionAvailableOnParams(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/public-inspection-documents", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        return decoded.rawText ?? "";
+      }
+      throw classifyGenericHttpError(decoded);
+    });
+  }
+
+  /**
+   * Current public inspection JSONP format companion (FR-PROTO-003 companion to FR-PI-003).
+   */
+  async currentJsonp(params: (PublicInspectionCurrentParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializePublicInspectionCurrentParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/public-inspection-documents/current", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        return decoded.rawText ?? "";
+      }
+      throw classifyGenericHttpError(decoded);
+    });
+  }
+
+  /**
+   * Single public inspection document lookup JSONP format companion (FR-PROTO-003 companion to FR-PI-005).
+   */
+  async findJsonp(params: PublicInspectionFindParams & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = QuerySerializer.serializePublicInspectionFindQuery(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const encodedDocNumber = encodeURIComponent(params.documentNumber);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>(`/public-inspection-documents/${encodedDocNumber}`, qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        return decoded.rawText ?? "";
+      }
+      throw classifyGenericHttpError(decoded);
+    });
+  }
+
+  /**
+   * Multiple public inspection document lookup JSONP format companion (FR-PROTO-003 companion to FR-PI-006).
+   */
+  async findManyJsonp(params: PublicInspectionFindManyParams & JsonpCallbackParams): Promise<JsonpText> {
+    const { pathSegment, entries } = QuerySerializer.serializePublicInspectionFindMany(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const encodedPathSegment = pathSegment
+      .split(",")
+      .map((d) => encodeURIComponent(d))
+      .join(",");
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>(`/public-inspection-documents/${encodedPathSegment}`, qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        return decoded.rawText ?? "";
+      }
+      throw classifyGenericHttpError(decoded);
+    });
+  }
+
+  /**
+   * Public inspection search details JSONP format companion (FR-PROTO-003 companion to FR-PI-009).
+   */
+  async searchDetailsJsonp(params: (PublicInspectionSearchDetailsParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializePublicInspectionSearchConditionsOnly(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/public-inspection-documents/search-details", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) {
+        return decoded.rawText ?? "";
+      }
+      throw classifySearchHttpError(decoded);
+    });
   }
 }
 

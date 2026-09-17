@@ -12,8 +12,8 @@ import type { FederalRegisterClient } from "../core/client";
 import { getInternalClientRuntime } from "../core/internal/runtime";
 import { decodeJsonResponse } from "../core/transport";
 import { QuerySerializer } from "../request/serializer";
-import type { IssueFindParams } from "../request/types";
-import type { IssueToc } from "./models";
+import type { IssueFindParams, JsonpCallbackParams } from "../request/types";
+import type { IssueToc, JsonpText } from "./models";
 
 export class IssuesService {
   readonly #client: FederalRegisterClient;
@@ -48,4 +48,40 @@ export class IssuesService {
       decodeJsonResponse
     );
   }
+
+  // --- FR-PROTO-003 JSONP Sibling Methods ---
+
+  /**
+   * Find issue TOC JSONP format companion (FR-PROTO-003 companion to FR-ISSUE-001).
+   */
+  async findJsonp(params: IssueFindParams & JsonpCallbackParams): Promise<JsonpText> {
+    const pubDate = QuerySerializer.serializeIssueFind(params);
+    const entries: { key: string; value: string }[] = [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>(
+      `/issues/${encodeURIComponent(pubDate)}.json`,
+      qs,
+      (decoded) => {
+        if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+        throw decodeJsonResponse(decoded);
+      }
+    );
+  }
+
+  /**
+   * Current issue TOC JSONP format companion (FR-PROTO-003 companion to FR-ISSUE-002).
+   */
+  async currentJsonp(params: JsonpCallbackParams): Promise<JsonpText> {
+    const entries: { key: string; value: string }[] = [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/issues/current.json", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw decodeJsonResponse(decoded);
+    });
+  }
 }
+

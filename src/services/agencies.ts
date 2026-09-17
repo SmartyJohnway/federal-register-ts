@@ -13,6 +13,7 @@ import { getInternalClientRuntime } from "../core/internal/runtime";
 import {
   decodeJsonResponse,
   classifyAgencyHttpError,
+  classifyGenericHttpError,
   type DecodedResponse,
 } from "../core/transport";
 import { QuerySerializer } from "../request/serializer";
@@ -22,10 +23,12 @@ import type {
   AgencyFindManyParams,
   AgencySuggestionsParams,
   AgencyField,
+  JsonpCallbackParams,
 } from "../request/types";
 import type {
   AgencyIndexItem,
   AgencyProjection,
+  JsonpText,
 } from "./models";
 
 /**
@@ -122,5 +125,68 @@ export class AgenciesService {
       qs,
       decodeJsonResponse
     );
+  }
+
+  // --- FR-PROTO-003 JSONP Sibling Methods ---
+
+  /**
+   * List all agencies JSONP format companion (FR-PROTO-003 companion to FR-AGENCY-001).
+   */
+  async listJsonp(params: (AgencyListParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = params ? QuerySerializer.serializeAgencyListParams(params) : [];
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/agencies", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifyGenericHttpError(decoded);
+    });
+  }
+
+  /**
+   * Single agency lookup JSONP format companion (FR-PROTO-003 companion to FR-AGENCY-002).
+   */
+  async findJsonp(params: AgencyFindParams & JsonpCallbackParams): Promise<JsonpText> {
+    const { pathSegment, entries } = QuerySerializer.serializeAgencyFind(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const encodedId = encodeURIComponent(pathSegment);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>(`/agencies/${encodedId}`, qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifyAgencyHttpError(decoded);
+    });
+  }
+
+  /**
+   * Multiple agency lookup JSONP format companion (FR-PROTO-003 companion to FR-AGENCY-004).
+   */
+  async findManyJsonp(params: AgencyFindManyParams & JsonpCallbackParams): Promise<JsonpText> {
+    const { pathSegment, entries } = QuerySerializer.serializeAgencyFindMany(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const encodedPath = pathSegment
+      .split(",")
+      .map((id) => encodeURIComponent(id))
+      .join(",");
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>(`/agencies/${encodedPath}`, qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifyGenericHttpError(decoded);
+    });
+  }
+
+  /**
+   * Agency suggestions JSONP format companion (FR-PROTO-003 companion to FR-AGENCY-005).
+   */
+  async suggestionsJsonp(params: AgencySuggestionsParams & JsonpCallbackParams): Promise<JsonpText> {
+    const entries = QuerySerializer.serializeAgencySuggestionsParams(params);
+    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<JsonpText>("/agencies/suggestions", qs, (decoded) => {
+      if (decoded.status >= 200 && decoded.status < 300) return decoded.rawText ?? "";
+      throw classifyGenericHttpError(decoded);
+    });
   }
 }
