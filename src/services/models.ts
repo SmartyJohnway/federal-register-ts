@@ -738,3 +738,15 @@ export interface WebClippingsResponse {
   readonly clippings: readonly WebClipping[];
   readonly folders: readonly WebFolder[];
 }
+
+// ---------------------------------------------------------------------------
+// 19. Canonical Domain Model Type Aliases
+// ---------------------------------------------------------------------------
+
+export type Document<K extends DocumentField = DocumentShowDefaultField> = DocumentShow<K>;
+export type Agency<K extends AgencyField = AgencyField> = AgencyProjection<K>;
+export type PublicInspectionDocument<K extends PublicInspectionField = PublicInspectionShowDefaultField> = PublicInspectionShow<K>;
+export type Section = SectionSummary;
+export type SuggestedSearch = SuggestedSearchDetail;
+export type Topic<K extends TopicField = TopicField> = TopicProjection<K>;
+
