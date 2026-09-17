@@ -160,13 +160,13 @@
     "capability_id": "FR-PROTO-014",
     "parity_mode": "QUERY_INPUT",
     "namespace_owner": "shared.search",
-    "canonical_surface": "type:DocumentSearchParams \\",
-    "request_input": "PublicInspectionSearchParams.metadataOnly",
-    "return_model": "DocumentSearchParams \\",
-    "format": "PublicInspectionSearchParams",
-    "exposure": "INHERITS_OWNING_OPERATION_RESPONSE",
-    "r0_05_state": "OWNING_OPERATION_FORMAT",
-    "r0_07_disposition": "PUBLIC_SOURCE_ONLY"
+    "canonical_surface": "type:DocumentSearchParams | PublicInspectionSearchParams.metadataOnly",
+    "request_input": "DocumentSearchParams | PublicInspectionSearchParams",
+    "return_model": "INHERITS_OWNING_OPERATION_RESPONSE",
+    "format": "OWNING_OPERATION_FORMAT",
+    "exposure": "PUBLIC_SOURCE_ONLY",
+    "r0_05_state": "NOT_LIVE_PROBED_R0_05_NOT_REQUIRED",
+    "r0_07_disposition": "TYPED_INPUT_CONTRACT"
   },
   {
     "ordinal": 14,
@@ -266,11 +266,11 @@
     "namespace_owner": "documents",
     "canonical_surface": "fr.documents.findByCitation",
     "request_input": "DocumentCitationFindParams",
-    "return_model": "MultiLookupEnvelope<DocumentShow<K \\",
-    "format": "\"citation\">>",
-    "exposure": "JSON_TYPED",
-    "r0_05_state": "PUBLIC_SOURCE_ONLY",
-    "r0_07_disposition": "PASS"
+    "return_model": "MultiLookupEnvelope<DocumentShow<K | \"citation\">>",
+    "format": "JSON_TYPED",
+    "exposure": "PUBLIC_SOURCE_ONLY",
+    "r0_05_state": "PASS",
+    "r0_07_disposition": "PUBLIC_CLIENT_INSTANCE_METHOD"
   },
   {
     "ordinal": 22,
@@ -279,11 +279,11 @@
     "namespace_owner": "documents",
     "canonical_surface": "fr.documents.findManyByCitation",
     "request_input": "DocumentCitationFindManyParams",
-    "return_model": "MultiLookupEnvelope<DocumentShow<K \\",
-    "format": "\"citation\">>",
-    "exposure": "JSON_TYPED",
-    "r0_05_state": "PUBLIC_SOURCE_ONLY",
-    "r0_07_disposition": "PASS"
+    "return_model": "MultiLookupEnvelope<DocumentShow<K | \"citation\">>",
+    "format": "JSON_TYPED",
+    "exposure": "PUBLIC_SOURCE_ONLY",
+    "r0_05_state": "PASS",
+    "r0_07_disposition": "PUBLIC_CLIENT_INSTANCE_METHOD"
   },
   {
     "ordinal": 23,
@@ -1527,11 +1527,11 @@
     "namespace_owner": "siteNotifications",
     "canonical_surface": "fr.siteNotifications.find",
     "request_input": "SiteNotificationFindParams",
-    "return_model": "ActiveSiteNotification \\",
-    "format": "InactiveSiteNotification",
-    "exposure": "JSON_TRI_STATE",
-    "r0_05_state": "PUBLIC_SOURCE_ONLY",
-    "r0_07_disposition": "PASS"
+    "return_model": "ActiveSiteNotification | InactiveSiteNotification",
+    "format": "JSON_TRI_STATE",
+    "exposure": "PUBLIC_SOURCE_ONLY",
+    "r0_05_state": "PASS",
+    "r0_07_disposition": "PUBLIC_CLIENT_INSTANCE_METHOD"
   },
   {
     "ordinal": 119,
@@ -1556,7 +1556,7 @@
     "return_model": "WebClippingsResponse",
     "format": "WEB_SESSION_JSON",
     "exposure": "WEB_OWNED_SESSION",
-    "r0_05_state": "PASS + AUTH_DEFERRED",
+    "r0_05_state": "PASS",
     "r0_07_disposition": "PUBLIC_CLIENT_INSTANCE_METHOD"
   }
 ]

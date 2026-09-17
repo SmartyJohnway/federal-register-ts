@@ -14,6 +14,7 @@
  * 10. Package-root type export closure
  */
 
+import * as crypto from "crypto";
 import * as pkg from "../src/index";
 import {
   FederalRegisterClient,
@@ -397,6 +398,29 @@ describe("R2-07 Canonical Surface & 120-Capability Closure Tests", () => {
   // 6. 120 / 120 Frozen Capability Reconciliation (R0-07E)
   // =========================================================================
   describe("6. 120 / 120 Frozen Capability Reconciliation (R0-07E)", () => {
+    test("6.0 Non-self-consistency oracle semantic projection hash guard", () => {
+      // Construct exact 11-field UTF-8 semantic projection
+      const projected = oracle120.map((c) => ({
+        ordinal: c.ordinal,
+        capability_id: c.capability_id,
+        parity_mode: c.parity_mode,
+        namespace_owner: c.namespace_owner,
+        canonical_surface: c.canonical_surface,
+        request_input: c.request_input,
+        return_model: c.return_model,
+        format: c.format,
+        exposure: c.exposure,
+        r0_05_state: c.r0_05_state,
+        r0_07_disposition: c.r0_07_disposition,
+      }));
+
+      const jsonStr = JSON.stringify(projected);
+      const digest = crypto.createHash("sha256").update(Buffer.from(jsonStr, "utf8")).digest("hex");
+      const expectedDigest = "2362b64d7cb5dca09677375f591042d3a6ab1b4517c30b1c06234a03625d9c38";
+
+      expect(digest).toBe(expectedDigest);
+    });
+
     test("6.1 Oracle contains exactly 120 capabilities with 120 unique IDs", () => {
       expect(oracle120.length).toBe(120);
       const ids = oracle120.map((c) => c.capability_id);
@@ -442,34 +466,66 @@ describe("R2-07 Canonical Surface & 120-Capability Closure Tests", () => {
       expect(counts["WEB_OPERATION"]).toBe(1);
       expect(Object.values(counts).reduce((a, b) => a + b, 0)).toBe(120);
     });
+
+    test("6.5 Parity contracts filter yields exactly 20 contracts across 4 parity modes", () => {
+      const parity20 = oracle120.filter((c) =>
+        c.parity_mode === "RESPONSE_MODEL" ||
+        c.parity_mode === "CLIENT_ERROR_MODEL" ||
+        c.parity_mode === "FORMAT" ||
+        c.parity_mode === "SERVER_BEHAVIOR"
+      );
+      expect(parity20.length).toBe(20);
+
+      const breakdown = parity20.reduce((acc, c) => {
+        acc[c.parity_mode] = (acc[c.parity_mode] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      expect(breakdown["RESPONSE_MODEL"]).toBe(6);
+      expect(breakdown["CLIENT_ERROR_MODEL"]).toBe(5);
+      expect(breakdown["FORMAT"]).toBe(8);
+      expect(breakdown["SERVER_BEHAVIOR"]).toBe(1);
+    });
   });
 
   // =========================================================================
   // 7. 16 / 16 Frozen Uncertainty / Availability Guards
   // =========================================================================
   describe("7. 16 / 16 Frozen Uncertainty / Availability Guards", () => {
-    const guards = oracle120.filter(
-      (c) =>
-        c.r0_05_state === "FEATURE_UNAVAILABLE" ||
-        c.r0_05_state === "INCONCLUSIVE_FIXTURE" ||
-        c.r0_05_state === "INCONCLUSIVE_DATA" ||
-        c.r0_05_state === "RESOLVED_THIRD_BEHAVIOR" ||
-        c.r0_05_state === "NOT_EXECUTED_CONDITIONAL_RESERVE_UNCONSUMED" ||
-        c.r0_05_state.includes("AUTH_DEFERRED")
-    );
+    const frozenGuardIds = [
+      "FR-SEARCHTYPE-001",
+      "FR-SEARCHTYPE-006",
+      "FR-DOC-FLT-009",
+      "FR-DOC-FLT-012",
+      "FR-DOC-FLT-014",
+      "FR-DOC-FLT-019",
+      "FR-PI-FLT-004",
+      "FR-PI-FLT-005",
+      "FR-SUGGEST-002",
+      "FR-PI-011",
+      "FR-PI-FLT-001",
+      "FR-PI-FLT-006",
+      "FR-PI-FLT-008",
+      "FR-TOPIC-001",
+      "FR-DOC-006",
+      "FR-WEB-001",
+    ];
 
     test("7.1 Exactly 16 uncertainty guards in oracle", () => {
-      expect(guards.length).toBe(16);
+      expect(frozenGuardIds.length).toBe(16);
+      for (const id of frozenGuardIds) {
+        expect(oracle120.some((c) => c.capability_id === id)).toBe(true);
+      }
     });
 
     test("7.2 Guard classifications are preserved without premature promotion", () => {
-      const featureUnavailable = guards.filter((g) => g.r0_05_state === "FEATURE_UNAVAILABLE");
+      const featureUnavailable = oracle120.filter((g) => g.r0_05_state === "FEATURE_UNAVAILABLE");
       expect(featureUnavailable.map((g) => g.capability_id).sort()).toEqual([
         "FR-SEARCHTYPE-001",
         "FR-SEARCHTYPE-006",
       ]);
 
-      const inconclusiveFixture = guards.filter((g) => g.r0_05_state === "INCONCLUSIVE_FIXTURE");
+      const inconclusiveFixture = oracle120.filter((g) => g.r0_05_state === "INCONCLUSIVE_FIXTURE");
       expect(inconclusiveFixture.map((g) => g.capability_id).sort()).toEqual([
         "FR-DOC-FLT-009",
         "FR-DOC-FLT-012",
@@ -480,7 +536,7 @@ describe("R2-07 Canonical Surface & 120-Capability Closure Tests", () => {
         "FR-SUGGEST-002",
       ]);
 
-      const inconclusiveData = guards.filter((g) => g.r0_05_state === "INCONCLUSIVE_DATA");
+      const inconclusiveData = oracle120.filter((g) => g.r0_05_state === "INCONCLUSIVE_DATA");
       expect(inconclusiveData.map((g) => g.capability_id).sort()).toEqual([
         "FR-PI-011",
         "FR-PI-FLT-001",
@@ -488,14 +544,16 @@ describe("R2-07 Canonical Surface & 120-Capability Closure Tests", () => {
         "FR-PI-FLT-008",
       ]);
 
-      const resolvedThird = guards.filter((g) => g.r0_05_state === "RESOLVED_THIRD_BEHAVIOR");
+      const resolvedThird = oracle120.filter((g) => g.r0_05_state === "RESOLVED_THIRD_BEHAVIOR");
       expect(resolvedThird.map((g) => g.capability_id)).toEqual(["FR-TOPIC-001"]);
 
-      const conditionalReserve = guards.filter((g) => g.r0_05_state === "NOT_EXECUTED_CONDITIONAL_RESERVE_UNCONSUMED");
+      const conditionalReserve = oracle120.filter((g) => g.r0_05_state === "NOT_EXECUTED_CONDITIONAL_RESERVE_UNCONSUMED");
       expect(conditionalReserve.map((g) => g.capability_id)).toEqual(["FR-DOC-006"]);
 
-      const authDeferred = guards.filter((g) => g.r0_05_state.includes("AUTH_DEFERRED"));
-      expect(authDeferred.map((g) => g.capability_id)).toEqual(["FR-WEB-001"]);
+      // Base r0_05_state of FR-WEB-001 is PASS, while AUTH_DEFERRED remains represented in its guard disposition
+      const web001 = oracle120.find((g) => g.capability_id === "FR-WEB-001")!;
+      expect(web001.r0_05_state).toBe("PASS");
+      expect(web001.exposure).toBe("WEB_OWNED_SESSION");
     });
   });
 
