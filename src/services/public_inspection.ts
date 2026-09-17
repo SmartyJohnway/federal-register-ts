@@ -15,6 +15,7 @@ import { getInternalClientRuntime } from "../core/internal/runtime";
 import {
   decodeJsonResponse,
   classifySearchHttpError,
+  classifyGenericHttpError,
   type DecodedResponse,
 } from "../core/transport";
 import { QuerySerializer } from "../request/serializer";
@@ -25,6 +26,9 @@ import type {
   PublicInspectionFindParams,
   PublicInspectionFindManyParams,
   PublicInspectionSearchDetailsParams,
+  PublicInspectionCurrentCsvParams,
+  PublicInspectionSearchCsvParams,
+  PublicInspectionSearchRssParams,
   PublicInspectionField,
 } from "../request/types";
 import type {
@@ -36,6 +40,8 @@ import type {
   MultiLookupEnvelope,
   PublicInspectionSearchDetails,
   PublicInspectionShowDefaultField,
+  PublicInspectionCsvText,
+  PublicInspectionRssXmlText,
 } from "./models";
 import {
   PublicInspectionFacetsService,
@@ -181,4 +187,71 @@ export class PublicInspectionService {
       searchDecoder
     );
   }
+
+  /**
+   * 7. Public Inspection current CSV export (FR-PI-004).
+   * Path: /public-inspection-documents/current.csv
+   */
+  async currentCsv(
+    params?: PublicInspectionCurrentCsvParams
+  ): Promise<PublicInspectionCsvText> {
+    const entries = params ? QuerySerializer.serializePublicInspectionCurrentParams(params) : [];
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<PublicInspectionCsvText>(
+      "/public-inspection-documents/current.csv",
+      qs,
+      (decoded) => {
+        if (decoded.status >= 200 && decoded.status < 300) {
+          return decoded.rawText ?? "";
+        }
+        throw classifyGenericHttpError(decoded);
+      }
+    );
+  }
+
+  /**
+   * 8. Public Inspection search CSV export (FR-PI-007).
+   * Path: /public-inspection-documents.csv
+   */
+  async searchCsv(
+    params?: PublicInspectionSearchCsvParams
+  ): Promise<PublicInspectionCsvText> {
+    const entries = params ? QuerySerializer.serializePublicInspectionSearchCsvParams(params) : [];
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<PublicInspectionCsvText>(
+      "/public-inspection-documents.csv",
+      qs,
+      (decoded) => {
+        if (decoded.status >= 200 && decoded.status < 300) {
+          return decoded.rawText ?? "";
+        }
+        throw classifySearchHttpError(decoded);
+      }
+    );
+  }
+
+  /**
+   * 9. Public Inspection search RSS feed (FR-PI-008).
+   * Path: /public-inspection-documents.rss
+   */
+  async searchRss(
+    params?: PublicInspectionSearchRssParams
+  ): Promise<PublicInspectionRssXmlText> {
+    const entries = params ? QuerySerializer.serializePublicInspectionSearchConditionsOnly(params) : [];
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<PublicInspectionRssXmlText>(
+      "/public-inspection-documents.rss",
+      qs,
+      (decoded) => {
+        if (decoded.status >= 200 && decoded.status < 300) {
+          return decoded.rawText ?? "";
+        }
+        throw classifySearchHttpError(decoded);
+      }
+    );
+  }
 }
+

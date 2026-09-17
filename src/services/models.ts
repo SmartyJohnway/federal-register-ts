@@ -17,6 +17,7 @@ import type {
   DocumentField,
   PublicInspectionField,
   AgencyField,
+  TopicField,
   IsoDateString,
 } from "../request/types";
 import type { MultiLookupNotFoundErrors } from "../core/errors";
@@ -519,3 +520,219 @@ export interface PublicInspectionIssueTypeBucket {
 export type PublicInspectionIssueTypeFacetMap =
   Record<IsoDateString, PublicInspectionIssueTypeBucket>;
 
+// ---------------------------------------------------------------------------
+// 8. R2-06 Alternate Formats (CSV / RSS)
+// ---------------------------------------------------------------------------
+
+export type CsvText = string;
+export type DocumentCsvText = CsvText;
+export type PublicInspectionCsvText = CsvText;
+export type CategoryCountCsvText = CsvText;
+export type DocumentTypeCategoryCountCsvText = CsvText;
+export type PageCountCategoryCountCsvText = CsvText;
+
+export type RssXmlText = string;
+export type DocumentRssXmlText = RssXmlText;
+export type PublicInspectionRssXmlText = RssXmlText;
+
+// ---------------------------------------------------------------------------
+// 9. Topics (R0-02E § 12)
+// ---------------------------------------------------------------------------
+
+export interface TopicFieldMap {
+  readonly name: string;
+  readonly slug: string;
+  readonly url: string;
+}
+
+export type TopicProjection<K extends TopicField = TopicField> = Pick<
+  TopicFieldMap,
+  K
+>;
+
+// ---------------------------------------------------------------------------
+// 10. Sections (R0-02E § 13)
+// ---------------------------------------------------------------------------
+
+export interface SectionSummary {
+  readonly name: string;
+}
+
+export type SectionMap = Record<string, SectionSummary>;
+
+// ---------------------------------------------------------------------------
+// 11. Suggested Searches (R0-02E § 14 & § 15)
+// ---------------------------------------------------------------------------
+
+export interface SuggestedSearchDetail {
+  readonly description: string;
+  readonly slug: string;
+  readonly search_conditions: Record<string, any>;
+  readonly section: string;
+  readonly title: string;
+}
+
+export interface SuggestedSearchIndexItem extends SuggestedSearchDetail {
+  readonly documents_in_last_year: number;
+  readonly documents_with_open_comment_periods: number;
+  readonly position: number | null;
+}
+
+export type SuggestedSearchIndexMap = Record<
+  string,
+  readonly SuggestedSearchIndexItem[]
+>;
+
+// ---------------------------------------------------------------------------
+// 12. Holidays (R0-02E § 16)
+// ---------------------------------------------------------------------------
+
+export type HolidayMap = Record<string, string>;
+
+// ---------------------------------------------------------------------------
+// 13. Effective Dates (R0-02F § 4)
+// ---------------------------------------------------------------------------
+
+export type EffectiveDateDelayKey =
+  | "15"
+  | "21"
+  | "30"
+  | "35"
+  | "45"
+  | "60"
+  | "90";
+
+export interface EffectiveDateOutcome {
+  readonly date: IsoDateString;
+  readonly delay_reasons: readonly string[];
+}
+
+export type EffectiveDateSchedule = Record<
+  EffectiveDateDelayKey,
+  EffectiveDateOutcome
+>;
+
+export type EffectiveDateMap = Record<string, EffectiveDateSchedule>;
+
+// ---------------------------------------------------------------------------
+// 14. Issues (R0-02F § 3)
+// ---------------------------------------------------------------------------
+
+export interface IssueTocDocument {
+  readonly subject_1: string;
+  readonly subject_2?: string;
+  readonly subject_3?: string;
+  readonly document_numbers: readonly string[];
+}
+
+export interface IssueTocCategory {
+  readonly type: string;
+  readonly documents: readonly IssueTocDocument[];
+}
+
+export interface IssueTocSeeAlso {
+  readonly name: string;
+  readonly slug: string;
+}
+
+export interface IssueTocAgency {
+  readonly name: string;
+  readonly slug: string;
+  readonly see_also?: readonly IssueTocSeeAlso[];
+  readonly document_categories: readonly IssueTocCategory[];
+}
+
+export interface IssueTocBase {
+  readonly agencies: readonly IssueTocAgency[];
+}
+
+export interface IssueTocMeta {
+  readonly publication_date: IsoDateString;
+}
+
+export interface IssueTocNote {
+  readonly title: string;
+  readonly text: string;
+}
+
+export interface XmlIssueToc extends IssueTocBase {
+  readonly meta: IssueTocMeta;
+  readonly note?: IssueTocNote;
+}
+
+export interface LegacyIssueToc extends IssueTocBase {
+  readonly meta?: never;
+  readonly note?: never;
+}
+
+export type IssueToc = XmlIssueToc | LegacyIssueToc;
+
+// ---------------------------------------------------------------------------
+// 15. Images (R0-02F § 2)
+// ---------------------------------------------------------------------------
+
+export type ImageMetadataMap = Record<string, ImageVariantMetadata>;
+
+// ---------------------------------------------------------------------------
+// 16. Site Notifications (R0-02F § 6)
+// ---------------------------------------------------------------------------
+
+export interface ActiveSiteNotification {
+  readonly id: number;
+  readonly identifier: string;
+  readonly notification_type: string | null;
+  readonly description: string | null;
+  readonly active: true;
+}
+
+export type InactiveSiteNotification = Record<string, never>;
+
+// ---------------------------------------------------------------------------
+// 17. Documentation (R0-02F § 7)
+// ---------------------------------------------------------------------------
+
+export interface FederalRegisterOpenApiDocument {
+  readonly openapi: string;
+  readonly info: {
+    readonly title: string;
+    readonly version: string;
+    readonly [key: string]: any;
+  };
+  readonly servers: ReadonlyArray<{
+    readonly url: string;
+    readonly [key: string]: any;
+  }>;
+  readonly paths: Record<string, any>;
+  readonly components?: {
+    readonly schemas?: Record<string, any>;
+    readonly [key: string]: any;
+  };
+  readonly [key: string]: any;
+}
+
+// ---------------------------------------------------------------------------
+// 18. Web Clippings (R0-02F § 8)
+// ---------------------------------------------------------------------------
+
+export interface WebClippingFolderRef {
+  readonly name: string;
+  readonly slug: string;
+}
+
+export interface WebClipping {
+  readonly document_number: string;
+  readonly folder: WebClippingFolderRef | null;
+}
+
+export interface WebFolder {
+  readonly name: string;
+  readonly slug: string;
+  readonly doc_count: number;
+  readonly documents: readonly string[];
+  readonly document_types: readonly string[];
+}
+
+export interface WebClippingsResponse {
+  readonly clippings: readonly WebClipping[];
+  readonly folders: readonly WebFolder[];
+}

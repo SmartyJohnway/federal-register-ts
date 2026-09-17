@@ -513,7 +513,7 @@ describe("R2-04 Core Resource Families (17 Operations) Suite", () => {
   // 6. Negative Phase-Leak Verification
   // =========================================================================
   describe("6. Negative Phase-Leak Verification", () => {
-    test("Prohibits unauthorized facet or alternate-format methods in R2-04", () => {
+    test("Verifies authorized methods exist while generic escapes remain undefined", () => {
       const client = new FederalRegisterClient();
 
       // Facets are authorized in R2-05
@@ -521,26 +521,33 @@ describe("R2-04 Core Resource Families (17 Operations) Suite", () => {
       expect(client.publicInspection.facets).toBeDefined();
       expect(client.publicInspection.issues).toBeDefined();
 
-      // CSV and RSS are deferred to R2-06
-      expect((client.documents as any).findCsv).toBeUndefined();
-      expect((client.documents as any).searchCsv).toBeUndefined();
-      expect((client.documents as any).searchRss).toBeUndefined();
-      expect((client.publicInspection as any).currentCsv).toBeUndefined();
-      expect((client.publicInspection as any).searchCsv).toBeUndefined();
-      expect((client.publicInspection as any).searchRss).toBeUndefined();
+      // CSV and RSS are authorized in R2-06
+      expect((client.documents as any).findCsv).toBeDefined();
+      expect((client.documents as any).searchCsv).toBeDefined();
+      expect((client.documents as any).searchRss).toBeDefined();
+      expect((client.publicInspection as any).currentCsv).toBeDefined();
+      expect((client.publicInspection as any).searchCsv).toBeDefined();
+      expect((client.publicInspection as any).searchRss).toBeDefined();
 
-      // Other resource families are deferred to R2-06
-      expect((client as any).topics).toBeUndefined();
-      expect((client as any).sections).toBeUndefined();
-      expect((client as any).suggestedSearches).toBeUndefined();
-      expect((client as any).holidays).toBeUndefined();
-      expect((client as any).effectiveDates).toBeUndefined();
-      expect((client as any).issues).toBeUndefined();
-      expect((client as any).images).toBeUndefined();
-      expect((client as any).categoryCounts).toBeUndefined();
-      expect((client as any).siteNotifications).toBeUndefined();
-      expect((client as any).documentation).toBeUndefined();
-      expect((client as any).clippings).toBeUndefined();
+      // Remaining capability families authorized in R2-06
+      expect((client as any).topics).toBeDefined();
+      expect((client as any).sections).toBeDefined();
+      expect((client as any).suggestedSearches).toBeDefined();
+      expect((client as any).holidays).toBeDefined();
+      expect((client as any).effectiveDates).toBeDefined();
+      expect((client as any).issues).toBeDefined();
+      expect((client as any).images).toBeDefined();
+      expect((client as any).categoryCounts).toBeDefined();
+      expect((client as any).siteNotifications).toBeDefined();
+      expect((client as any).documentation).toBeDefined();
+      expect((client as any).clippings).toBeDefined();
+
+      // Unauthorized escapes remain undefined
+      expect((client as any).get).toBeUndefined();
+      expect((client as any).post).toBeUndefined();
+      expect((client as any).jsonp).toBeUndefined();
+      expect((client.documents as any).facet).toBeUndefined();
+      expect((client.publicInspection as any).facet).toBeUndefined();
     });
   });
 });

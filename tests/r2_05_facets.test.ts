@@ -477,7 +477,7 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
       expect(piSize).toBe(false);
     });
 
-    test("Prohibits unauthorized future alternate formats, generic facet escapes, and resources in R2-05", () => {
+    test("Prohibits unauthorized generic facet escapes and untyped escape hatches", () => {
       const client = new FederalRegisterClient();
 
       // Generic facet(name) method prohibited on services and sub-namespaces
@@ -487,26 +487,30 @@ describe("R2-05 Facets & Aggregations (15 Operations) Contract Suite", () => {
       expect((client.publicInspection.facets as any).facet).toBeUndefined();
       expect((client.publicInspection.issues.facets as any).facet).toBeUndefined();
 
-      // Alternate formats (CSV/RSS) deferred to R2-06
-      expect((client.documents as any).findCsv).toBeUndefined();
-      expect((client.documents as any).searchCsv).toBeUndefined();
-      expect((client.documents as any).searchRss).toBeUndefined();
-      expect((client.publicInspection as any).currentCsv).toBeUndefined();
-      expect((client.publicInspection as any).searchCsv).toBeUndefined();
-      expect((client.publicInspection as any).searchRss).toBeUndefined();
+      // Untyped escapes prohibited
+      expect((client as any).get).toBeUndefined();
+      expect((client as any).post).toBeUndefined();
+      expect((client as any).jsonp).toBeUndefined();
 
-      // Deferred resources deferred to R2-06
-      expect((client as any).topics).toBeUndefined();
-      expect((client as any).sections).toBeUndefined();
-      expect((client as any).suggestedSearches).toBeUndefined();
-      expect((client as any).holidays).toBeUndefined();
-      expect((client as any).effectiveDates).toBeUndefined();
-      expect((client as any).issues).toBeUndefined();
-      expect((client as any).images).toBeUndefined();
-      expect((client as any).categoryCounts).toBeUndefined();
-      expect((client as any).siteNotifications).toBeUndefined();
-      expect((client as any).documentation).toBeUndefined();
-      expect((client as any).clippings).toBeUndefined();
+      // Alternate formats (CSV/RSS) and other families are authorized in R2-06
+      expect((client.documents as any).findCsv).toBeDefined();
+      expect((client.documents as any).searchCsv).toBeDefined();
+      expect((client.documents as any).searchRss).toBeDefined();
+      expect((client.publicInspection as any).currentCsv).toBeDefined();
+      expect((client.publicInspection as any).searchCsv).toBeDefined();
+      expect((client.publicInspection as any).searchRss).toBeDefined();
+
+      expect((client as any).topics).toBeDefined();
+      expect((client as any).sections).toBeDefined();
+      expect((client as any).suggestedSearches).toBeDefined();
+      expect((client as any).holidays).toBeDefined();
+      expect((client as any).effectiveDates).toBeDefined();
+      expect((client as any).issues).toBeDefined();
+      expect((client as any).images).toBeDefined();
+      expect((client as any).categoryCounts).toBeDefined();
+      expect((client as any).siteNotifications).toBeDefined();
+      expect((client as any).documentation).toBeDefined();
+      expect((client as any).clippings).toBeDefined();
     });
   });
 });

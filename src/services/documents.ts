@@ -16,6 +16,7 @@ import { getInternalClientRuntime } from "../core/internal/runtime";
 import {
   decodeJsonResponse,
   classifySearchHttpError,
+  classifyGenericHttpError,
   type DecodedResponse,
 } from "../core/transport";
 import { QuerySerializer } from "../request/serializer";
@@ -27,6 +28,9 @@ import type {
   DocumentCitationFindManyParams,
   DocumentAutocompleteParams,
   DocumentSearchDetailsParams,
+  DocumentFindCsvParams,
+  DocumentSearchRssParams,
+  DocumentSearchCsvParams,
   DocumentField,
 } from "../request/types";
 import type {
@@ -38,6 +42,8 @@ import type {
   DocumentSearchDetails,
   DocumentSearchDefaultField,
   DocumentShowDefaultField,
+  DocumentCsvText,
+  DocumentRssXmlText,
 } from "./models";
 import { DocumentFacetsService } from "./facets";
 
@@ -196,4 +202,65 @@ export class DocumentsService {
       searchDecoder
     );
   }
+
+  /**
+   * 8. Document show CSV export (FR-DOC-007).
+   * Path: /documents/{ids}.csv
+   */
+  async findCsv(params: DocumentFindCsvParams): Promise<DocumentCsvText> {
+    const { pathSegment, entries } = QuerySerializer.serializeDocumentFindCsv(params);
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<DocumentCsvText>(
+      `/documents/${pathSegment}.csv`,
+      qs,
+      (decoded) => {
+        if (decoded.status >= 200 && decoded.status < 300) {
+          return decoded.rawText ?? "";
+        }
+        throw classifyGenericHttpError(decoded);
+      }
+    );
+  }
+
+  /**
+   * 9. Document search RSS feed (FR-DOC-008).
+   * Path: /documents.rss
+   */
+  async searchRss(params?: DocumentSearchRssParams): Promise<DocumentRssXmlText> {
+    const entries = params ? QuerySerializer.serializeDocumentSearchRssParams(params) : [];
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<DocumentRssXmlText>(
+      "/documents.rss",
+      qs,
+      (decoded) => {
+        if (decoded.status >= 200 && decoded.status < 300) {
+          return decoded.rawText ?? "";
+        }
+        throw classifySearchHttpError(decoded);
+      }
+    );
+  }
+
+  /**
+   * 10. Document search CSV export (FR-DOC-009).
+   * Path: /documents.csv
+   */
+  async searchCsv(params?: DocumentSearchCsvParams): Promise<DocumentCsvText> {
+    const entries = params ? QuerySerializer.serializeDocumentSearchCsvParams(params) : [];
+    const qs = QuerySerializer.toQueryString(entries);
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<DocumentCsvText>(
+      "/documents.csv",
+      qs,
+      (decoded) => {
+        if (decoded.status >= 200 && decoded.status < 300) {
+          return decoded.rawText ?? "";
+        }
+        throw classifySearchHttpError(decoded);
+      }
+    );
+  }
 }
+

@@ -178,3 +178,36 @@ export type {
   PublicInspectionIssuesService,
 } from './services/facets';
 
+// R0-07B / R2-06 Remaining Capability Service Types & Models
+export type { TopicsService } from './services/topics';
+export type { SectionsService } from './services/sections';
+export type { SuggestedSearchesService } from './services/suggested_searches';
+export type { HolidaysService } from './services/holidays';
+export type { EffectiveDatesService } from './services/effective_dates';
+export type { IssuesService } from './services/issues';
+export type { ImagesService } from './services/images';
+export type { CategoryCountsService } from './services/category_counts';
+export type { SiteNotificationsService } from './services/site_notifications';
+export type { DocumentationService } from './services/documentation';
+export type { ClippingsService } from './services/clippings';
+export type {
+  DocumentCsvText,
+  PublicInspectionCsvText,
+  DocumentRssXmlText,
+  PublicInspectionRssXmlText,
+  CategoryCountCsvText,
+  TopicFieldMap,
+  TopicProjection,
+  SectionMap,
+  SuggestedSearchIndexMap,
+  HolidayMap,
+  EffectiveDateMap,
+  IssueToc,
+  ImageMetadataMap,
+  ActiveSiteNotification,
+  InactiveSiteNotification,
+  FederalRegisterOpenApiDocument,
+  WebClippingsResponse,
+} from './services/models';
+
+

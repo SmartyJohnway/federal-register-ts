@@ -13,6 +13,17 @@ import { initializeClientRuntime } from "./internal/runtime";
 import { DocumentsService } from "../services/documents";
 import { PublicInspectionService } from "../services/public_inspection";
 import { AgenciesService } from "../services/agencies";
+import { TopicsService } from "../services/topics";
+import { SectionsService } from "../services/sections";
+import { SuggestedSearchesService } from "../services/suggested_searches";
+import { HolidaysService } from "../services/holidays";
+import { EffectiveDatesService } from "../services/effective_dates";
+import { IssuesService } from "../services/issues";
+import { ImagesService } from "../services/images";
+import { CategoryCountsService } from "../services/category_counts";
+import { SiteNotificationsService } from "../services/site_notifications";
+import { DocumentationService } from "../services/documentation";
+import { ClippingsService } from "../services/clippings";
 
 /**
  * Exact frozen public client configuration interface.
@@ -34,12 +45,12 @@ export class FederalRegisterClient {
   #fetch: typeof globalThis.fetch;
 
   /**
-   * Core Document operations service namespace (R0-07B / R2-04).
+   * Core Document operations service namespace (R0-07B / R2-04 / R2-06).
    */
   readonly documents: DocumentsService;
 
   /**
-   * Core Public Inspection operations service namespace (R0-07B / R2-04).
+   * Core Public Inspection operations service namespace (R0-07B / R2-04 / R2-06).
    */
   readonly publicInspection: PublicInspectionService;
 
@@ -47,6 +58,61 @@ export class FederalRegisterClient {
    * Core Agency operations service namespace (R0-07B / R2-04).
    */
   readonly agencies: AgenciesService;
+
+  /**
+   * Topics operations service namespace (R0-07B / R2-06).
+   */
+  readonly topics: TopicsService;
+
+  /**
+   * Sections operations service namespace (R0-07B / R2-06).
+   */
+  readonly sections: SectionsService;
+
+  /**
+   * Suggested Searches operations service namespace (R0-07B / R2-06).
+   */
+  readonly suggestedSearches: SuggestedSearchesService;
+
+  /**
+   * Holidays operations service namespace (R0-07B / R2-06).
+   */
+  readonly holidays: HolidaysService;
+
+  /**
+   * Effective Dates operations service namespace (R0-07B / R2-06).
+   */
+  readonly effectiveDates: EffectiveDatesService;
+
+  /**
+   * Issues operations service namespace (R0-07B / R2-06).
+   */
+  readonly issues: IssuesService;
+
+  /**
+   * Images operations service namespace (R0-07B / R2-06).
+   */
+  readonly images: ImagesService;
+
+  /**
+   * Category Counts operations service namespace (R0-07B / R2-06).
+   */
+  readonly categoryCounts: CategoryCountsService;
+
+  /**
+   * Site Notifications operations service namespace (R0-07B / R2-06).
+   */
+  readonly siteNotifications: SiteNotificationsService;
+
+  /**
+   * Documentation operations service namespace (R0-07B / R2-06).
+   */
+  readonly documentation: DocumentationService;
+
+  /**
+   * Web Clippings operations service namespace (R0-07B / R2-06).
+   */
+  readonly clippings: ClippingsService;
 
   constructor(options?: FederalRegisterClientOptions) {
     const rawBase = options?.baseUrl || DEFAULT_BASE_URL;
@@ -69,5 +135,16 @@ export class FederalRegisterClient {
     this.documents = new DocumentsService(this);
     this.publicInspection = new PublicInspectionService(this);
     this.agencies = new AgenciesService(this);
+    this.topics = new TopicsService(this);
+    this.sections = new SectionsService(this);
+    this.suggestedSearches = new SuggestedSearchesService(this);
+    this.holidays = new HolidaysService(this);
+    this.effectiveDates = new EffectiveDatesService(this);
+    this.issues = new IssuesService(this);
+    this.images = new ImagesService(this);
+    this.categoryCounts = new CategoryCountsService(this);
+    this.siteNotifications = new SiteNotificationsService(this);
+    this.documentation = new DocumentationService(this);
+    this.clippings = new ClippingsService(this);
   }
 }
