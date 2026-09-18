@@ -1,4 +1,3 @@
-// d:\HTSUSjohnway-SEP10\federal_register-master\ts_microservices_implementation\src\aggregator.ts
 
 import { Document } from './document';
 import { ResultSet } from './result_set';

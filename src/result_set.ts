@@ -1,4 +1,3 @@
-// d:\HTSUSjohnway-SEP10\federal_register-master\ts_microservices_implementation\src\result_set.ts
 
 // Corresponds to federal_register/result_set.rb
 

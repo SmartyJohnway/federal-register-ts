@@ -1,4 +1,3 @@
-// d:\HTSUSjohnway-SEP10\federal_register-master\ts_microservices_implementation\src\facets\public_inspection_issue\type.ts
 
 // Corresponds to federal_register/facet/public_inspection_issue/type.rb
 

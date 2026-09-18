@@ -1,4 +1,3 @@
-// d:\HTSUSjohnway-SEP10\federal_register-master\ts_microservices_implementation\src\interfaces\document_search_details_interfaces.ts
 
 export interface FilterOption {
   value: string;
