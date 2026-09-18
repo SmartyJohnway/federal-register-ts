@@ -166,7 +166,6 @@ jobs:
             "compilerOptions": {
               "target": "ES2020",
               "module": "CommonJS",
-              "moduleResolution": "node",
               "lib": ["ES2020", "DOM"],
               "strict": true
             }
@@ -241,7 +240,6 @@ jobs:
             "compilerOptions": {
               "target": "ES2020",
               "module": "CommonJS",
-              "moduleResolution": "node",
               "lib": ["ES2020", "DOM"],
               "strict": true
             }
