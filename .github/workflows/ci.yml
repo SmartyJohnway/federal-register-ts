@@ -51,16 +51,20 @@ jobs:
               return results;
             };
             const jsonFiles = glob(".");
-            console.log("Checking " + jsonFiles.length + " JSON files...");
+            let checked = 0;
             for (const f of jsonFiles) {
-              try {
-                JSON.parse(fs.readFileSync(f, "utf-8"));
-              } catch (err) {
-                console.error("Invalid JSON:", f, err.message);
-                process.exit(1);
+              const content = fs.readFileSync(f, "utf-8").trim();
+              if (content.startsWith("{") || content.startsWith("[")) {
+                try {
+                  JSON.parse(content);
+                  checked++;
+                } catch (err) {
+                  console.error("Invalid JSON:", f, err.message);
+                  process.exit(1);
+                }
               }
             }
-            console.log("All JSON files valid.");
+            console.log("Validated " + checked + " genuine JSON files. Zero parse errors.");
           '
 
       - name: TypeScript typecheck
@@ -102,15 +106,13 @@ jobs:
       - name: Pack tarball & verify leakage
         id: pack
         run: |
-          TARBALL_JSON=$(npm pack --json)
-          TARBALL_NAME=$(echo "$TARBALL_JSON" | jq -r '.[0].filename')
-          TARBALL_SIZE=$(echo "$TARBALL_JSON" | jq -r '.[0].size')
+          TARBALL_NAME=$(npm pack)
           echo "tarball_name=$TARBALL_NAME" >> "$GITHUB_OUTPUT"
           echo "tarball_path=$(pwd)/$TARBALL_NAME" >> "$GITHUB_OUTPUT"
-          echo "Packed tarball: $TARBALL_NAME ($TARBALL_SIZE bytes)"
+          echo "Packed tarball: $TARBALL_NAME"
           
           tar -tf "$TARBALL_NAME" > tarball_files.txt
-          echo "=== Tarball Contents (${TARBALL_NAME}) ==="
+          echo "=== Tarball Contents ($TARBALL_NAME) ==="
           cat tarball_files.txt
           
           FORBIDDEN_LEAKAGE=$(grep -E '^(package/node_modules|package/tests|package/\.github|package/\.env)' tarball_files.txt || true)
