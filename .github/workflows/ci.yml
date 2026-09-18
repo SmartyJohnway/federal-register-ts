@@ -179,7 +179,7 @@ jobs:
           console.log("TS consumer successfully compiled.");
           EOF
           
-          npx tsc --noEmit
+          npx -y --package typescript tsc --noEmit
           echo "TypeScript package-root consumer compilation: PASS"
           
           # 4. Negative legacy/root surface probe (package-qualified)
@@ -194,7 +194,7 @@ jobs:
           const doc = new FR.Document();
           EOF
           
-          if npx tsc negative-should-fail.ts --noEmit 2>/dev/null; then
+          if npx -y --package typescript tsc negative-should-fail.ts --noEmit 2>/dev/null; then
             echo "ERROR: new FR.Document() compiled when it should have failed!"
             exit 1
           else
