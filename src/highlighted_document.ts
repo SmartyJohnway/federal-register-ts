@@ -1,4 +1,3 @@
-// d:\HTSUSjohnway-SEP10\federal_register-master\ts_microservices_implementation\src\highlighted_document.ts
 
 // Corresponds to federal_register/highlighted_document.rb
 

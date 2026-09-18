@@ -1,4 +1,3 @@
-// d:\HTSUSjohnway-SEP10\federal_register-master\ts_microservices_implementation\src\base.ts
 
 // Corresponds to federal_register/base.rb
 

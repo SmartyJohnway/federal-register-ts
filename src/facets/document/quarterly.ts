@@ -1,4 +1,3 @@
-// d:\HTSUSjohnway-SEP10\federal_register-master\ts_microservices_implementation\src\facets\document\quarterly.ts
 
 // Corresponds to federal_register/facet/document/quarterly.rb
 

@@ -1,7 +1,11 @@
 // d:\HTSUSjohnway-SEP10\federal_register-master\ts_microservices_implementation\tests\aggregator.test.ts
 
 import { FederalRegister, AggregatedQuery, AggregatedResponse } from '../src/aggregator';
-import { Document, DocumentAgencyFacet, DocumentDailyFacet, ResultSet, FacetResultSet } from '../src/index';
+import { Document } from '../src/document';
+import { Agency as DocumentAgencyFacet } from '../src/facets/document/agency';
+import { Daily as DocumentDailyFacet } from '../src/facets/document/daily';
+import { ResultSet } from '../src/result_set';
+import { FacetResultSet } from '../src/facet_result_set';
 
 // Mock the underlying adapters
 const mockDocumentSearch = jest.spyOn(Document, 'search');

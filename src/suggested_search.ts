@@ -1,4 +1,3 @@
-// d:\HTSUSjohnway-SEP10\federal_register-master\ts_microservices_implementation\src\suggested_search.ts
 
 // Corresponds to federal_register/suggested_search.rb
 

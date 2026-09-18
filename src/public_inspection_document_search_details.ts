@@ -1,4 +1,3 @@
-// d:\HTSUSjohnway-SEP10\federal_register-master\ts_microservices_implementation\src\public_inspection_document_search_details.ts
 
 // Corresponds to federal_register/public_inspection_document_search_details.rb
 
