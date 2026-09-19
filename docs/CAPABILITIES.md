@@ -239,4 +239,3 @@ The following 16 capabilities have specific frozen uncertainty dispositions esta
 - **Verified Branch:** `ANONYMOUS_BRANCH_PASS`
 - **Deferred Branch:** `AUTHENTICATED_BRANCH_AUTH_DEFERRED`
 - **Guard:** `PRESERVE_AUTH_DEFERRED_SIGNED_IN_BRANCH`
-
