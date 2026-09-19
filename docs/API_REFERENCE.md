@@ -63,7 +63,7 @@ All 53 canonical operations are organized under 14 top-level client service name
 ### `client.documents.search(params?)`
 Search published Federal Register documents with structured conditions and full-text querying.
 
-- **Wire Route:** `GET /documents.json`
+- **Wire Route:** `GET /documents`
 - **Parameters:** `DocumentSearchParams` (optional)
   - `conditions?: DocumentSearchConditions` —Structured filters (e.g. `conditions.term` for full-text search, `conditions.agencies`, `conditions.publicationDate`, etc.).
   - `fields?: readonly DocumentField[]` —Requested response fields.
@@ -86,7 +86,7 @@ const result = await client.documents.search({
 ### `client.documents.find(params)`
 Retrieve a single published document by its document number.
 
-- **Wire Route:** `GET /documents/{document_number}.json`
+- **Wire Route:** `GET /documents/{document_number}`
 - **Parameters:** `DocumentFindParams`
   - `documentNumber: string` —Opaque document number (e.g. `"2024-01234"`).
   - `fields?: readonly DocumentField[]` —Requested response fields.
@@ -102,7 +102,7 @@ const doc = await client.documents.find({
 ### `client.documents.findMany(params)`
 Retrieve multiple published documents by document numbers. Partial success (when some documents exist and others do not) is returned in the envelope without throwing.
 
-- **Wire Route:** `GET /documents/{document_numbers}.json`
+- **Wire Route:** `GET /documents/{document_numbers}`
 - **Parameters:** `DocumentFindManyParams`
   - `documentNumbers: readonly [string, ...string[]]` —Non-empty array of document numbers.
   - `fields?: readonly DocumentField[]` —Requested response fields.
@@ -119,7 +119,7 @@ const batch = await client.documents.findMany({
 ### `client.documents.findByCitation(params)`
 Retrieve a document by its official Federal Register citation (volume and page number).
 
-- **Wire Route:** `GET /documents/{volume}%20FR%20{page}.json`
+- **Wire Route:** `GET /documents/{volume}%20FR%20{page}`
 - **Parameters:** `DocumentCitationFindParams`
   - `citation: FederalRegisterCitation` —Federal Register citation object (`{ volume: PositiveInteger, page: PositiveInteger }`).
   - `fields?: readonly DocumentField[]` —Requested response fields.
@@ -134,7 +134,7 @@ const citation = await client.documents.findByCitation({
 ### `client.documents.findManyByCitation(params)`
 Retrieve multiple documents by citations.
 
-- **Wire Route:** `GET /documents/{citations}.json`
+- **Wire Route:** `GET /documents/{citations}`
 - **Parameters:** `DocumentCitationFindManyParams`
   - `citations: NonEmptyReadonlyArray<FederalRegisterCitation>` —Non-empty list of citations (`{ volume, page }`).
   - `fields?: readonly DocumentField[]` —Requested response fields.
@@ -143,7 +143,7 @@ Retrieve multiple documents by citations.
 ### `client.documents.autocomplete(params)`
 Retrieve search autocomplete suggestions matching a partial term.
 
-- **Wire Route:** `GET /documents/autocomplete-suggestions.json`
+- **Wire Route:** `GET /documents/autocomplete-suggestions`
 - **Parameters:** `DocumentAutocompleteParams`
   - `term: string` —Partial search query text.
 - **Returns:** `Promise<DocumentAutocompleteSuggestion[]>`
@@ -151,7 +151,7 @@ Retrieve search autocomplete suggestions matching a partial term.
 ### `client.documents.searchDetails(params?)`
 Retrieve search metadata, query breakdown, and refinement suggestions for a given document search.
 
-- **Wire Route:** `GET /documents/search-details.json`
+- **Wire Route:** `GET /documents/search-details`
 - **Parameters:** `DocumentSearchDetailsParams` (optional)
 - **Returns:** `Promise<DocumentSearchDetails>`
 
