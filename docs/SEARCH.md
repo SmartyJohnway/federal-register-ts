@@ -90,7 +90,7 @@ const results = await client.documents.search({
 ### Structured Filter Types & Semantics
 Upstream executes distinct filter types depending on field mapping:
 - **`terms` (Logical OR):** Multi-value arrays such as `agency_ids`, `types`, `sections`, `topics`, `presidents`.
-- **`match_phrase`:** Exact phrase matching for identifiers such as `docket_id` and `regulation_id_number` (RIN).
+- **`match_phrase`:** Scalar analyzed phrase matching for identifiers such as `docket_id` and `regulation_id_number` (RIN). Because this relies on OpenSearch `match_phrase` on analyzed text fields rather than an exact-term keyword filter, queries are subject to upstream analyzer tokenization boundaries, and partial phrase matching may occur.
 - **`range`:** Bounded or half-bounded range intervals for dates (`publication_date`, `effective_date`, `signing_date`) and CFR titles/parts.
 - **`term`:** Single-value exact match for boolean flags (e.g. `significant`, `correction`, `accepting_comments`).
 - **`bool.filter` (Logical AND):** Combines distinct filter fields together.
