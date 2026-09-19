@@ -1,0 +1,7 @@
+{
+  "name": "example-commonjs-consumer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CommonJS consumer example for federal-register-ts",
+  "main": "search-documents.js"
+}
