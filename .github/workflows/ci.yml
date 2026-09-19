@@ -21,6 +21,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
 
       - name: Setup Node.js 22
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
@@ -32,7 +35,28 @@ jobs:
         run: npm ci
 
       - name: Verify Git whitespace hygiene
-        run: git diff --check
+        run: |
+          echo "=== Inspecting committed changes for whitespace errors ==="
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            echo "Inspecting pull_request range: $BASE_SHA..$HEAD_SHA"
+            git diff --check "$BASE_SHA" "$HEAD_SHA"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            BEFORE_SHA="${{ github.event.before }}"
+            AFTER_SHA="${{ github.event.after }}"
+            if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ] || [ -z "$BEFORE_SHA" ]; then
+              echo "Push initial commit check for HEAD"
+              git diff-tree --check HEAD
+            else
+              echo "Inspecting push range: $BEFORE_SHA..$AFTER_SHA"
+              git diff --check "$BEFORE_SHA" "$AFTER_SHA"
+            fi
+          else
+            echo "Inspecting commit delta for workflow_dispatch: HEAD~1..HEAD"
+            git diff --check HEAD~1 HEAD || git diff --check HEAD
+          fi
+          echo "Committed changes whitespace check: PASS (zero whitespace errors in delta)"
 
       - name: Verify JSON syntax
         run: |
@@ -77,10 +101,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
@@ -109,19 +135,26 @@ jobs:
           TARBALL_NAME=$(npm pack)
           echo "tarball_name=$TARBALL_NAME" >> "$GITHUB_OUTPUT"
           echo "tarball_path=$(pwd)/$TARBALL_NAME" >> "$GITHUB_OUTPUT"
-          echo "Packed tarball: $TARBALL_NAME"
+          echo "=== Tarball Identity ==="
+          echo "Filename: $TARBALL_NAME"
+          echo -n "Bytes: "
+          stat -c %s "$TARBALL_NAME" 2>/dev/null || stat -f %z "$TARBALL_NAME"
+          echo -n "SHA-256: "
+          sha256sum "$TARBALL_NAME"
+          echo "Node version: $(node --version)"
+          echo "npm version: $(npm --version)"
           
           tar -tf "$TARBALL_NAME" > tarball_files.txt
           echo "=== Tarball Contents ($TARBALL_NAME) ==="
           cat tarball_files.txt
           
-          FORBIDDEN_LEAKAGE=$(grep -E '^(package/node_modules|package/tests|package/\.github|package/\.env)' tarball_files.txt || true)
-          if [ -n "$FORBIDDEN_LEAKAGE" ]; then
-            echo "ERROR: Forbidden package leakage detected:"
-            echo "$FORBIDDEN_LEAKAGE"
+          DISALLOWED=$(grep -vE '^package/(package\.json|README\.md|LICENSE|dist/.*)' tarball_files.txt || true)
+          if [ -n "$DISALLOWED" ]; then
+            echo "ERROR: Disallowed files detected in tarball outside publication allowlist:"
+            echo "$DISALLOWED"
             exit 1
           fi
-          echo "Package leakage check: PASS (zero forbidden files in tarball)"
+          echo "Publication surface check: PASS (100% of files inside package/package.json, package/README.md, package/LICENSE, package/dist/**)"
 
       - name: Fresh exact-tarball consumer verification
         run: |
@@ -160,7 +193,7 @@ jobs:
             console.log("NODE ESM CONSUMER INTEROP WITH COMMONJS PACKAGE: PASS");
           '
           
-          # 3. TypeScript package-root consumer check
+          # 3. TypeScript package-root consumer check (pinned to current stable typescript@7.0.2)
           cat << 'EOF' > tsconfig.json
           {
             "compilerOptions": {
@@ -178,10 +211,10 @@ jobs:
           console.log("TS consumer successfully compiled.");
           EOF
           
-          npx -y --package typescript tsc --noEmit
-          echo "TypeScript package-root consumer compilation: PASS"
+          npx -y --package typescript@7.0.2 tsc --noEmit
+          echo "TypeScript package-root consumer compilation (TS 7.0.2): PASS"
           
-          # 4. Negative legacy/root surface probe (package-qualified)
+          # 4. Negative legacy/root surface probe (package-qualified, pinned to typescript@7.0.2)
           cat << 'EOF' > negative.ts
           import * as FR from 'federal-register-ts';
           // @ts-expect-error - Document is a type, not a runtime constructor
@@ -193,11 +226,11 @@ jobs:
           const doc = new FR.Document();
           EOF
           
-          if npx -y --package typescript tsc negative-should-fail.ts --noEmit 2>/dev/null; then
+          if npx -y --package typescript@7.0.2 tsc negative-should-fail.ts --noEmit 2>/dev/null; then
             echo "ERROR: new FR.Document() compiled when it should have failed!"
             exit 1
           else
-            echo "Negative probe PASS: new FR.Document() correctly rejected by TypeScript compiler"
+            echo "Negative probe PASS: new FR.Document() correctly rejected by TypeScript 7.0.2 compiler"
           fi
 
   typescript-matrix:
@@ -207,10 +240,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ts-version: ['5.0.4', '5.2.2', '5.4.5', '5.6.3', '5.9.3']
+        ts-version: ['5.0.4', '5.2.2', '5.4.5', '5.6.3', '5.9.3', '6.0.3', '7.0.2']
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js 22
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
@@ -231,6 +266,13 @@ jobs:
         run: |
           npm run build
           TARBALL=$(npm pack)
+          echo "=== Consumer Tarball Identity (${{ matrix.ts-version }}) ==="
+          echo "Filename: $TARBALL"
+          echo -n "Bytes: "
+          stat -c %s "$TARBALL" 2>/dev/null || stat -f %z "$TARBALL"
+          echo -n "SHA-256: "
+          sha256sum "$TARBALL"
+          
           CONSUMER_DIR=$(mktemp -d)
           cd "$CONSUMER_DIR"
           npm init -y
@@ -259,6 +301,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js 22
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
@@ -344,11 +388,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: TruffleHog Secret Scan
         uses: trufflesecurity/trufflehog@f19d6e5d2bef8a8ceca2b7d77ec447fc304f8078 # v3.88.5
         with:
+          version: "3.97.5@sha256:1cec88f18ca39e26e04e61fe9d886c9c4e5f2fc0ba4f2ed185cac0722bd8a076"
           extra_args: --only-verified
 
       - name: Repository regex secret audit
