@@ -15,8 +15,8 @@ Thank you for your interest in contributing to `federal-register-ts`!
 ## 2. Development Setup
 
 ### Prerequisites
-- Node.js 22 LTS or Node.js 24 LTS (Node.js 20 also runs cleanly)
-- npm 9+
+- Node.js 22 LTS or Node.js 24 LTS (supported blocking runtimes)
+- npm (bundled with Node.js)
 
 ### Initial Setup
 ```bash

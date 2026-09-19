@@ -2,7 +2,7 @@
 
 This document provides the normative 120-capability matrix for `federal-register-ts`, aligning directly with the frozen canonical contract in `r0-07_final_120_capability_ts_surface_registry.json`.
 
-> **Important Distinction:** The Federal Register API surface is governed across **120 distinct capability records**, which represent specific operations, filters, query parameters, format exports, facet dimensions, server contracts, and error profiles. **120 governed capabilities is NOT equivalent to 120 API endpoints.** The underlying API exposes approximately 35 distinct wire URL routes; multiple capabilities govern distinct query parameter semantics, response representation policies, or data formats on shared routes.
+> **Important Distinction:** The Federal Register API surface is governed across **120 distinct capability records**, which represent specific operations, filters, query parameters, format exports, facet dimensions, server contracts, and error profiles. **120 governed capabilities is NOT equivalent to 120 API endpoints.** The underlying API exposes 28 current v1 route patterns (27 in federalregister-api-core and 1 web-owned endpoint in federalregister-web); multiple capabilities govern distinct query parameter semantics, response representation policies, or data formats on shared routes.
 
 ## Summary Breakdown
 

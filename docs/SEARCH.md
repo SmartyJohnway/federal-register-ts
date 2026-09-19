@@ -1,4 +1,4 @@
-﻿# Search Semantics & Query Architecture
+# Search Semantics & Query Architecture
 
 This document provides the normative search semantics, query structure, and wire serialization contract for `federal-register-ts`.
 
@@ -10,11 +10,28 @@ Search correctness is safety-critical: a logically malformed query can return pl
 
 The FederalRegister.gov API operates two distinct search mechanisms with different query semantics:
 
-1. **Full-Text Lexical Search:** Executed via Elasticsearch `simple_query_string` parser against document full text.
-2. **Structured Metadata Filters:** Exact match and terms filtering against Elasticsearch structured mappings.
+1. **Full-Text Lexical Search:** Executed via OpenSearch `simple_query_string` parser against document full text.
+2. **Structured Metadata Filters:** Filter clauses (`terms`, `match_phrase`, `range`, `term`) executed against OpenSearch structured mappings.
 
 ```text
-??????????????????????????????????????????????????????????????????????????????                       FederalRegisterClient                            ???????????????????????????????????????砂?????????????????????????????????????????Full-Text Search                  ??Structured Filters                  ????conditions: { term: "..." }       ??conditions: { agencies: [...] }     ???????????????????????????????????????潑?????????????????????????????????????????Wire: conditions[term]            ??Wire: conditions[agencies][]        ????Simple Query String               ??Terms / Range Filters               ????Standard Boolean logic:           ??Same-field: OR                      ????- "AND", "OR", "NOT", "+", "-", ""??Cross-field: AND                    ???????????????????????????????????????氯???????????????????????????????????????```
++-------------------------------------------------------------------------------+
+|                             FederalRegisterClient                             |
++---------------------------------------+---------------------------------------+
+| Full-Text Lexical Query               | Structured Metadata Filters           |
+| conditions: { term: "..." }           | conditions: { agencyIds: [...] }      |
++---------------------------------------+---------------------------------------+
+| Wire: conditions[term]                | Wire: conditions[agency_ids][]        |
+| OpenSearch Simple Query String        | OpenSearch Filter Clauses             |
+| Lexical query rules:                  | Filter type semantics:                |
+| - Whitespace = default AND            | - Multi-value array = OR (terms)      |
+| - "|" = OR                            | - Cross-field = AND (bool.filter)     |
+| - Unary "-" = NOT / exclude           | - match_phrase (docket/RIN)           |
+| - "&" -> "+" alias                    | - range (dates/CFR)                   |
+| - '""' = phrase, () = grouping        | - term (boolean flags)                |
+| - NOTE: textual "AND"/"OR"/"NOT" are  | - No same-field AND                   |
+|   NOT promoted to operator tokens     | - No structured filter NOT            |
++---------------------------------------+---------------------------------------+
+```
 
 ---
 
@@ -27,7 +44,7 @@ conditions[term]=<query>
 ```
 
 ### Divergence / Stale Notice: Top-Level `term`
-Top-level `term` (`?term=...`) is a historical downstream divergence from pre-revival code and Ruby gem remnants. The canonical SDK strictly transmits full-text queries inside the `conditions` object:
+Top-level `term` (`?term=...`) is a noncanonical / historical downstream form from pre-revival code and Ruby gem remnants. The canonical SDK strictly transmits full-text queries inside the `conditions` object:
 
 ```typescript
 // Canonical SDK Usage:
@@ -43,7 +60,7 @@ const results = await client.documents.search({
 ## 3. Structured Filter Semantics
 
 ### Same-Field Multi-Value: Logical OR
-When multiple values are provided for a single filter field (such as an array of agency IDs or document types), upstream combines them using Elasticsearch `terms` filter, which evaluates as a **logical OR**:
+When multiple values are provided for a single filter field (such as an array of agency IDs or document types), upstream combines them using OpenSearch `terms` filter, which evaluates as a **logical OR**:
 
 ```typescript
 const results = await client.documents.search({
@@ -57,7 +74,7 @@ const results = await client.documents.search({
 ```
 
 ### Cross-Field Conditions: Logical AND
-When multiple distinct condition fields are specified, upstream combines them using Elasticsearch `bool.filter`, which evaluates as a **logical AND**:
+When multiple distinct condition fields are specified, upstream combines them using OpenSearch `bool.filter`, which evaluates as a **logical AND**:
 
 ```typescript
 const results = await client.documents.search({
@@ -70,10 +87,18 @@ const results = await client.documents.search({
 });
 ```
 
+### Structured Filter Types & Semantics
+Upstream executes distinct filter types depending on field mapping:
+- **`terms` (Logical OR):** Multi-value arrays such as `agency_ids`, `types`, `sections`, `topics`, `presidents`.
+- **`match_phrase`:** Exact phrase matching for identifiers such as `docket_id` and `regulation_id_number` (RIN).
+- **`range`:** Bounded or half-bounded range intervals for dates (`publication_date`, `effective_date`, `signing_date`) and CFR titles/parts.
+- **`term`:** Single-value exact match for boolean flags (e.g. `significant`, `correction`, `accepting_comments`).
+- **`bool.filter` (Logical AND):** Combines distinct filter fields together.
+
 ### Unsupported Filter Boolean Operations
 The Federal Register API **does not** support:
 - Logical AND across multiple values of the same field (e.g. "must match both topic A and topic B simultaneously" on single document terms array).
-- Structured NOT / inversion on structured filters (e.g. "agencies NOT EPA"). Negation is available only within full-text lexical queries (`-term` or `NOT term`).
+- Structured NOT / inversion on structured filters (e.g. "agencies NOT EPA"). Negation is available only within full-text lexical queries (`-term`).
 
 The SDK strictly reflects upstream API capabilities and does not manufacture pseudo-Boolean capabilities client-side.
 

@@ -1,4 +1,4 @@
-﻿# Federal Register TypeScript SDK ??Usage Guide
+# Federal Register TypeScript SDK — Usage Guide
 
 This guide illustrates real-world usage patterns for `federal-register-ts`, an independent TypeScript client for the FederalRegister.gov API.
 
@@ -137,8 +137,8 @@ async function getAgencyCounts() {
     },
   });
 
-  for (const [agencySlug, count] of Object.entries(counts)) {
-    console.log(`${agencySlug}: ${count} documents`);
+  for (const [agencySlug, entry] of Object.entries(counts)) {
+    console.log(`${agencySlug} (${entry.name}): ${entry.count} documents`);
   }
 }
 ```
