@@ -3,16 +3,14 @@
  * Demonstrates:
  * - End-to-end type safety for request filters and field projections
  * - Generic response narrowing (DocumentShow<K> and DocumentSearchItem<K>)
- * - Multi-document lookup envelope handling (MultiLookupEnvelope<T>)
+ * - Type-safe search envelope consumption (SearchResultEnvelope<T>)
  */
 
 import {
   FederalRegisterClient,
   SearchResultEnvelope,
   DocumentSearchItem,
-  DocumentShow,
-  MultiLookupEnvelope,
-  RequestValidationError
+  DocumentShow
 } from 'federal-register-ts';
 
 // Reusable mock fetch wrapper for offline execution
