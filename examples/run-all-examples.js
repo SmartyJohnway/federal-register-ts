@@ -48,12 +48,12 @@ try {
 
   // Copy mock transport & examples to temp workspace
   fs.copyFileSync(path.join(__dirname, 'mock-transport.js'), path.join(tempDir, 'mock-transport.js'));
-  
+
   // Copy commonjs
   fs.mkdirSync(path.join(tempDir, 'commonjs'), { recursive: true });
   fs.copyFileSync(path.join(__dirname, 'commonjs', 'search-documents.js'), path.join(tempDir, 'commonjs', 'search-documents.js'));
   fs.copyFileSync(path.join(__dirname, 'commonjs', 'error-handling.js'), path.join(tempDir, 'commonjs', 'error-handling.js'));
-  
+
   // Copy esm
   fs.mkdirSync(path.join(tempDir, 'esm-interop'), { recursive: true });
   fs.copyFileSync(path.join(__dirname, 'esm-interop', 'search-documents.mjs'), path.join(tempDir, 'esm-interop', 'search-documents.mjs'));
