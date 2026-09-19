@@ -1,76 +1,176 @@
-# Federal Register API Client (TypeScript)
+﻿# federal-register-ts
 
-A robust, type-safe TypeScript client for the Federal Register API. This library is a TypeScript implementation inspired by the official `federal_register` Ruby gem, designed to make searching and retrieving US government documents easy in modern JavaScript/TypeScript applications.
+[![CI](https://github.com/SmartyJohnway/federal-register-ts/actions/workflows/ci.yml/badge.svg)](https://github.com/SmartyJohnway/federal-register-ts/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Features
+Independent, type-safe TypeScript SDK for the [FederalRegister.gov](https://www.federalregister.gov) API.
 
-*   🚀 **Full TypeScript Support**: Comprehensive type definitions for search parameters and responses.
-*   🔍 **Advanced Search**: Support for complex filtering, facets, and conditions.
-*   📄 **Document Retrieval**: Fetch detailed document information and metadata.
-*   🏛️ **Agency & PI Support**: Includes endpoints for Agencies and Public Inspection documents.
+> **Disclaimer:** This project is an independent open-source library and is **not** endorsed by, maintained by, or officially affiliated with the National Archives and Records Administration (NARA), the Office of the Federal Register (OFR), or the United States Government.
 
-## Installation
+---
 
-```bash
-npm install federal-register-ts
-```
+## Publication Status
 
-## Usage
+> **Notice:** The `federal-register-ts` package has not yet been published to the npm registry. After formal release, the installation command will be:
+> ```bash
+> npm install federal-register-ts
+> ```
+> To use or evaluate the SDK prior to publication, please clone the repository and build from source.
 
-### 1. Searching Documents
+---
+
+## Key Features
+
+- ??儭?**Complete Capability Coverage:** 100% coverage across all 120 governed Federal Register API capability records across 14 distinct operation namespaces.
+- ?? **Type-Safe Request & Response Contracts:** End-to-end TypeScript typings for queries, filters, envelopes, models, and response projections.
+- ? **Correct Search Semantics:** Strict adherence to upstream Elasticsearch query semantics, preserving canonical `conditions[term]` search, same-field OR, and cross-field AND filtering.
+- ??**Multi-Lookup Partial Success:** Tolerant multi-document lookup handling where existing items resolve cleanly and missing IDs are safely returned in `errors.not_found`.
+- ?儭?**Structured Error Hierarchy:** Granular error classification distinguishing client validation, 404 record not found, 405 method not allowed, and API status message errors.
+- ?? **Modern Runtime Support:** Verified on Node.js 22 LTS and 24 LTS across Linux, macOS, and Windows. Verified against exact TypeScript compiler points `5.0.4` through `7.0.2`.
+
+---
+
+## Quick Start
+
+### Installation & Client Creation
 
 ```typescript
-import { searchDocuments, SearchParams } from 'federal-register-ts';
+import { FederalRegisterClient } from 'federal-register-ts';
 
-const params: SearchParams = {
-  term: 'environment',
-  per_page: 10,
-  order: 'newest',
-  conditions: {
-    agency_ids: ['492'], // Environmental Protection Agency
-    publication_date: {
-      gte: '2023-01-01'
+// Connect to default endpoint (https://www.federalregister.gov/api/v1)
+const client = new FederalRegisterClient();
+```
+
+### Searching Published Documents
+
+Full-text queries are always provided via `conditions.term`:
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function run() {
+  const results = await client.documents.search({
+    conditions: {
+      term: 'renewable energy',
+      types: ['RULE', 'PRORULE'],
+      publicationDate: { gte: '2024-01-01' },
+    },
+    perPage: 10,
+    page: 1,
+    order: 'newest',
+  });
+
+  console.log(`Found ${results.count} documents matching query.`);
+  if ('results' in results) {
+    for (const doc of results.results) {
+      console.log(`- [${doc.document_number}] ${doc.title}`);
     }
   }
-};
-
-async function runSearch() {
-  const response = await searchDocuments(params);
-  console.log('Results:', response);
 }
+
+run();
 ```
 
-### 2. Finding a Specific Document
-
-Retrieve a document by its document number.
+### Retrieving a Document by Document Number
 
 ```typescript
-import { findDocument } from 'federal-register-ts';
+import { FederalRegisterClient } from 'federal-register-ts';
 
-async function getDoc() {
-  const docNumber = '2023-12345';
-  const response = await findDocument(docNumber, {
-    fields: ['title', 'abstract', 'publication_date']
+const client = new FederalRegisterClient();
+
+async function getDocument() {
+  const doc = await client.documents.find({
+    documentNumber: '2024-01234',
+    fields: ['title', 'document_number', 'publication_date', 'html_url'],
   });
-  
-  console.log(response);
+
+  console.log('Title:', doc.title);
+  console.log('URL:', doc.html_url);
 }
 ```
+
+---
+
+## 14 Operation Namespaces Overview
+
+All 53 canonical operations are accessible via client namespaces:
+
+| Namespace | Primary Capabilities | Example Methods |
+|---|---|---|
+| `documents` | Published document search, show, batch, citation lookup, CSV, RSS | `search`, `find`, `findMany`, `findByCitation`, `findCsv`, `searchCsv`, `searchRss` |
+| `documents.facets` | Document aggregations by agency, topic, section, type, date intervals | `agency`, `topic`, `section`, `type`, `daily`, `monthly`, `yearly` |
+| `publicInspection` | Pre-publication documents filed for inspection, date lookup, CSV, RSS | `search`, `availableOn`, `current`, `find`, `findMany`, `currentCsv` |
+| `publicInspection.facets` | Pre-publication document aggregations | `type`, `agency`, `agencies` |
+| `publicInspection.issues.facets` | Public inspection issue daily & type breakdowns | `daily`, `type` |
+| `agencies` | Directory of federal agencies, single lookup, multi-lookup, suggestions | `list`, `find`, `findMany`, `suggestions` |
+| `topics` | Topic suggestions | `suggestions` |
+| `sections` | Subject section listings | `list` |
+| `suggestedSearches` | Curated searches by topic and section | `list`, `listBySections`, `find` |
+| `holidays` | Federal public legal holidays calendar | `list` |
+| `effectiveDates` | Procedural delayed effective date calculation | `calculate` |
+| `issues` | Daily table of contents (current or historical) | `current`, `find` |
+| `images` | Document image metadata and dimensions | `find` |
+| `categoryCounts` | Category and page-count statistical CSV exports | `documentTypeCsv`, `pageCountCsv` |
+| `siteNotifications` | System maintenance and API service notifications | `find` |
+| `documentation` | Direct download of upstream OpenAPI specification | `fetchOpenApi` |
+| `clippings` | User clipping folders (web-authenticated session) | `current` |
+
+---
+
+## Search Semantics & Safety (P0)
+
+1. **Full-Text vs. Filters:** Full-text search occurs in `conditions.term` via Elasticsearch `simple_query_string`. Structured filters (e.g. `agency_ids`, `type`, `publication_date`) are evaluated as exact matches.
+2. **Boolean Logic:**
+   - Multi-values in the *same* structured filter evaluate as **logical OR** (e.g. `agency_ids: [492, 468]` matches EPA *or* Forest Service).
+   - Distinct filters combine as **logical AND** (e.g. `agency_ids` *and* `type` *and* `publication_date`).
+3. **No Top-Level `term`:** Top-level `term` is a deprecated downstream divergence. Always use `conditions.term`.
+4. **Pagination Limits:** Upstream allows `page` up to `50` and `perPage` up to `2000`. Beyond 50 pages, partition queries using publication date ranges.
+
+For detailed search behavior, see [docs/SEARCH.md](docs/SEARCH.md).
+
+---
+
+## Compatibility
+
+- **Node.js:** Verified on Node.js 22 LTS (Maintenance) and 24 LTS (Active). Verified on Windows, macOS, and Ubuntu.
+- **TypeScript:** Verified against exact compiler versions `5.0.4`, `5.2.2`, `5.4.5`, `5.6.3`, `5.9.3`, `6.0.3`, and `7.0.2`.
+- **Module Format:** Distributed as a CommonJS library with verified Node.js ESM interoperability (`import` and `require` supported).
+
+For complete runtime details, see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+
+---
+
+## Documentation Index
+
+- **[API Reference](docs/API_REFERENCE.md):** Complete reference for all 14 namespaces and 53 operations.
+- **[Governed Capabilities Matrix](docs/CAPABILITIES.md):** Complete 120-capability registry.
+- **[Search Semantics Guide](docs/SEARCH.md):** Search logic, query syntax, and parameter serialization.
+- **[Usage Guide](docs/USAGE.md):** Practical code examples.
+- **[Compatibility Guide](docs/COMPATIBILITY.md):** Supported environments and compiler versions.
+- **[Contributing Guidelines](CONTRIBUTING.md):** Development workflows and PR instructions.
+
+---
 
 ## Development
 
-1. Clone the repo
-2. `npm install`
-3. `npm run build`
+```bash
+# Build TypeScript
+npm run build
 
-## Porting History & Documentation
+# Run unit tests
+npm test
 
-This project is a complete TypeScript port of the official `federal_register` Ruby Gem. To help developers understand the translation process and architecture decisions, we have included the following resources in the repository:
+# Run CI test suite (in band)
+npm run test:ci
 
-*   **`progress_logs/`**: A detailed daily log of the development process. It documents the step-by-step porting workflow, from the initial analysis of the Ruby Gem to the scaffolding of adapters (e.g., `Agency`, `Document`, `Facet`) and the implementation of specific features.
-*   **`docs/`**: Contains architectural analysis of the original Ruby Gem (`ruby_gem_analysis_summary`) and project schema definitions (JSON Schema / OpenAPI) used to ensure type safety and API consistency during the migration.
-*   **`tests/`**: Comprehensive unit tests that mirror the functionality of the original gem, ensuring that the TypeScript implementation behaves identically to the Ruby version.
+# Run typecheck
+npm run typecheck
+```
+
+---
 
 ## License
 
-MIT
+[MIT](LICENSE) 穢 2025 SmartyJohnway

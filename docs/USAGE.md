@@ -1,134 +1,226 @@
-# Federal Register TS Library - Usage Guide
+﻿# Federal Register TypeScript SDK ??Usage Guide
 
-This guide explains how to use the `fr-ts-microservices` library to interact with the Federal Register API.
+This guide illustrates real-world usage patterns for `federal-register-ts`, an independent TypeScript client for the FederalRegister.gov API.
 
 ---
 
-## Installation
+## 1. Quick Start
 
-Assuming the project is built and available, you can import the necessary classes from the main entry point:
+### Installation Note
+> **Publication Notice:** The package has not yet been published to the npm public registry. After formal publication occurs, installation will be:
+> ```bash
+> npm install federal-register-ts
+> ```
+
+### Creating a Client
+
+All operations are accessed through `FederalRegisterClient`:
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+```
+
+---
+
+## 2. Searching Documents
+
+Full-text queries and structured filters are passed via the `conditions` object.
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function searchEnvironmentalRules() {
+  const response = await client.documents.search({
+    conditions: {
+      term: 'clean air',
+      types: ['RULE', 'PRORULE'],
+      publicationDate: { gte: '2024-01-01' },
+    },
+    perPage: 10,
+    page: 1,
+    order: 'newest',
+  });
+
+  console.log(`Total matching documents: ${response.count}`);
+  if ('results' in response) {
+    for (const doc of response.results) {
+      console.log(`- [${doc.document_number}] ${doc.title} (${doc.publication_date})`);
+    }
+  }
+}
+```
+
+---
+
+## 3. Retrieving Documents
+
+### Single Document by Document Number
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function getDocument() {
+  const doc = await client.documents.find({
+    documentNumber: '2024-01234',
+    fields: ['title', 'document_number', 'publication_date', 'html_url', 'agency_names'],
+  });
+
+  console.log('Title:', doc.title);
+  console.log('URL:', doc.html_url);
+}
+```
+
+### Multiple Documents with Partial Success Handling
+When looking up multiple documents, any non-existent document numbers are returned in the `errors.not_found` array rather than aborting the request:
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function getBatch() {
+  const batch = await client.documents.findMany({
+    documentNumbers: ['2024-01234', 'invalid-doc-number'],
+  });
+
+  console.log(`Found ${batch.count} documents.`);
+  for (const doc of batch.results) {
+    console.log(`Found: ${doc.document_number}`);
+  }
+
+  if (batch.errors?.not_found) {
+    console.warn('Not found:', batch.errors.not_found);
+  }
+}
+```
+
+### Citation Lookup
+Retrieve documents by official Federal Register volume and page number:
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function getCitation() {
+  const lookup = await client.documents.findByCitation({
+    citation: { volume: 89, page: 12345 },
+  });
+
+  for (const doc of lookup.results) {
+    console.log(`Citation result: ${doc.title}`);
+  }
+}
+```
+
+---
+
+## 4. Working with Facets & Aggregations
+
+Facets provide real-time aggregation counts without needing to paginate through all documents.
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function getAgencyCounts() {
+  // Breakdown of 2024 documents by publishing agency
+  const counts = await client.documents.facets.agency({
+    conditions: {
+      publicationDate: { gte: '2024-01-01', lte: '2024-12-31' },
+    },
+  });
+
+  for (const [agencySlug, count] of Object.entries(counts)) {
+    console.log(`${agencySlug}: ${count} documents`);
+  }
+}
+```
+
+---
+
+## 5. Public Inspection Documents (Pre-Publication)
+
+Public Inspection documents are filed with the Office of the Federal Register and available for public review prior to official daily publication:
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function checkCurrentPublicInspection() {
+  const current = await client.publicInspection.current();
+
+  console.log(`Filed for inspection: ${current.count} documents`);
+  if ('results' in current) {
+    for (const doc of current.results) {
+      console.log(`- [${doc.document_number}] ${doc.title}`);
+    }
+  }
+}
+```
+
+---
+
+## 6. Federal Agencies Directory
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function listAgencies() {
+  const agencies = await client.agencies.list();
+
+  console.log(`Loaded ${agencies.length} federal agencies.`);
+  const epa = agencies.find(a => a.slug === 'environmental-protection-agency');
+  if (epa) {
+    console.log(`EPA ID: ${epa.id}, Website: ${epa.url}`);
+  }
+}
+```
+
+---
+
+## 7. Error Handling
+
+Structured error classes enable granular handling:
 
 ```typescript
 import {
-  FederalRegister,
-  Document,
-  Agency,
-  DocumentAgencyFacet,
-  // ... and other classes
-} from './src/index';
-```
+  FederalRegisterClient,
+  FederalRegisterSearchValidationError,
+  FederalRegisterAgencyNotFoundError,
+  FederalRegisterHttpError,
+  FederalRegisterError,
+} from 'federal-register-ts';
 
----
+const client = new FederalRegisterClient();
 
-## 1. Aggregated Search (Recommended)
-
-The easiest way to use the library is through the `FederalRegister` aggregator, which can handle complex queries for documents and facets simultaneously.
-
-### Example: Find documents about climate change and get agency facet counts
-
-```typescript
-import { FederalRegister, AggregatedQuery, AggregatedResponse } from './src/index';
-
-async function performSearch() {
-  const query: AggregatedQuery = {
-    term: 'climate change',
-    conditions: {
-      publication_date: { year: '2023' },
-    },
-    facets: ['agency', 'daily'], // Request agency and daily facet counts
-    per_page: 10,
-  };
-
+async function safeSearch() {
   try {
-    const response: AggregatedResponse = await FederalRegister.search(query);
-
-    // 1. Handle Document Results
-    console.log(`Found ${response.documents.count} documents.`);
-    for (const doc of response.documents) {
-      console.log(`- [${doc.document_number}] ${doc.title}`);
+    const results = await client.documents.search({
+      conditions: {
+        term: 'energy',
+      },
+    });
+    console.log('Results:', results.count);
+  } catch (err) {
+    if (err instanceof FederalRegisterSearchValidationError) {
+      console.error('Invalid search parameters:', err.body?.errors);
+    } else if (err instanceof FederalRegisterAgencyNotFoundError) {
+      console.error('Agency does not exist.');
+    } else if (err instanceof FederalRegisterHttpError) {
+      console.error(`HTTP ${err.status}:`, err.rawText);
+    } else if (err instanceof FederalRegisterError) {
+      console.error('SDK Error:', err.message);
     }
-
-    // 2. Handle Facet Results
-    if (response.facets.agency) {
-      console.log('\nAgency Counts:');
-      for (const agencyFacet of response.facets.agency) {
-        console.log(`- ${agencyFacet.name}: ${agencyFacet.count}`);
-      }
-    }
-
-  } catch (error) {
-    console.error("Search failed:", error);
   }
 }
-
-performSearch();
-```
-
----
-
-## 2. Direct Adapter Usage
-
-For more specific tasks, you can use the individual adapters directly.
-
-### Example 1: Find a single document by its document number
-
-```typescript
-import { Document } from './src/index';
-
-async function findDocument() {
-  try {
-    const doc = await Document.find('2023-12345');
-    console.log('Found Document:');
-    console.log(`Title: ${doc.title}`);
-    console.log(`URL: ${doc.html_url}`);
-  } catch (error) {
-    console.error("Failed to find document:", error);
-  }
-}
-
-findDocument();
-```
-
-### Example 2: Get a list of all agencies
-
-```typescript
-import { Agency } from './src/index';
-
-async function listAgencies() {
-  try {
-    const agencies = await Agency.all({ fields: ['name', 'slug'] });
-    console.log('All Agencies:');
-    for (const agency of agencies) {
-      console.log(`- ${agency.name} (slug: ${agency.slug})`);
-    }
-  } catch (error) {
-    console.error("Failed to list agencies:", error);
-  }
-}
-
-listAgencies();
-```
-
-### Example 3: Get only facet counts for a specific topic
-
-```typescript
-import { DocumentTopicFacet, FacetResultSet } from './src/index';
-
-async function getTopicFacets() {
-  const query = {
-    conditions: { term: 'nuclear energy' },
-  };
-
-  try {
-    const resultSet: FacetResultSet<DocumentTopicFacet> = await DocumentTopicFacet.search(query, DocumentTopicFacet);
-    console.log('Topic Counts for "nuclear energy":');
-    for (const topic of resultSet) {
-      console.log(`- ${topic.name}: ${topic.count}`);
-    }
-  } catch (error) {
-    console.error("Failed to get topic facets:", error);
-  }
-}
-
-getTopicFacets();
 ```
