@@ -231,3 +231,12 @@ The following 16 capabilities have specific frozen uncertainty dispositions esta
 - **Disposition:** `INCONCLUSIVE_FIXTURE` — Inconclusive fixture (upstream lacks populated test fixtures or valid values for live verification)
 - **Surface:** `fr.suggestedSearches.listBySections`
 - **Guard:** `PRESERVE_INCONCLUSIVE_STATE; DO_NOT_UPGRADE_WITHOUT_GOVERNED_NEW_EVIDENCE`
+
+### FR-WEB-001: User/session clippings API
+- **Family:** 6.22 Web-owned API
+- **Disposition:** `PASS` (anonymous) / `AUTH_DEFERRED` (signed-in) — Anonymous branch verified; authenticated/signed-in branch deferred
+- **Surface:** `fr.clippings.current`
+- **Verified Branch:** `ANONYMOUS_BRANCH_PASS`
+- **Deferred Branch:** `AUTHENTICATED_BRANCH_AUTH_DEFERRED`
+- **Guard:** `PRESERVE_AUTH_DEFERRED_SIGNED_IN_BRANCH`
+

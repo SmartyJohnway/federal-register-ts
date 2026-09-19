@@ -13,7 +13,7 @@ All compatibility claims are backed by reproducible execution evidence verified 
 | **Node.js 24** | Current Active LTS | **SUPPORTED_BLOCKING** | Verified on `ubuntu-latest` in mandatory blocking CI matrix. |
 | **Node.js 22** | Maintenance LTS | **SUPPORTED_BLOCKING** | Verified on `ubuntu-latest` in mandatory blocking CI matrix. |
 | **Node.js 20** | End of Life (EOL 2026-04-30) | **EOL_HISTORICAL_TECHNICAL_PASS** | Tests execute cleanly; historical observation only, not a supported prerequisite or blocking guarantee. |
-| **Node.js < 20** | End of Life (EOL) | **UNSUPPORTED** | Not tested; lacks native global Fetch API and modern JavaScript runtime features. |
+| **Node.js < 20** | End of Life (EOL) | **UNSUPPORTED** | Node.js versions below the accepted support matrix are not tested or guaranteed by this SDK. |
 
 ---
 

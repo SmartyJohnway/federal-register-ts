@@ -49,7 +49,7 @@ All 53 canonical operations are organized under 14 top-level client service name
 | Category Counts | `client.categoryCounts` | 2 operations | CSV reporting for document types and page count statistics. |
 | Site Notifications | `client.siteNotifications` | 1 operation | System and maintenance announcements. |
 | Documentation | `client.documentation` | 1 operation | Upstream OpenAPI 3.0 specification download. |
-| Clippings | `client.clippings` | 1 operation | Web-owned user clipping folders (session-authenticated). |
+| Clippings | `client.clippings` | 1 operation | Web-owned, session-aware endpoint for user clipping folders. |
 
 > **Architecture Note on Facet Subservices:** Rather than being standalone top-level services, aggregation endpoints are structured as nested subservices on their parent resource services:
 > - `client.documents.facets` (10 facet operations)
@@ -394,27 +394,34 @@ Retrieve agency suggestions based on query text.
 - `fetchOpenApi()`: `GET /documentation` —Fetch the official OpenAPI 3.0 specification directly from FederalRegister.gov. Returns `Promise<FederalRegisterOpenApiDocument>`.
 
 ### Clippings Service (`client.clippings`)
-- `current()`: `GET /clippings` —Web-owned session clippings endpoint. Requires upstream session authentication cookies. Returns `Promise<WebClippingsResponse>`.
+- `current()`: `GET /clippings` —Web-owned, session-aware user clippings endpoint. Anonymous requests return an empty clipboard (verified contract); authenticated/signed-in behavior remains `AUTH_DEFERRED`. Returns `Promise<WebClippingsResponse>`.
 
 ---
 
 ## Error Hierarchy
 
-All SDK errors inherit from the root `FederalRegisterError` class.
+The SDK provides a structured error hierarchy for handling request validation, HTTP transport errors, and API-specific condition payloads:
 
 ```text
-FederalRegisterError
-├── RequestValidationError                  (Client-side request validation failure)
-└── FederalRegisterHttpError<TBody>        (Non-2xx HTTP status from API)
-    ├── FederalRegisterStatusMessageError   ({ status, message } body from upstream)
-    ├── FederalRegisterSearchValidationError ({ errors: { [field]: reason } })
-    ├── FederalRegisterAgencyNotFoundError  ({ error: 404 } for missing agency)
-    ├── FederalRegisterEffectiveDateRangeError ({ error: string } for date calc)
-    ├── PublicInspectionIssueConditionError ({ status: 400, error: string })
-    ├── FederalRegisterEmptyJsonError       (Empty JSON {} response body)
-    ├── FederalRegisterEmptyBodyError       (Empty body with 0 bytes)
-    └── FederalRegisterRawResponseError     (Non-JSON or unparseable body)
+Error
+├── RequestValidationError                  (Client-side parameter validation failure)
+└── FederalRegisterError                    (Base class for API-related SDK failures)
+    ├── FederalRegisterHttpError<TBody>     (Non-2xx HTTP status from API)
+    │   ├── FederalRegisterStatusMessageError   ({ status, message } body from upstream)
+    │   ├── FederalRegisterSearchValidationError ({ errors: { [field]: reason } })
+    │   ├── FederalRegisterAgencyNotFoundError  ({ error: 404 } for missing agency)
+    │   ├── FederalRegisterEffectiveDateRangeError ({ error: string } for date calc)
+    │   ├── FederalRegisterEmptyJsonError       (Empty JSON {} response body)
+    │   ├── FederalRegisterEmptyBodyError       (Empty body with 0 bytes)
+    │   └── FederalRegisterRawResponseError     (Non-JSON or unparseable body)
+    └── PublicInspectionIssueConditionError (Operation-specific semantic 400 error in HTTP 200 payload)
 ```
+
+### Error Inheritance & Semantics
+- **`RequestValidationError`** extends JavaScript's built-in `Error` directly and is thrown before dispatching HTTP requests when parameter validation fails (e.g. invalid date format, out-of-range pagination, unauthorized field projection).
+- **`FederalRegisterError`** extends `Error` as the base class for server/API errors.
+- **`FederalRegisterHttpError<TBody>`** extends `FederalRegisterError` for non-2xx HTTP transport responses, preserving `status`, `contentType`, `bodyKind`, `body`, and `rawText`.
+- **`PublicInspectionIssueConditionError`** extends `FederalRegisterError` directly (not `FederalRegisterHttpError`). It represents the operation-specific Public Inspection Issue semantic error path where HTTP 200 may contain a body with status 400 semantics.
 
 ### Inspecting Errors
 

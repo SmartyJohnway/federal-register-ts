@@ -112,7 +112,7 @@ All 53 canonical operations are accessible via 14 top-level client namespaces:
 | Category Counts | `client.categoryCounts` | Category and page-count statistical CSV exports | `documentTypeCsv`, `pageCountCsv` |
 | Site Notifications | `client.siteNotifications` | System maintenance and API service notifications | `find` |
 | Documentation | `client.documentation` | Direct download of upstream OpenAPI specification | `fetchOpenApi` |
-| Clippings | `client.clippings` | User clipping folders (web-authenticated session) | `current` |
+| Clippings | `client.clippings` | User clipping folders (web-owned, session-aware) | `current` |
 
 > **Note on Facet Subservices:** Aggregations for published and public inspection documents are implemented as nested subservices (`client.documents.facets`, `client.publicInspection.facets`, and `client.publicInspection.issues.facets`) under their parent resource namespaces, rather than separate top-level namespaces.
 
