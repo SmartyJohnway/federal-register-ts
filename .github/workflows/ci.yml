@@ -143,11 +143,11 @@ jobs:
           sha256sum "$TARBALL_NAME"
           echo "Node version: $(node --version)"
           echo "npm version: $(npm --version)"
-          
+
           tar -tf "$TARBALL_NAME" > tarball_files.txt
           echo "=== Tarball Contents ($TARBALL_NAME) ==="
           cat tarball_files.txt
-          
+
           DISALLOWED=$(grep -vE '^package/(package\.json|README\.md|LICENSE|dist/.*)' tarball_files.txt || true)
           if [ -n "$DISALLOWED" ]; then
             echo "ERROR: Disallowed files detected in tarball outside publication allowlist:"
@@ -162,10 +162,10 @@ jobs:
           CONSUMER_DIR=$(mktemp -d)
           echo "Consumer directory: $CONSUMER_DIR"
           cd "$CONSUMER_DIR"
-          
+
           npm init -y
           npm install "$TARBALL_PATH"
-          
+
           # 1. CommonJS package-root runtime check
           node -e '
             const FR = require("federal-register-ts");
@@ -180,7 +180,7 @@ jobs:
             }
             console.log("CJS Consumer PASS: FederalRegisterClient instantiated, find method verified.");
           '
-          
+
           # 2. Node ESM consumer interoperability check
           node --input-type=module -e '
             import FR from "federal-register-ts";
@@ -192,7 +192,7 @@ jobs:
             const client = new FederalRegisterClient();
             console.log("NODE ESM CONSUMER INTEROP WITH COMMONJS PACKAGE: PASS");
           '
-          
+
           # 3. TypeScript package-root consumer check (pinned to current stable typescript@7.0.2)
           cat << 'EOF' > tsconfig.json
           {
@@ -204,28 +204,28 @@ jobs:
             }
           }
           EOF
-          
+
           cat << 'EOF' > consumer.ts
           import { FederalRegisterClient } from 'federal-register-ts';
           const client = new FederalRegisterClient();
           console.log("TS consumer successfully compiled.");
           EOF
-          
+
           npx -y --package typescript@7.0.2 tsc --noEmit
           echo "TypeScript package-root consumer compilation (TS 7.0.2): PASS"
-          
+
           # 4. Negative legacy/root surface probe (package-qualified, pinned to typescript@7.0.2)
           cat << 'EOF' > negative.ts
           import * as FR from 'federal-register-ts';
           // @ts-expect-error - Document is a type, not a runtime constructor
           const doc = new FR.Document();
           EOF
-          
+
           cat << 'EOF' > negative-should-fail.ts
           import * as FR from 'federal-register-ts';
           const doc = new FR.Document();
           EOF
-          
+
           if npx -y --package typescript@7.0.2 tsc negative-should-fail.ts --noEmit 2>/dev/null; then
             echo "ERROR: new FR.Document() compiled when it should have failed!"
             exit 1
@@ -272,7 +272,7 @@ jobs:
           stat -c %s "$TARBALL" 2>/dev/null || stat -f %z "$TARBALL"
           echo -n "SHA-256: "
           sha256sum "$TARBALL"
-          
+
           CONSUMER_DIR=$(mktemp -d)
           cd "$CONSUMER_DIR"
           npm init -y
@@ -334,15 +334,15 @@ jobs:
               "PublicInspectionIssueConditionError",
               "RequestValidationError"
             ].sort();
-            
+
             console.log("Actual exports count:", actualExports.length);
             console.log("Actual exports:", actualExports);
-            
+
             if (actualExports.length !== expectedExports.length) {
               console.error("Export count mismatch! Expected " + expectedExports.length + ", got " + actualExports.length);
               process.exit(1);
             }
-            
+
             for (let i = 0; i < expectedExports.length; i++) {
               if (actualExports[i] !== expectedExports[i]) {
                 console.error("Export mismatch at " + i + ": expected " + expectedExports[i] + ", got " + actualExports[i]);
@@ -357,7 +357,7 @@ jobs:
           node -e '
             const { FederalRegisterClient } = require("./dist/index.js");
             const client = new FederalRegisterClient();
-            
+
             const services = [
               "documents", "agencies", "publicInspection", "sections", "topics",
               "suggestedSearches", "holidays", "effectiveDates", "issues", "images",
@@ -369,7 +369,7 @@ jobs:
                 process.exit(1);
               }
             }
-            
+
             if (typeof client.agencies.list !== "function") process.exit(1);
             if (typeof client.agencies.find !== "function") process.exit(1);
             if (typeof client.agencies.findMany !== "function") process.exit(1);
