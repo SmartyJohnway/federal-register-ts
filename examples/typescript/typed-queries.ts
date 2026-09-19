@@ -22,6 +22,7 @@ const mockFetch: typeof globalThis.fetch = async (input: RequestInfo | URL) => {
     const payload: SearchResultEnvelope<DocumentSearchItem<'title' | 'document_number' | 'publication_date'>> = {
       count: 1,
       total_pages: 1,
+      description: 'Documents matching query',
       results: [
         {
           title: 'Standards for Clean Water Infrastructure',
