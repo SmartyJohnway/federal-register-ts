@@ -7,15 +7,15 @@ const path = require('path');
 function auditWorkflow(filePath) {
   const content = fs.readFileSync(filePath, 'utf8');
   const lines = content.split(/\r?\n/);
-  
+
   let inRunBlock = false;
   let runIndent = 0;
   const injectionFindings = [];
-  
+
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const lineNum = i + 1;
-    
+
     // Check for run block start
     const runMatch = line.match(/^(\s*)run:\s*(\|.*|>.*)?$/);
     if (runMatch) {
@@ -23,7 +23,7 @@ function auditWorkflow(filePath) {
       runIndent = runMatch[1].length;
       continue;
     }
-    
+
     // If in run block, check indentation
     if (inRunBlock) {
       const currentIndent = line.match(/^(\s*)/)[1].length;
