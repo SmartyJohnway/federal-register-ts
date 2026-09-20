@@ -74,10 +74,13 @@ jobs:
         run: npm test
 
       - name: Validate release candidate metadata
+        env:
+          TARGET_VERSION: ${{ inputs.target_version }}
+          DIST_TAG: ${{ inputs.dist_tag }}
         run: |
           node scripts/release/verify-release-candidate.js \
-            --target-version "${{ inputs.target_version }}" \
-            --dist-tag "${{ inputs.dist_tag }}"
+            --target-version "$TARGET_VERSION" \
+            --dist-tag "$DIST_TAG"
 
       - name: Pack release tarball (exact binding)
         id: pack
@@ -96,8 +99,21 @@ jobs:
           echo "Filename: $TARBALL_NAME"
 
       - name: Audit release tarball
-        run: node scripts/release/audit-tarball.js "${{ steps.pack.outputs.tarball_name }}"
+        env:
+          TARBALL_NAME: ${{ steps.pack.outputs.tarball_name }}
+        run: node scripts/release/audit-tarball.js "$TARBALL_NAME"
 
       - name: Test non-publishing dry-run publish
+        env:
+          DIST_TAG: ${{ inputs.dist_tag }}
         run: |
-          npm publish --dry-run --tag "${{ inputs.dist_tag }}"
+          npm publish --dry-run --tag "$DIST_TAG"
+
+      - name: Clean transient tarball artifact
+        env:
+          TARBALL_NAME: ${{ steps.pack.outputs.tarball_name }}
+        run: |
+          if [ -n "$TARBALL_NAME" ] && [ -f "$TARBALL_NAME" ]; then
+            rm -f "$TARBALL_NAME"
+            echo "Cleaned transient tarball: $TARBALL_NAME"
+          fi
