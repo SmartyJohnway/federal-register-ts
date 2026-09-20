@@ -6,28 +6,37 @@ const path = require('path');
 const crypto = require('crypto');
 const { execSync } = require('child_process');
 
-function findTarball(dir) {
-  const files = fs.readdirSync(dir);
-  const tarballs = files.filter(f => f.startsWith('federal-register-ts-') && f.endsWith('.tgz'));
-  if (tarballs.length === 0) {
-    throw new Error(`No federal-register-ts-*.tgz tarball found in ${dir}`);
-  }
-  return path.join(dir, tarballs[0]);
-}
-
 function main() {
-  const targetDir = process.argv[2] ? path.resolve(process.argv[2]) : process.cwd();
-  let tarballPath;
+  // Require explicit tarball path — no directory-scan fallback
+  const tarballArg = process.argv[2];
 
-  if (fs.existsSync(targetDir) && fs.statSync(targetDir).isFile() && targetDir.endsWith('.tgz')) {
-    tarballPath = targetDir;
-  } else {
-    tarballPath = findTarball(targetDir);
+  if (!tarballArg) {
+    console.error('Usage: node audit-tarball.js <exact-tarball-path>');
+    console.error('Error: Explicit tarball path is required. Directory discovery is not supported.');
+    process.exit(1);
+  }
+
+  const tarballPath = path.resolve(tarballArg);
+
+  if (!fs.existsSync(tarballPath)) {
+    console.error(`Error: Tarball not found at path: ${tarballPath}`);
+    process.exit(1);
+  }
+
+  if (!tarballPath.endsWith('.tgz')) {
+    console.error(`Error: Path does not point to a .tgz file: ${tarballPath}`);
+    process.exit(1);
+  }
+
+  if (!fs.statSync(tarballPath).isFile()) {
+    console.error(`Error: Path is not a regular file: ${tarballPath}`);
+    process.exit(1);
   }
 
   console.log('=== Release Tarball Security & Composition Audit ===');
   console.log(`Tarball Path: ${tarballPath}`);
 
+  // Compute exact hashes
   const tarballBytes = fs.readFileSync(tarballPath);
   const sha256 = crypto.createHash('sha256').update(tarballBytes).digest('hex');
   const sha512 = crypto.createHash('sha512').update(tarballBytes).digest('hex');
@@ -44,6 +53,7 @@ function main() {
   const entries = rawEntries.map(e => e.replace(/^package\//, ''));
   console.log(`Total Entries: ${entries.length}`);
 
+  // Forbidden prefixes — detect source/config leakage into publication surface
   const forbiddenPrefixes = [
     'src/',
     'tests/',
@@ -78,6 +88,7 @@ function main() {
   console.log(`Distribution Files (dist/**): ${distCount}`);
   console.log(`Root Package Files:           ${rootFiles.join(', ')}`);
 
+  // Verify allowed publication surface — no forbidden entries
   if (leaks.length > 0) {
     console.error('\nCRITICAL SECURITY LEAKAGE DETECTED:');
     for (const leak of leaks) {
@@ -98,8 +109,12 @@ function main() {
     process.exit(1);
   }
 
-  console.log('\nTarball Path Leakage Audit: PASS (0 forbidden entries)');
-  console.log('Tarball Composition Audit: PASS');
+  console.log('\n=== Audit Summary ===');
+  console.log('Publication Surface Leakage Check: PASS (0 forbidden entries)');
+  console.log('Mandatory Root Files Check:        PASS');
+  console.log('Exact Hash Computation:            RECORDED');
+  console.log('Entry Count:                       RECORDED');
+  console.log('Tarball Composition Audit:         PASS');
 }
 
 main();

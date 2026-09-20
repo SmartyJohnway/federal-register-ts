@@ -36,19 +36,33 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write # required for OIDC token minting & provenance attestation
     steps:
+      - name: Enforce R3-05 zero-publish safety invariant
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          echo "CRITICAL ERROR: dry_run must be true in R3-05."
+          echo "Live npm publication is STRICTLY FORBIDDEN in milestone R3-05."
+          echo "Live stage/publish is gated for future R3-07/R3-08."
+          exit 1
+
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js 22 (no cache — release hardening)
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: 22
-          cache: 'npm'
+
+      - name: Record release toolchain identity
+        run: |
+          echo "=== Release Toolchain Identity ==="
+          echo "Node: $(node --version)"
+          echo "npm:  $(npm --version)"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "Runner Arch: ${{ runner.arch }}"
 
       - name: Install dependencies
         run: npm ci
@@ -65,23 +79,25 @@ jobs:
             --target-version "${{ inputs.target_version }}" \
             --dist-tag "${{ inputs.dist_tag }}"
 
-      - name: Pack release tarball
-        run: npm pack
+      - name: Pack release tarball (exact binding)
+        id: pack
+        run: |
+          PACK_OUTPUT=$(npm pack --json)
+          TARBALL_NAME=$(echo "$PACK_OUTPUT" | node -e "
+            const chunks = [];
+            process.stdin.on('data', c => chunks.push(c));
+            process.stdin.on('end', () => {
+              const data = JSON.parse(chunks.join(''));
+              console.log(Array.isArray(data) ? data[0].filename : data.filename);
+            });
+          ")
+          echo "tarball_name=$TARBALL_NAME" >> "$GITHUB_OUTPUT"
+          echo "=== Exact Tarball Binding ==="
+          echo "Filename: $TARBALL_NAME"
 
       - name: Audit release tarball
-        run: node scripts/release/audit-tarball.js
+        run: node scripts/release/audit-tarball.js "${{ steps.pack.outputs.tarball_name }}"
 
       - name: Test non-publishing dry-run publish
         run: |
           npm publish --dry-run --tag "${{ inputs.dist_tag }}"
-
-      - name: Enforce R3-05 zero-publish safety invariant
-        run: |
-          echo "=== R3-05 SAFETY INVARIANT ATTESTATION ==="
-          echo "Live npm publication is STRICTLY FORBIDDEN in milestone R3-05."
-          echo "Inputs validated: version=${{ inputs.target_version }}, dist-tag=${{ inputs.dist_tag }}, dry_run=${{ inputs.dry_run }}."
-          if [ "${{ inputs.dry_run }}" != "true" ]; then
-            echo "CRITICAL ERROR: dry_run must be true in R3-05. Live publication is gated for R3-07/R3-08."
-            exit 1
-          fi
-          echo "Safety invariant check: PASS (dry-run only verified)."
