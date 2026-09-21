@@ -1,27 +1,20 @@
-name: Release Engineering & Supply-Chain Validation
+name: Release & Staged Publishing
 
 on:
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: 'Execute in dry-run mode (MUST be true in R3-05)'
-        type: boolean
-        required: true
-        default: true
       target_version:
-        description: 'Target release version (e.g., 1.0.0-rc.1 or 1.0.0)'
+        description: 'Target release version (must be 1.0.0)'
         type: string
         required: true
         default: '1.0.0'
       dist_tag:
-        description: 'npm distribution tag (latest, rc, next)'
+        description: 'npm distribution tag (must be latest)'
         type: choice
         options:
-          - rc
-          - next
           - latest
         required: true
-        default: 'rc'
+        default: 'latest'
 
 concurrency:
   group: release-${{ github.ref }}
@@ -32,18 +25,23 @@ permissions:
 
 jobs:
   validate-and-pack:
-    name: Validate & Dry-Run Pack
+    name: Validate & Pack Stable Artifact
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    outputs:
+      tarball_name: ${{ steps.pack.outputs.tarball_name }}
+      tarball_sha256: ${{ steps.audit.outputs.tarball_sha256 }}
     steps:
-      - name: Enforce R3-05 zero-publish safety invariant
-        if: ${{ inputs.dry_run != true }}
+      - name: Enforce strict R3-08 release parameters
+        env:
+          TARGET_VERSION: ${{ inputs.target_version }}
+          DIST_TAG: ${{ inputs.dist_tag }}
         run: |
-          echo "CRITICAL ERROR: dry_run must be true in R3-05."
-          echo "Live npm publication is STRICTLY FORBIDDEN in milestone R3-05."
-          echo "Live stage/publish is gated for future R3-07/R3-08."
-          exit 1
+          if [ "$TARGET_VERSION" != "1.0.0" ] || [ "$DIST_TAG" != "latest" ]; then
+            echo "CRITICAL ERROR: R3-08 only authorizes target_version=1.0.0 and dist_tag=latest."
+            exit 1
+          fi
 
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -73,6 +71,9 @@ jobs:
       - name: Run test suite
         run: npm test
 
+      - name: Run typecheck
+        run: npm run typecheck
+
       - name: Validate release candidate metadata
         env:
           TARGET_VERSION: ${{ inputs.target_version }}
@@ -99,21 +100,68 @@ jobs:
           echo "Filename: $TARBALL_NAME"
 
       - name: Audit release tarball
+        id: audit
         env:
           TARBALL_NAME: ${{ steps.pack.outputs.tarball_name }}
-        run: node scripts/release/audit-tarball.js "$TARBALL_NAME"
+        run: |
+          node scripts/release/audit-tarball.js "$TARBALL_NAME"
+          SHA256_HASH=$(sha256sum "$TARBALL_NAME" | cut -d ' ' -f 1)
+          echo "tarball_sha256=$SHA256_HASH" >> "$GITHUB_OUTPUT"
+          if [ "$SHA256_HASH" != "c91e63bfa28ca3a9de10a9b5225a8e774a3ae6fe7f1de3bd36e7297bf6db6950" ]; then
+            echo "CRITICAL ERROR: Tarball SHA-256 does not match frozen stable artifact!"
+            exit 1
+          fi
 
-      - name: Test non-publishing dry-run publish
+      - name: Upload validated tarball artifact
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: release-tarball
+          path: ${{ steps.pack.outputs.tarball_name }}
+          if-no-files-found: error
+          retention-days: 1
+
+  stage-publish:
+    name: OIDC Staged Publish (npm-release)
+    needs: validate-and-pack
+    runs-on: ubuntu-latest
+    environment: npm-release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Setup Node.js 22 (no cache — release hardening)
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 22
+
+      - name: Download validated tarball artifact
+        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4.1.9
+        with:
+          name: release-tarball
+
+      - name: Verify downloaded tarball integrity
+        env:
+          EXPECTED_SHA256: "c91e63bfa28ca3a9de10a9b5225a8e774a3ae6fe7f1de3bd36e7297bf6db6950"
+        run: |
+          TARBALL="federal-register-ts-1.0.0.tgz"
+          if [ ! -f "$TARBALL" ]; then
+            echo "CRITICAL ERROR: Tarball not found!"
+            exit 1
+          fi
+          ACTUAL_SHA256=$(sha256sum "$TARBALL" | cut -d ' ' -f 1)
+          echo "Actual SHA256:   $ACTUAL_SHA256"
+          echo "Expected SHA256: $EXPECTED_SHA256"
+          if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+            echo "CRITICAL ERROR: Downloaded tarball SHA-256 mismatch!"
+            exit 1
+          fi
+          echo "Tarball integrity verified."
+
+      - name: Execute OIDC Staged Publish
         env:
           DIST_TAG: ${{ inputs.dist_tag }}
         run: |
-          npm publish --dry-run --tag "$DIST_TAG"
-
-      - name: Clean transient tarball artifact
-        env:
-          TARBALL_NAME: ${{ steps.pack.outputs.tarball_name }}
-        run: |
-          if [ -n "$TARBALL_NAME" ] && [ -f "$TARBALL_NAME" ]; then
-            rm -f "$TARBALL_NAME"
-            echo "Cleaned transient tarball: $TARBALL_NAME"
-          fi
+          echo "=== Executing npm stage publish via OIDC ==="
+          npm stage publish ./federal-register-ts-1.0.0.tgz \
+            --tag "$DIST_TAG" \
+            --registry=https://registry.npmjs.org/
