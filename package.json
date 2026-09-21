@@ -1,7 +1,7 @@
 {
   "name": "federal-register-ts",
   "version": "1.0.0",
-  "description": "A TypeScript client for the Federal Register API, inspired by the official Ruby gem.",
+  "description": "Independent, type-safe TypeScript SDK for the FederalRegister.gov API.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -10,17 +10,25 @@
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "test": "jest"
+    "test": "jest",
+    "test:ci": "jest --runInBand",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "federal-register",
-    "api",
+    "federal-register-api",
+    "api-client",
     "typescript",
-    "government",
-    "usa"
+    "sdk",
+    "government-data",
+    "public-inspection"
   ],
   "author": "SmartyJohnway",
   "license": "MIT",
+  "homepage": "https://github.com/SmartyJohnway/federal-register-ts#readme",
+  "bugs": {
+    "url": "https://github.com/SmartyJohnway/federal-register-ts/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SmartyJohnway/federal-register-ts.git"

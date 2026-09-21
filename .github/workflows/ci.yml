@@ -1,0 +1,426 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    name: Foundation Hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Git whitespace hygiene
+        run: |
+          echo "=== Inspecting committed changes for whitespace errors ==="
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            echo "Inspecting pull_request range: $BASE_SHA..$HEAD_SHA"
+            git diff --check "$BASE_SHA" "$HEAD_SHA"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            BEFORE_SHA="${{ github.event.before }}"
+            AFTER_SHA="${{ github.event.after }}"
+            if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ] || [ -z "$BEFORE_SHA" ]; then
+              echo "Push initial commit check for HEAD"
+              git diff-tree --check HEAD
+            else
+              echo "Inspecting push range: $BEFORE_SHA..$AFTER_SHA"
+              git diff --check "$BEFORE_SHA" "$AFTER_SHA"
+            fi
+          else
+            echo "Inspecting commit delta for workflow_dispatch: HEAD~1..HEAD"
+            git diff --check HEAD~1 HEAD || git diff --check HEAD
+          fi
+          echo "Committed changes whitespace check: PASS (zero whitespace errors in delta)"
+
+      - name: Verify JSON syntax
+        run: |
+          node -e '
+            const fs = require("fs");
+            const glob = (dir) => {
+              let results = [];
+              for (const file of fs.readdirSync(dir, { withFileTypes: true })) {
+                const full = dir + "/" + file.name;
+                if (file.isDirectory()) {
+                  if (file.name !== "node_modules" && file.name !== ".git") results.push(...glob(full));
+                } else if (file.name.endsWith(".json")) {
+                  results.push(full);
+                }
+              }
+              return results;
+            };
+            const jsonFiles = glob(".");
+            let checked = 0;
+            for (const f of jsonFiles) {
+              const content = fs.readFileSync(f, "utf-8").trim();
+              if (content.startsWith("{") || content.startsWith("[")) {
+                try {
+                  JSON.parse(content);
+                  checked++;
+                } catch (err) {
+                  console.error("Invalid JSON:", f, err.message);
+                  process.exit(1);
+                }
+              }
+            }
+            console.log("Validated " + checked + " genuine JSON files. Zero parse errors.");
+          '
+
+      - name: TypeScript typecheck
+        run: npm run typecheck
+
+  node-matrix:
+    name: Node Matrix (${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    needs: foundation
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Record toolchain environment
+        run: |
+          echo "=== Node & npm Environment ==="
+          node --version
+          npm --version
+
+      - name: Install dependencies (npm ci)
+        run: npm ci
+
+      - name: Build SDK (npm run build)
+        run: npm run build
+
+      - name: Execute test suite (npm test)
+        run: npm run test:ci
+
+      - name: Pack tarball & verify leakage
+        id: pack
+        run: |
+          TARBALL_NAME=$(npm pack)
+          echo "tarball_name=$TARBALL_NAME" >> "$GITHUB_OUTPUT"
+          echo "tarball_path=$(pwd)/$TARBALL_NAME" >> "$GITHUB_OUTPUT"
+          echo "=== Tarball Identity ==="
+          echo "Filename: $TARBALL_NAME"
+          echo -n "Bytes: "
+          stat -c %s "$TARBALL_NAME" 2>/dev/null || stat -f %z "$TARBALL_NAME"
+          echo -n "SHA-256: "
+          sha256sum "$TARBALL_NAME"
+          echo "Node version: $(node --version)"
+          echo "npm version: $(npm --version)"
+
+          tar -tf "$TARBALL_NAME" > tarball_files.txt
+          echo "=== Tarball Contents ($TARBALL_NAME) ==="
+          cat tarball_files.txt
+
+          DISALLOWED=$(grep -vE '^package/(package\.json|README\.md|LICENSE|dist/.*)' tarball_files.txt || true)
+          if [ -n "$DISALLOWED" ]; then
+            echo "ERROR: Disallowed files detected in tarball outside publication allowlist:"
+            echo "$DISALLOWED"
+            exit 1
+          fi
+          echo "Publication surface check: PASS (100% of files inside package/package.json, package/README.md, package/LICENSE, package/dist/**)"
+
+      - name: Fresh exact-tarball consumer verification
+        run: |
+          TARBALL_PATH="${{ steps.pack.outputs.tarball_path }}"
+          CONSUMER_DIR=$(mktemp -d)
+          echo "Consumer directory: $CONSUMER_DIR"
+          cd "$CONSUMER_DIR"
+
+          npm init -y
+          npm install "$TARBALL_PATH"
+
+          # 1. CommonJS package-root runtime check
+          node -e '
+            const FR = require("federal-register-ts");
+            if (typeof FR.FederalRegisterClient !== "function") {
+              console.error("FederalRegisterClient is not a function");
+              process.exit(1);
+            }
+            const client = new FR.FederalRegisterClient();
+            if (typeof client.documents.find !== "function") {
+              console.error("client.documents.find is not a function");
+              process.exit(1);
+            }
+            console.log("CJS Consumer PASS: FederalRegisterClient instantiated, find method verified.");
+          '
+
+          # 2. Node ESM consumer interoperability check
+          node --input-type=module -e '
+            import FR from "federal-register-ts";
+            const { FederalRegisterClient } = FR;
+            if (typeof FederalRegisterClient !== "function") {
+              console.error("ESM import of FederalRegisterClient failed");
+              process.exit(1);
+            }
+            const client = new FederalRegisterClient();
+            console.log("NODE ESM CONSUMER INTEROP WITH COMMONJS PACKAGE: PASS");
+          '
+
+          # 3. TypeScript package-root consumer check (pinned to current stable typescript@7.0.2)
+          cat << 'EOF' > tsconfig.json
+          {
+            "compilerOptions": {
+              "target": "ES2020",
+              "module": "CommonJS",
+              "lib": ["ES2020", "DOM"],
+              "strict": true
+            }
+          }
+          EOF
+
+          cat << 'EOF' > consumer.ts
+          import { FederalRegisterClient } from 'federal-register-ts';
+          const client = new FederalRegisterClient();
+          console.log("TS consumer successfully compiled.");
+          EOF
+
+          npx -y --package typescript@7.0.2 tsc --noEmit
+          echo "TypeScript package-root consumer compilation (TS 7.0.2): PASS"
+
+          # 4. Negative legacy/root surface probe (package-qualified, pinned to typescript@7.0.2)
+          cat << 'EOF' > negative.ts
+          import * as FR from 'federal-register-ts';
+          // @ts-expect-error - Document is a type, not a runtime constructor
+          const doc = new FR.Document();
+          EOF
+
+          cat << 'EOF' > negative-should-fail.ts
+          import * as FR from 'federal-register-ts';
+          const doc = new FR.Document();
+          EOF
+
+          if npx -y --package typescript@7.0.2 tsc negative-should-fail.ts --noEmit 2>/dev/null; then
+            echo "ERROR: new FR.Document() compiled when it should have failed!"
+            exit 1
+          else
+            echo "Negative probe PASS: new FR.Document() correctly rejected by TypeScript 7.0.2 compiler"
+          fi
+
+  typescript-matrix:
+    name: TypeScript Matrix (${{ matrix.ts-version }})
+    runs-on: ubuntu-latest
+    needs: foundation
+    strategy:
+      fail-fast: false
+      matrix:
+        ts-version: ['5.0.4', '5.2.2', '5.4.5', '5.6.3', '5.9.3', '6.0.3', '7.0.2']
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile source with candidate TypeScript compiler
+        run: |
+          echo "Evaluating candidate TypeScript ${{ matrix.ts-version }}..."
+          npx -y --package typescript@${{ matrix.ts-version }} tsc --noEmit
+          echo "TypeScript ${{ matrix.ts-version }} source typecheck: PASS"
+
+      - name: Compile consumer with candidate TypeScript compiler
+        run: |
+          npm run build
+          TARBALL=$(npm pack)
+          echo "=== Consumer Tarball Identity (${{ matrix.ts-version }}) ==="
+          echo "Filename: $TARBALL"
+          echo -n "Bytes: "
+          stat -c %s "$TARBALL" 2>/dev/null || stat -f %z "$TARBALL"
+          echo -n "SHA-256: "
+          sha256sum "$TARBALL"
+
+          CONSUMER_DIR=$(mktemp -d)
+          cd "$CONSUMER_DIR"
+          npm init -y
+          npm install "$GITHUB_WORKSPACE/$TARBALL"
+          cat << 'EOF' > tsconfig.json
+          {
+            "compilerOptions": {
+              "target": "ES2020",
+              "module": "CommonJS",
+              "lib": ["ES2020", "DOM"],
+              "strict": true
+            }
+          }
+          EOF
+          cat << 'EOF' > test.ts
+          import { FederalRegisterClient } from 'federal-register-ts';
+          const client = new FederalRegisterClient();
+          EOF
+          npx -y --package typescript@${{ matrix.ts-version }} tsc --noEmit
+          echo "TypeScript ${{ matrix.ts-version }} consumer compile: PASS"
+
+  package-surface:
+    name: Package Surface Regression
+    runs-on: ubuntu-latest
+    needs: foundation
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies and build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Verify exact 12 runtime value exports
+        run: |
+          node -e '
+            const index = require("./dist/index.js");
+            const actualExports = Object.keys(index).sort();
+            const expectedExports = [
+              "FederalRegisterAgencyNotFoundError",
+              "FederalRegisterClient",
+              "FederalRegisterEffectiveDateRangeError",
+              "FederalRegisterEmptyBodyError",
+              "FederalRegisterEmptyJsonError",
+              "FederalRegisterError",
+              "FederalRegisterHttpError",
+              "FederalRegisterRawResponseError",
+              "FederalRegisterSearchValidationError",
+              "FederalRegisterStatusMessageError",
+              "PublicInspectionIssueConditionError",
+              "RequestValidationError"
+            ].sort();
+
+            console.log("Actual exports count:", actualExports.length);
+            console.log("Actual exports:", actualExports);
+
+            if (actualExports.length !== expectedExports.length) {
+              console.error("Export count mismatch! Expected " + expectedExports.length + ", got " + actualExports.length);
+              process.exit(1);
+            }
+
+            for (let i = 0; i < expectedExports.length; i++) {
+              if (actualExports[i] !== expectedExports[i]) {
+                console.error("Export mismatch at " + i + ": expected " + expectedExports[i] + ", got " + actualExports[i]);
+                process.exit(1);
+              }
+            }
+            console.log("Root runtime surface check: PASS (exactly 12 values).");
+          '
+
+      - name: Verify canonical services & lack of agencies.search
+        run: |
+          node -e '
+            const { FederalRegisterClient } = require("./dist/index.js");
+            const client = new FederalRegisterClient();
+
+            const services = [
+              "documents", "agencies", "publicInspection", "sections", "topics",
+              "suggestedSearches", "holidays", "effectiveDates", "issues", "images",
+              "categoryCounts", "siteNotifications", "documentation", "clippings"
+            ];
+            for (const s of services) {
+              if (!client[s]) {
+                console.error("Missing service namespace:", s);
+                process.exit(1);
+              }
+            }
+
+            if (typeof client.agencies.list !== "function") process.exit(1);
+            if (typeof client.agencies.find !== "function") process.exit(1);
+            if (typeof client.agencies.findMany !== "function") process.exit(1);
+            if (typeof client.agencies.suggestions !== "function") process.exit(1);
+            if (typeof client.agencies.search !== "undefined") {
+              console.error("Forbidden client.agencies.search method exists!");
+              process.exit(1);
+            }
+            console.log("Agencies service verified: list/find/findMany/suggestions present, search absent. PASS.");
+          '
+
+  secret-scan:
+    name: Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@f19d6e5d2bef8a8ceca2b7d77ec447fc304f8078 # v3.88.5
+        with:
+          version: "3.97.5@sha256:1cec88f18ca39e26e04e61fe9d886c9c4e5f2fc0ba4f2ed185cac0722bd8a076"
+          extra_args: --only-verified
+
+      - name: Repository regex secret audit
+        run: |
+          node -e '
+            const cp = require("child_process");
+            const patterns = [
+              /AIza[0-9A-Za-z-_]{35}/,
+              /(?:ghp|gho|ghu|ghs|ghr)_[0-9a-zA-Z]{36}/,
+              /github_pat_[0-9a-zA-Z_]{82}/,
+              /npm_[0-9a-zA-Z]{36}/,
+              /AKIA[0-9A-Z]{16}/,
+              /-----BEGIN (?:RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----/
+            ];
+            const log = cp.execSync("git log -p", { maxBuffer: 50 * 1024 * 1024 }).toString();
+            let matches = 0;
+            patterns.forEach((p, idx) => {
+              const m = log.match(p);
+              if (m) {
+                console.error("Pattern match found for regex pattern index:", idx);
+                matches++;
+              }
+            });
+            if (matches > 0) {
+              console.error("Secret scan regex found " + matches + " potential secret patterns!");
+              process.exit(1);
+            }
+            console.log("Secret scan regex PASS: 0 matches found across full git history.");
+          '

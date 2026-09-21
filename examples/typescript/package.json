@@ -1,0 +1,6 @@
+{
+  "name": "example-typescript-consumer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TypeScript typed consumer example for federal-register-ts"
+}

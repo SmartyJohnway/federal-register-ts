@@ -1,0 +1,7 @@
+{
+  "name": "example-esm-consumer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ECMAScript Modules (ESM) interop consumer example for federal-register-ts",
+  "type": "module"
+}
