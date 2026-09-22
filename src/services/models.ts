@@ -29,6 +29,7 @@ import type { MultiLookupNotFoundErrors } from "../core/errors";
 export interface SearchMetadataEnvelope {
   readonly count: number;
   readonly description: string;
+  readonly is_neural?: boolean;
 }
 
 export interface NonEmptySearchResultEnvelope<T> extends SearchMetadataEnvelope {
