@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       target_version:
-        description: 'Target release version (must be 1.0.0)'
+        description: 'Target release version (must be 1.0.1)'
         type: string
         required: true
-        default: '1.0.0'
+        default: '1.0.1'
       dist_tag:
         description: 'npm distribution tag (must be latest)'
         type: choice
@@ -33,13 +33,13 @@ jobs:
       tarball_name: ${{ steps.pack.outputs.tarball_name }}
       tarball_sha256: ${{ steps.audit.outputs.tarball_sha256 }}
     steps:
-      - name: Enforce strict R3-08 release parameters
+      - name: Enforce strict R3-POSTGA-01-R1 release parameters
         env:
           TARGET_VERSION: ${{ inputs.target_version }}
           DIST_TAG: ${{ inputs.dist_tag }}
         run: |
-          if [ "$TARGET_VERSION" != "1.0.0" ] || [ "$DIST_TAG" != "latest" ]; then
-            echo "CRITICAL ERROR: R3-08 only authorizes target_version=1.0.0 and dist_tag=latest."
+          if [ "$TARGET_VERSION" != "1.0.1" ] || [ "$DIST_TAG" != "latest" ]; then
+            echo "CRITICAL ERROR: R3-POSTGA-01-R1 only authorizes target_version=1.0.1 and dist_tag=latest."
             exit 1
           fi
 
@@ -115,7 +115,7 @@ jobs:
           node scripts/release/audit-tarball.js "$TARBALL_NAME"
           SHA256_HASH=$(sha256sum "$TARBALL_NAME" | cut -d ' ' -f 1)
           echo "tarball_sha256=$SHA256_HASH" >> "$GITHUB_OUTPUT"
-          if [ "$SHA256_HASH" != "c91e63bfa28ca3a9de10a9b5225a8e774a3ae6fe7f1de3bd36e7297bf6db6950" ]; then
+          if [ "$SHA256_HASH" != "bbbf653a6900debfe9a8a382a906ff4cdf6e750f2255b4abce38d3254c048685" ]; then
             echo "CRITICAL ERROR: Tarball SHA-256 does not match frozen stable artifact!"
             exit 1
           fi
@@ -163,9 +163,9 @@ jobs:
 
       - name: Verify downloaded tarball integrity
         env:
-          EXPECTED_SHA256: "c91e63bfa28ca3a9de10a9b5225a8e774a3ae6fe7f1de3bd36e7297bf6db6950"
+          EXPECTED_SHA256: "bbbf653a6900debfe9a8a382a906ff4cdf6e750f2255b4abce38d3254c048685"
         run: |
-          TARBALL="federal-register-ts-1.0.0.tgz"
+          TARBALL="federal-register-ts-1.0.1.tgz"
           if [ ! -f "$TARBALL" ]; then
             echo "CRITICAL ERROR: Tarball not found!"
             exit 1
@@ -184,6 +184,6 @@ jobs:
           DIST_TAG: ${{ inputs.dist_tag }}
         run: |
           echo "=== Executing npm stage publish via OIDC ==="
-          npm stage publish ./federal-register-ts-1.0.0.tgz \
+          npm stage publish ./federal-register-ts-1.0.1.tgz \
             --tag "$DIST_TAG" \
             --registry=https://registry.npmjs.org/
