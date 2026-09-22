@@ -59,6 +59,23 @@ function searchDecoder<T>(decoded: DecodedResponse): T {
   throw classifySearchHttpError(decoded);
 }
 
+/**
+ * Multi-lookup decoder normalizing upstream single-item response polymorphism.
+ */
+function decodeDocumentMultiLookupResponse<T>(decoded: DecodedResponse): MultiLookupEnvelope<T> {
+  const parsed = decodeJsonResponse(decoded);
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    if ("results" in parsed && Array.isArray(parsed.results)) {
+      return parsed as MultiLookupEnvelope<T>;
+    }
+    return {
+      count: 1,
+      results: [parsed as T],
+    };
+  }
+  return parsed as MultiLookupEnvelope<T>;
+}
+
 export class DocumentsService {
   readonly #client: FederalRegisterClient;
 
@@ -126,7 +143,7 @@ export class DocumentsService {
     return runtime.execute<MultiLookupEnvelope<DocumentShow<K>>>(
       `/documents/${encodedPathSegment}`,
       qs,
-      decodeJsonResponse
+      decodeDocumentMultiLookupResponse
     );
   }
 

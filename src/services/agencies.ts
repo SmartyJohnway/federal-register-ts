@@ -42,6 +42,20 @@ function agencyFindDecoder<T>(decoded: DecodedResponse): T {
   throw classifyAgencyHttpError(decoded);
 }
 
+/**
+ * Agency multi-lookup decoder normalizing upstream single-item response to plain array.
+ */
+function decodeAgencyListResponse<T>(decoded: DecodedResponse): T[] {
+  const parsed = decodeJsonResponse(decoded);
+  if (Array.isArray(parsed)) {
+    return parsed as T[];
+  }
+  if (parsed && typeof parsed === "object") {
+    return [parsed as T];
+  }
+  return [];
+}
+
 export class AgenciesService {
   readonly #client: FederalRegisterClient;
 
@@ -105,7 +119,7 @@ export class AgenciesService {
     return runtime.execute<AgencyProjection<K>[]>(
       `/agencies/${encodedPath}`,
       qs,
-      decodeJsonResponse
+      decodeAgencyListResponse
     );
   }
 
