@@ -9,13 +9,13 @@ Independent, type-safe TypeScript SDK for the [FederalRegister.gov](https://www.
 
 ---
 
-## Publication Status
+## Installation
 
-> **Notice:** The `federal-register-ts` package has not yet been published to the npm registry. After formal release, the installation command will be:
-> ```bash
-> npm install federal-register-ts
-> ```
-> To use or evaluate the SDK prior to publication, please clone the repository and build from source.
+Install the package via npm:
+
+```bash
+npm install federal-register-ts
+```
 
 ---
 
