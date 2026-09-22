@@ -22,6 +22,7 @@ import {
   TopicField,
   DocumentOrder,
   DocumentOrderInput,
+  DocumentTypeCode,
   SearchTypeId,
   DateCondition,
   CfrCondition,
@@ -498,3 +499,311 @@ export function validateJsonpCallback(callback: any, fieldName: string = "callba
   }
   return callback;
 }
+
+export const DOCUMENT_TYPE_CODES: ReadonlySet<string> = new Set<DocumentTypeCode>([
+  "RULE",
+  "PRORULE",
+  "NOTICE",
+  "PRESDOCU",
+]);
+
+export function validateDocumentTypeCodes(types: any, fieldName = "types"): readonly DocumentTypeCode[] {
+  if (!Array.isArray(types)) {
+    throw new RequestValidationError(
+      `Field '${fieldName}' must be an array of DocumentTypeCode values. Received: ${JSON.stringify(types)}`,
+      fieldName,
+      types
+    );
+  }
+  for (let i = 0; i < types.length; i++) {
+    const item = types[i];
+    if (typeof item !== "string" || !DOCUMENT_TYPE_CODES.has(item as DocumentTypeCode)) {
+      throw new RequestValidationError(
+        `Invalid DocumentTypeCode '${item}' at index ${i} for '${fieldName}'. Allowed values: ${Array.from(DOCUMENT_TYPE_CODES).join(", ")}.`,
+        fieldName,
+        item
+      );
+    }
+  }
+  return types as readonly DocumentTypeCode[];
+}
+
+export function validateRequiredParams(params: any, contextName: string): void {
+  if (params === undefined || params === null || typeof params !== "object" || Array.isArray(params)) {
+    throw new RequestValidationError(
+      `Parameter object for ${contextName} is required and cannot be ${params === null ? "null" : typeof params}.`,
+      "params",
+      params
+    );
+  }
+}
+
+export function validateUnknownKeys(
+  obj: any,
+  allowedKeys: ReadonlySet<string>,
+  contextName: string,
+  allowCallback = false
+): void {
+  if (typeof obj !== "object" || obj === null || Array.isArray(obj)) {
+    return;
+  }
+  for (const key of Object.keys(obj)) {
+    if (!allowedKeys.has(key)) {
+      if (allowCallback && key === "callback") {
+        continue;
+      }
+      throw new RequestValidationError(
+        `Unknown parameter '${key}' for ${contextName}. Allowed parameters: ${Array.from(allowedKeys).join(", ")}.`,
+        key,
+        obj[key]
+      );
+    }
+  }
+}
+
+export const DOCUMENT_SEARCH_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "page",
+  "perPage",
+  "order",
+  "fields",
+  "conditions",
+  "metadataOnly",
+  "includePre1994Docs",
+]);
+
+export const DOCUMENT_SEARCH_CONDITIONS_KEYS: ReadonlySet<string> = new Set([
+  "term",
+  "regulationIdNumber",
+  "agencies",
+  "agencyIds",
+  "citingDocumentNumbers",
+  "documentNumbers",
+  "executiveOrderNumbers",
+  "presidents",
+  "sections",
+  "sectionIds",
+  "volume",
+  "topics",
+  "topicIds",
+  "types",
+  "noticeTypes",
+  "noticeTypeIds",
+  "presidentialDocumentTypes",
+  "presidentialDocumentTypeIds",
+  "smallEntities",
+  "smallEntityIds",
+  "docketId",
+  "significant",
+  "acceptingComments",
+  "correction",
+  "near",
+  "publicationDate",
+  "signingDate",
+  "effectiveDate",
+  "commentDate",
+  "cfr",
+  "searchTypeId",
+]);
+
+export const EXECUTIVE_ORDER_CSV_SEARCH_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "page",
+  "perPage",
+  "order",
+  "fields",
+  "conditions",
+  "includePre1994Docs",
+]);
+
+export const EXECUTIVE_ORDER_CSV_CONDITIONS_KEYS: ReadonlySet<string> = new Set([
+  "term",
+  "regulationIdNumber",
+  "agencies",
+  "agencyIds",
+  "citingDocumentNumbers",
+  "documentNumbers",
+  "executiveOrderNumbers",
+  "presidents",
+  "sections",
+  "sectionIds",
+  "volume",
+  "topics",
+  "topicIds",
+  "types",
+  "noticeTypes",
+  "noticeTypeIds",
+  "presidentialDocumentType",
+  "smallEntities",
+  "smallEntityIds",
+  "docketId",
+  "significant",
+  "acceptingComments",
+  "correction",
+  "near",
+  "publicationDate",
+  "signingDate",
+  "effectiveDate",
+  "commentDate",
+  "cfr",
+  "searchTypeId",
+]);
+
+export const DOCUMENT_SEARCH_RSS_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "conditions",
+  "includePre1994Docs",
+]);
+
+export const DOCUMENT_FIND_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "documentNumber",
+  "publicationDate",
+  "fields",
+]);
+
+export const DOCUMENT_FIND_MANY_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "documentNumbers",
+  "fields",
+]);
+
+export const DOCUMENT_CITATION_FIND_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "citation",
+  "fields",
+]);
+
+export const DOCUMENT_CITATION_FIND_MANY_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "citations",
+  "fields",
+]);
+
+export const DOCUMENT_FIND_CSV_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "documentNumbers",
+  "fields",
+]);
+
+export const DOCUMENT_AUTOCOMPLETE_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "term",
+]);
+
+export const DOCUMENT_SEARCH_DETAILS_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "conditions",
+  "omitSpellingSuggestions",
+]);
+
+export const DOCUMENT_FACET_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "conditions",
+]);
+
+export const PUBLIC_INSPECTION_SEARCH_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "page",
+  "perPage",
+  "fields",
+  "conditions",
+  "metadataOnly",
+]);
+
+export const PUBLIC_INSPECTION_SEARCH_CONDITIONS_KEYS: ReadonlySet<string> = new Set([
+  "term",
+  "agencies",
+  "agencyIds",
+  "types",
+  "docketId",
+  "documentNumbers",
+  "specialFiling",
+  "filedAt",
+  "searchTypeId",
+]);
+
+export const PUBLIC_INSPECTION_AVAILABLE_ON_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "availableOn",
+  "fields",
+]);
+
+export const PUBLIC_INSPECTION_CURRENT_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "fields",
+]);
+
+export const PUBLIC_INSPECTION_CURRENT_CSV_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "fields",
+]);
+
+export const PUBLIC_INSPECTION_FIND_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "documentNumber",
+  "fields",
+]);
+
+export const PUBLIC_INSPECTION_FIND_MANY_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "documentNumbers",
+  "fields",
+]);
+
+export const PUBLIC_INSPECTION_SEARCH_CSV_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "fields",
+  "conditions",
+]);
+
+export const PUBLIC_INSPECTION_SEARCH_RSS_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "conditions",
+]);
+
+export const PUBLIC_INSPECTION_SEARCH_DETAILS_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "conditions",
+]);
+
+export const PUBLIC_INSPECTION_FACET_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "conditions",
+]);
+
+export const PUBLIC_INSPECTION_ISSUE_DAILY_FACET_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "publicationDate",
+]);
+
+export const PUBLIC_INSPECTION_ISSUE_TYPE_FACET_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "publicationDate",
+]);
+
+export const AGENCY_LIST_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "fields",
+]);
+
+export const AGENCY_FIND_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "idOrSlug",
+  "fields",
+]);
+
+export const AGENCY_FIND_MANY_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "ids",
+  "fields",
+]);
+
+export const AGENCY_SUGGESTIONS_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "term",
+  "fields",
+]);
+
+export const TOPIC_SUGGESTIONS_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "term",
+  "fields",
+]);
+
+export const SUGGESTED_SEARCH_SECTIONS_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "sections",
+]);
+
+export const SUGGESTED_SEARCH_FIND_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "slug",
+]);
+
+export const EFFECTIVE_DATES_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "startDate",
+  "endDate",
+]);
+
+export const ISSUE_FIND_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "publicationDate",
+]);
+
+export const IMAGE_FIND_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "identifier",
+]);
+
+export const SITE_NOTIFICATION_FIND_PARAMS_KEYS: ReadonlySet<string> = new Set([
+  "identifier",
+]);
