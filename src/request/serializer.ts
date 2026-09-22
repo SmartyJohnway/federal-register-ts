@@ -67,6 +67,46 @@ import {
   validateEffectiveDatesRange,
   validateNonEmptyArray,
   validateJsonpCallback,
+  validateUnknownKeys,
+  validateRequiredParams,
+  validateDocumentTypeCodes,
+  DOCUMENT_SEARCH_PARAMS_KEYS,
+  DOCUMENT_SEARCH_CONDITIONS_KEYS,
+  EXECUTIVE_ORDER_CSV_SEARCH_PARAMS_KEYS,
+  EXECUTIVE_ORDER_CSV_CONDITIONS_KEYS,
+  DOCUMENT_SEARCH_RSS_PARAMS_KEYS,
+  DOCUMENT_FIND_PARAMS_KEYS,
+  DOCUMENT_FIND_MANY_PARAMS_KEYS,
+  DOCUMENT_CITATION_FIND_PARAMS_KEYS,
+  DOCUMENT_CITATION_FIND_MANY_PARAMS_KEYS,
+  DOCUMENT_FIND_CSV_PARAMS_KEYS,
+  DOCUMENT_AUTOCOMPLETE_PARAMS_KEYS,
+  DOCUMENT_SEARCH_DETAILS_PARAMS_KEYS,
+  DOCUMENT_FACET_PARAMS_KEYS,
+  PUBLIC_INSPECTION_SEARCH_PARAMS_KEYS,
+  PUBLIC_INSPECTION_SEARCH_CONDITIONS_KEYS,
+  PUBLIC_INSPECTION_AVAILABLE_ON_PARAMS_KEYS,
+  PUBLIC_INSPECTION_CURRENT_PARAMS_KEYS,
+  PUBLIC_INSPECTION_CURRENT_CSV_PARAMS_KEYS,
+  PUBLIC_INSPECTION_FIND_PARAMS_KEYS,
+  PUBLIC_INSPECTION_FIND_MANY_PARAMS_KEYS,
+  PUBLIC_INSPECTION_SEARCH_CSV_PARAMS_KEYS,
+  PUBLIC_INSPECTION_SEARCH_RSS_PARAMS_KEYS,
+  PUBLIC_INSPECTION_SEARCH_DETAILS_PARAMS_KEYS,
+  PUBLIC_INSPECTION_FACET_PARAMS_KEYS,
+  PUBLIC_INSPECTION_ISSUE_DAILY_FACET_PARAMS_KEYS,
+  PUBLIC_INSPECTION_ISSUE_TYPE_FACET_PARAMS_KEYS,
+  AGENCY_LIST_PARAMS_KEYS,
+  AGENCY_FIND_PARAMS_KEYS,
+  AGENCY_FIND_MANY_PARAMS_KEYS,
+  AGENCY_SUGGESTIONS_PARAMS_KEYS,
+  TOPIC_SUGGESTIONS_PARAMS_KEYS,
+  SUGGESTED_SEARCH_SECTIONS_PARAMS_KEYS,
+  SUGGESTED_SEARCH_FIND_PARAMS_KEYS,
+  EFFECTIVE_DATES_PARAMS_KEYS,
+  ISSUE_FIND_PARAMS_KEYS,
+  IMAGE_FIND_PARAMS_KEYS,
+  SITE_NOTIFICATION_FIND_PARAMS_KEYS,
 } from "./validation";
 
 export interface SerializedQueryEntry {
@@ -132,6 +172,8 @@ export class QuerySerializer {
     conditions: DocumentSearchConditions,
     entries: SerializedQueryEntry[]
   ): void {
+    validateRequiredParams(conditions, "DocumentSearchConditions");
+    validateUnknownKeys(conditions, DOCUMENT_SEARCH_CONDITIONS_KEYS, "DocumentSearchConditions");
     const raw = conditions as Record<string, any>;
     for (const [k, v] of Object.entries(raw)) {
       if (v === null) {
@@ -209,6 +251,7 @@ export class QuerySerializer {
     }
 
     if (conditions.types !== undefined) {
+      validateDocumentTypeCodes(conditions.types, "conditions.types");
       QuerySerializer.appendEntry(entries, "conditions[type]", conditions.types);
     }
 
@@ -321,6 +364,8 @@ export class QuerySerializer {
   }
 
   public static serializeDocumentSearchParams(params: DocumentSearchParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "DocumentSearchParams");
+    validateUnknownKeys(params, DOCUMENT_SEARCH_PARAMS_KEYS, "DocumentSearchParams", true);
     const raw = params as Record<string, any>;
     if ("term" in raw || "q" in raw) {
       throw new RequestValidationError("Top-level term or q is forbidden on DocumentSearchParams. Full-text search belongs in conditions.term.", "term");
@@ -364,6 +409,7 @@ export class QuerySerializer {
   }
 
   public static serializeDocumentSearchCsvParams(params: DocumentSearchCsvParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "DocumentSearchCsvParams");
     const raw = params as Record<string, any>;
     if ("metadataOnly" in raw && raw.metadataOnly !== undefined) {
       throw new RequestValidationError("metadataOnly is invalid for Document CSV search requests.", "metadataOnly");
@@ -373,6 +419,13 @@ export class QuerySerializer {
       params.conditions &&
       "presidentialDocumentType" in params.conditions &&
       (params.conditions as any).presidentialDocumentType === "executive_order";
+
+    if (isEoBranch) {
+      validateUnknownKeys(params, EXECUTIVE_ORDER_CSV_SEARCH_PARAMS_KEYS, "ExecutiveOrderCsvSearchParams");
+      validateUnknownKeys(params.conditions, EXECUTIVE_ORDER_CSV_CONDITIONS_KEYS, "ExecutiveOrderCsvConditions");
+    } else {
+      validateUnknownKeys(params, DOCUMENT_SEARCH_PARAMS_KEYS, "DocumentSearchCsvParams");
+    }
 
     const entries: SerializedQueryEntry[] = [];
 
@@ -418,6 +471,8 @@ export class QuerySerializer {
   }
 
   public static serializeDocumentSearchRssParams(params: DocumentSearchRssParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "DocumentSearchRssParams");
+    validateUnknownKeys(params, DOCUMENT_SEARCH_RSS_PARAMS_KEYS, "DocumentSearchRssParams");
     const entries: SerializedQueryEntry[] = [];
     if (params.includePre1994Docs === true) {
       entries.push({ key: "include_pre_1994_docs", value: "true" });
@@ -429,6 +484,8 @@ export class QuerySerializer {
   }
 
   public static serializeDocumentFindQuery(params: DocumentFindParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "DocumentFindParams");
+    validateUnknownKeys(params, DOCUMENT_FIND_PARAMS_KEYS, "DocumentFindParams", true);
     validateNonBlankString(params.documentNumber, "documentNumber");
     const entries: SerializedQueryEntry[] = [];
     if (params.publicationDate !== undefined) {
@@ -446,6 +503,8 @@ export class QuerySerializer {
     pathSegment: string;
     entries: SerializedQueryEntry[];
   } {
+    validateRequiredParams(params, "DocumentFindManyParams");
+    validateUnknownKeys(params, DOCUMENT_FIND_MANY_PARAMS_KEYS, "DocumentFindManyParams", true);
     const docNumbers = validateNonEmptyArray<string>(params.documentNumbers, "documentNumbers");
     docNumbers.forEach((d) => validateNonBlankString(d, "documentNumber"));
     const pathSegment = docNumbers.join(",");
@@ -462,6 +521,9 @@ export class QuerySerializer {
     page: number;
     entries: SerializedQueryEntry[];
   } {
+    validateRequiredParams(params, "DocumentCitationFindParams");
+    validateUnknownKeys(params, DOCUMENT_CITATION_FIND_PARAMS_KEYS, "DocumentCitationFindParams", true);
+    validateRequiredParams(params.citation, "DocumentCitationFindParams.citation");
     validatePositiveInteger(params.citation.volume, "citation.volume");
     validatePositiveInteger(params.citation.page, "citation.page");
     const entries: SerializedQueryEntry[] = [];
@@ -480,6 +542,8 @@ export class QuerySerializer {
     pathSegment: string;
     entries: SerializedQueryEntry[];
   } {
+    validateRequiredParams(params, "DocumentCitationFindManyParams");
+    validateUnknownKeys(params, DOCUMENT_CITATION_FIND_MANY_PARAMS_KEYS, "DocumentCitationFindManyParams", true);
     const citations = validateNonEmptyArray<FederalRegisterCitation>(params.citations, "citations");
     const formatted = citations.map((c) => {
       validatePositiveInteger(c.volume, "citation.volume");
@@ -499,6 +563,8 @@ export class QuerySerializer {
     pathSegment: string;
     entries: SerializedQueryEntry[];
   } {
+    validateRequiredParams(params, "DocumentFindCsvParams");
+    validateUnknownKeys(params, DOCUMENT_FIND_CSV_PARAMS_KEYS, "DocumentFindCsvParams");
     const docNumbers = validateNonEmptyArray<string>(params.documentNumbers, "documentNumbers");
     docNumbers.forEach((d) => validateNonBlankString(d, "documentNumber"));
     const pathSegment = docNumbers.join(",");
@@ -511,6 +577,8 @@ export class QuerySerializer {
   }
 
   public static serializeDocumentAutocompleteParams(params: DocumentAutocompleteParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "DocumentAutocompleteParams");
+    validateUnknownKeys(params, DOCUMENT_AUTOCOMPLETE_PARAMS_KEYS, "DocumentAutocompleteParams", true);
     if (typeof params.term !== "string") {
       throw new RequestValidationError("Autocomplete 'term' must be a string.", "term", params.term);
     }
@@ -518,6 +586,8 @@ export class QuerySerializer {
   }
 
   public static serializeDocumentSearchDetailsParams(params: DocumentSearchDetailsParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "DocumentSearchDetailsParams");
+    validateUnknownKeys(params, DOCUMENT_SEARCH_DETAILS_PARAMS_KEYS, "DocumentSearchDetailsParams", true);
     const entries: SerializedQueryEntry[] = [];
     if (params.omitSpellingSuggestions !== undefined) {
       entries.push({
@@ -532,17 +602,20 @@ export class QuerySerializer {
   }
 
   public static serializeDocumentFacetParams(params: DocumentFacetParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "DocumentFacetParams");
+    validateUnknownKeys(params, DOCUMENT_FACET_PARAMS_KEYS, "DocumentFacetParams", true);
     const entries: SerializedQueryEntry[] = [];
     if (params.conditions !== undefined) {
       QuerySerializer.serializeDocumentConditions(params.conditions, entries);
     }
     return entries;
   }
-
   public static serializePublicInspectionConditions(
     conditions: PublicInspectionSearchConditions,
     entries: SerializedQueryEntry[]
   ): void {
+    validateRequiredParams(conditions, "PublicInspectionSearchConditions");
+    validateUnknownKeys(conditions, PUBLIC_INSPECTION_SEARCH_CONDITIONS_KEYS, "PublicInspectionSearchConditions");
     const raw = conditions as Record<string, any>;
     for (const [k, v] of Object.entries(raw)) {
       if (v === null) {
@@ -575,6 +648,10 @@ export class QuerySerializer {
     }
 
     if (conditions.types !== undefined) {
+      if (!Array.isArray(conditions.types)) {
+        throw new RequestValidationError("conditions.types must be an array.", "types", conditions.types);
+      }
+      conditions.types.forEach((t, idx) => validateNonBlankString(t, `types[${idx}]`));
       QuerySerializer.appendEntry(entries, "conditions[type]", conditions.types);
     }
 
@@ -602,6 +679,8 @@ export class QuerySerializer {
   }
 
   public static serializePublicInspectionSearchParams(params: PublicInspectionSearchParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "PublicInspectionSearchParams");
+    validateUnknownKeys(params, PUBLIC_INSPECTION_SEARCH_PARAMS_KEYS, "PublicInspectionSearchParams", true);
     const raw = params as Record<string, any>;
     if ("term" in raw || "q" in raw) {
       throw new RequestValidationError("Top-level term or q is forbidden on PublicInspectionSearchParams.", "term");
@@ -642,6 +721,8 @@ export class QuerySerializer {
   }
 
   public static serializePublicInspectionAvailableOnParams(params: PublicInspectionAvailableOnParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "PublicInspectionAvailableOnParams");
+    validateUnknownKeys(params, PUBLIC_INSPECTION_AVAILABLE_ON_PARAMS_KEYS, "PublicInspectionAvailableOnParams", true);
     validateIsoDateString(params.availableOn, "availableOn");
     const entries: SerializedQueryEntry[] = [
       { key: "conditions[available_on]", value: params.availableOn },
@@ -654,6 +735,19 @@ export class QuerySerializer {
   }
 
   public static serializePublicInspectionCurrentParams(params: PublicInspectionCurrentParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "PublicInspectionCurrentParams");
+    validateUnknownKeys(params, PUBLIC_INSPECTION_CURRENT_PARAMS_KEYS, "PublicInspectionCurrentParams", true);
+    const entries: SerializedQueryEntry[] = [];
+    if (params.fields !== undefined) {
+      validateFields<PublicInspectionField>(params.fields, PUBLIC_INSPECTION_FIELDS, "PublicInspection");
+      QuerySerializer.appendEntry(entries, "fields", params.fields);
+    }
+    return entries;
+  }
+
+  public static serializePublicInspectionCurrentCsvParams(params: PublicInspectionCurrentCsvParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "PublicInspectionCurrentCsvParams");
+    validateUnknownKeys(params, PUBLIC_INSPECTION_CURRENT_CSV_PARAMS_KEYS, "PublicInspectionCurrentCsvParams");
     const entries: SerializedQueryEntry[] = [];
     if (params.fields !== undefined) {
       validateFields<PublicInspectionField>(params.fields, PUBLIC_INSPECTION_FIELDS, "PublicInspection");
@@ -663,6 +757,8 @@ export class QuerySerializer {
   }
 
   public static serializePublicInspectionFindQuery(params: PublicInspectionFindParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "PublicInspectionFindParams");
+    validateUnknownKeys(params, PUBLIC_INSPECTION_FIND_PARAMS_KEYS, "PublicInspectionFindParams", true);
     validateNonBlankString(params.documentNumber, "documentNumber");
     const entries: SerializedQueryEntry[] = [];
     if (params.fields !== undefined) {
@@ -676,6 +772,8 @@ export class QuerySerializer {
     pathSegment: string;
     entries: SerializedQueryEntry[];
   } {
+    validateRequiredParams(params, "PublicInspectionFindManyParams");
+    validateUnknownKeys(params, PUBLIC_INSPECTION_FIND_MANY_PARAMS_KEYS, "PublicInspectionFindManyParams", true);
     const docNumbers = validateNonEmptyArray<string>(params.documentNumbers, "documentNumbers");
     docNumbers.forEach((d) => validateNonBlankString(d, "documentNumber"));
     const pathSegment = docNumbers.join(",");
@@ -688,6 +786,8 @@ export class QuerySerializer {
   }
 
   public static serializePublicInspectionSearchCsvParams(params: PublicInspectionSearchCsvParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "PublicInspectionSearchCsvParams");
+    validateUnknownKeys(params, PUBLIC_INSPECTION_SEARCH_CSV_PARAMS_KEYS, "PublicInspectionSearchCsvParams");
     const entries: SerializedQueryEntry[] = [];
     if (params.fields !== undefined) {
       validateFields<PublicInspectionField>(params.fields, PUBLIC_INSPECTION_FIELDS, "PublicInspection");
@@ -702,6 +802,18 @@ export class QuerySerializer {
   public static serializePublicInspectionSearchConditionsOnly(params: {
     conditions?: PublicInspectionSearchConditions;
   }): SerializedQueryEntry[] {
+    validateRequiredParams(params, "PublicInspectionSearchRssParams");
+    validateUnknownKeys(params, PUBLIC_INSPECTION_SEARCH_RSS_PARAMS_KEYS, "PublicInspectionSearchRssParams");
+    const entries: SerializedQueryEntry[] = [];
+    if (params.conditions !== undefined) {
+      QuerySerializer.serializePublicInspectionConditions(params.conditions, entries);
+    }
+    return entries;
+  }
+
+  public static serializePublicInspectionSearchDetailsParams(params: PublicInspectionSearchDetailsParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "PublicInspectionSearchDetailsParams");
+    validateUnknownKeys(params, PUBLIC_INSPECTION_SEARCH_DETAILS_PARAMS_KEYS, "PublicInspectionSearchDetailsParams", true);
     const entries: SerializedQueryEntry[] = [];
     if (params.conditions !== undefined) {
       QuerySerializer.serializePublicInspectionConditions(params.conditions, entries);
@@ -710,6 +822,8 @@ export class QuerySerializer {
   }
 
   public static serializePublicInspectionFacetParams(params: PublicInspectionFacetParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "PublicInspectionFacetParams");
+    validateUnknownKeys(params, PUBLIC_INSPECTION_FACET_PARAMS_KEYS, "PublicInspectionFacetParams", true);
     const entries: SerializedQueryEntry[] = [];
     if (params.conditions !== undefined) {
       QuerySerializer.serializePublicInspectionConditions(params.conditions, entries);
@@ -720,7 +834,9 @@ export class QuerySerializer {
   public static serializePublicInspectionIssueDailyFacetParams(
     params: PublicInspectionIssueDailyFacetParams
   ): SerializedQueryEntry[] {
-    if (!params || !params.publicationDate || !params.publicationDate.gte) {
+    validateRequiredParams(params, "PublicInspectionIssueDailyFacetParams");
+    validateUnknownKeys(params, PUBLIC_INSPECTION_ISSUE_DAILY_FACET_PARAMS_KEYS, "PublicInspectionIssueDailyFacetParams", true);
+    if (!params.publicationDate || !params.publicationDate.gte) {
       throw new RequestValidationError(
         "PublicInspectionIssueDailyFacetParams requires publicationDate.gte condition.",
         "publicationDate.gte"
@@ -733,7 +849,9 @@ export class QuerySerializer {
   public static serializePublicInspectionIssueTypeFacetParams(
     params: PublicInspectionIssueTypeFacetParams
   ): SerializedQueryEntry[] {
-    if (!params || !params.publicationDate || !params.publicationDate.is) {
+    validateRequiredParams(params, "PublicInspectionIssueTypeFacetParams");
+    validateUnknownKeys(params, PUBLIC_INSPECTION_ISSUE_TYPE_FACET_PARAMS_KEYS, "PublicInspectionIssueTypeFacetParams", true);
+    if (!params.publicationDate || !params.publicationDate.is) {
       throw new RequestValidationError(
         "PublicInspectionIssueTypeFacetParams requires publicationDate.is condition.",
         "publicationDate.is"
@@ -744,6 +862,8 @@ export class QuerySerializer {
   }
 
   public static serializeAgencyListParams(params: AgencyListParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "AgencyListParams");
+    validateUnknownKeys(params, AGENCY_LIST_PARAMS_KEYS, "AgencyListParams", true);
     const entries: SerializedQueryEntry[] = [];
     if (params.fields !== undefined) {
       validateFields<AgencyField>(params.fields, AGENCY_FIELDS, "Agency");
@@ -756,6 +876,8 @@ export class QuerySerializer {
     pathSegment: string;
     entries: SerializedQueryEntry[];
   } {
+    validateRequiredParams(params, "AgencyFindParams");
+    validateUnknownKeys(params, AGENCY_FIND_PARAMS_KEYS, "AgencyFindParams", true);
     let pathSegment: string;
     if (typeof params.idOrSlug === "number") {
       validatePositiveInteger(params.idOrSlug, "idOrSlug");
@@ -776,6 +898,8 @@ export class QuerySerializer {
     pathSegment: string;
     entries: SerializedQueryEntry[];
   } {
+    validateRequiredParams(params, "AgencyFindManyParams");
+    validateUnknownKeys(params, AGENCY_FIND_MANY_PARAMS_KEYS, "AgencyFindManyParams", true);
     const ids = validateNonEmptyArray<number>(params.ids, "ids");
     ids.forEach((id) => validatePositiveInteger(id, "id"));
     const pathSegment = ids.join(",");
@@ -788,6 +912,8 @@ export class QuerySerializer {
   }
 
   public static serializeAgencySuggestionsParams(params: AgencySuggestionsParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "AgencySuggestionsParams");
+    validateUnknownKeys(params, AGENCY_SUGGESTIONS_PARAMS_KEYS, "AgencySuggestionsParams", true);
     if (typeof params.term !== "string") {
       throw new RequestValidationError("Agency suggestions 'term' must be a string.", "term", params.term);
     }
@@ -800,6 +926,8 @@ export class QuerySerializer {
   }
 
   public static serializeTopicSuggestionsParams(params: TopicSuggestionsParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "TopicSuggestionsParams");
+    validateUnknownKeys(params, TOPIC_SUGGESTIONS_PARAMS_KEYS, "TopicSuggestionsParams", true);
     if (typeof params.term !== "string") {
       throw new RequestValidationError("Topic suggestions 'term' must be a string.", "term", params.term);
     }
@@ -812,6 +940,8 @@ export class QuerySerializer {
   }
 
   public static serializeSuggestedSearchSectionsParams(params: SuggestedSearchSectionsParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "SuggestedSearchSectionsParams");
+    validateUnknownKeys(params, SUGGESTED_SEARCH_SECTIONS_PARAMS_KEYS, "SuggestedSearchSectionsParams", true);
     if (!Array.isArray(params.sections) || params.sections.length === 0) {
       throw new RequestValidationError("SuggestedSearchSectionsParams requires a non-empty sections array.", "sections");
     }
@@ -821,10 +951,14 @@ export class QuerySerializer {
   }
 
   public static serializeSuggestedSearchFind(params: SuggestedSearchFindParams): string {
+    validateRequiredParams(params, "SuggestedSearchFindParams");
+    validateUnknownKeys(params, SUGGESTED_SEARCH_FIND_PARAMS_KEYS, "SuggestedSearchFindParams", true);
     return validateNonBlankString(params.slug, "slug");
   }
 
   public static serializeEffectiveDatesParams(params: EffectiveDatesParams): SerializedQueryEntry[] {
+    validateRequiredParams(params, "EffectiveDatesParams");
+    validateUnknownKeys(params, EFFECTIVE_DATES_PARAMS_KEYS, "EffectiveDatesParams", true);
     validateEffectiveDatesRange(params.startDate, params.endDate);
     return [
       { key: "start_date", value: params.startDate },
@@ -833,14 +967,20 @@ export class QuerySerializer {
   }
 
   public static serializeIssueFind(params: IssueFindParams): string {
+    validateRequiredParams(params, "IssueFindParams");
+    validateUnknownKeys(params, ISSUE_FIND_PARAMS_KEYS, "IssueFindParams", true);
     return validateIsoDateString(params.publicationDate, "publicationDate");
   }
 
   public static serializeImageFind(params: ImageFindParams): string {
+    validateRequiredParams(params, "ImageFindParams");
+    validateUnknownKeys(params, IMAGE_FIND_PARAMS_KEYS, "ImageFindParams", true);
     return validateNonBlankString(params.identifier, "identifier");
   }
 
   public static serializeSiteNotificationFind(params: SiteNotificationFindParams): string {
+    validateRequiredParams(params, "SiteNotificationFindParams");
+    validateUnknownKeys(params, SITE_NOTIFICATION_FIND_PARAMS_KEYS, "SiteNotificationFindParams", true);
     return validateNonBlankString(params.identifier, "identifier");
   }
 
