@@ -360,6 +360,7 @@ Retrieve agency suggestions based on query text.
 ## 6. Other Specialized Services
 
 ### Topics Service (`client.topics`)
+- `list()`: `GET /topics.json` —Retrieve the complete topic catalog (CAP-001). Returns `Promise<TopicCatalogResponse>` containing curated `thesaurus` and informal `ad_hoc` topic buckets with count metadata.
 - `suggestions(params)`: `GET /topics/suggestions` —Suggestions matching partial topic names. Accepts `TopicSuggestionsParams` (`term: string; fields?: readonly TopicField[]`). Returns `Promise<readonly TopicProjection<K>[]>`.
 
 ### Sections Service (`client.sections`)

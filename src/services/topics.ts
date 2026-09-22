@@ -11,13 +11,26 @@ import { getInternalClientRuntime } from "../core/internal/runtime";
 import { decodeJsonResponse } from "../core/transport";
 import { QuerySerializer } from "../request/serializer";
 import type { TopicSuggestionsParams, TopicField, JsonpCallbackParams } from "../request/types";
-import type { TopicProjection, JsonpText } from "./models";
+import type { TopicProjection, JsonpText, TopicCatalogResponse } from "./models";
 
 export class TopicsService {
   readonly #client: FederalRegisterClient;
 
   constructor(client: FederalRegisterClient) {
     this.#client = client;
+  }
+
+  /**
+   * Topic catalog (CAP-001).
+   * Path: /topics.json
+   */
+  async list(): Promise<TopicCatalogResponse> {
+    const runtime = getInternalClientRuntime(this.#client);
+    return runtime.execute<TopicCatalogResponse>(
+      "/topics.json",
+      undefined,
+      decodeJsonResponse
+    );
   }
 
   /**

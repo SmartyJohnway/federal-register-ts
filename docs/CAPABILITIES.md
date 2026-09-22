@@ -239,3 +239,16 @@ The following 16 capabilities have specific frozen uncertainty dispositions esta
 - **Verified Branch:** `ANONYMOUS_BRANCH_PASS`
 - **Deferred Branch:** `AUTHENTICATED_BRANCH_AUTH_DEFERRED`
 - **Guard:** `PRESERVE_AUTH_DEFERRED_SIGNED_IN_BRANCH`
+
+---
+
+## Post-Release Capability Deltas (v1.1.0+)
+
+### CAP-001: Topic catalog
+- **Family:** 6.12 Topics
+- **Disposition:** `PASS` (deterministic fixture & production wire contract verified)
+- **Release:** `v1.1.0 MINOR`
+- **Surface:** `fr.topics.list(): Promise<TopicCatalogResponse>`
+- **Upstream Route:** `GET /api/v1/topics.json`
+- **Description:** Complete Federal Register topic catalog partitioned into curated `thesaurus` and informal `ad_hoc` buckets with count metadata.
+- **Notes:** Upstream source (`api-core`) routes and developer docs omit `/topics.json`, but current production exposes it. Catalog items do not provide `url`. Name/slug is not strictly 1:1 (ad-hoc bucket contains empty slugs and collision cases); the SDK does not auto-slugify.
