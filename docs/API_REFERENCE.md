@@ -404,7 +404,7 @@ The SDK provides a structured error hierarchy for handling request validation, H
 
 ```text
 Error
-├── RequestValidationError                  (Client-side parameter validation failure)
+├── RequestValidationError                  (Client-side parameter validation failure, zero network requests)
 └── FederalRegisterError                    (Base class for API-related SDK failures)
     ├── FederalRegisterHttpError<TBody>     (Non-2xx HTTP status from API)
     │   ├── FederalRegisterStatusMessageError   ({ status, message } body from upstream)
@@ -413,14 +413,15 @@ Error
     │   ├── FederalRegisterEffectiveDateRangeError ({ error: string } for date calc)
     │   ├── FederalRegisterEmptyJsonError       (Empty JSON {} response body)
     │   ├── FederalRegisterEmptyBodyError       (Empty body with 0 bytes)
-    │   └── FederalRegisterRawResponseError     (Non-JSON or unparseable body)
+    │   └── FederalRegisterRawResponseError     (Non-JSON, HTML 404/502, or unparseable body)
     └── PublicInspectionIssueConditionError (Operation-specific semantic 400 error in HTTP 200 payload)
 ```
 
 ### Error Inheritance & Semantics
-- **`RequestValidationError`** extends JavaScript's built-in `Error` directly and is thrown before dispatching HTTP requests when parameter validation fails (e.g. invalid date format, out-of-range pagination, unauthorized field projection).
+- **`RequestValidationError`** extends JavaScript's built-in `Error` directly and is thrown before dispatching HTTP requests when parameter validation fails (e.g. invalid date format, out-of-range pagination, unauthorized field projection, or unrecognized request keys).
 - **`FederalRegisterError`** extends `Error` as the base class for server/API errors.
 - **`FederalRegisterHttpError<TBody>`** extends `FederalRegisterError` for non-2xx HTTP transport responses, preserving `status`, `contentType`, `bodyKind`, `body`, and `rawText`.
+- **`FederalRegisterRawResponseError`** is thrown when the upstream server returns non-JSON content (such as HTML 404 pages for missing resources or gateway error pages). Structured error types (like `FederalRegisterAgencyNotFoundError`) apply only when upstream provides the corresponding structured JSON payload.
 - **`PublicInspectionIssueConditionError`** extends `FederalRegisterError` directly (not `FederalRegisterHttpError`). It represents the operation-specific Public Inspection Issue semantic error path where HTTP 200 may contain a body with status 400 semantics.
 
 ### Inspecting Errors
@@ -428,18 +429,27 @@ Error
 ```typescript
 import {
   FederalRegisterClient,
+  RequestValidationError,
   FederalRegisterError,
   FederalRegisterSearchValidationError,
+  FederalRegisterRawResponseError,
   FederalRegisterHttpError,
 } from 'federal-register-ts';
 
+const client = new FederalRegisterClient();
+
 try {
   await client.documents.search({
-    conditions: { publicationDate: { is: 'invalid-date' } },
+    conditions: { term: 'clean energy' },
+    page: 100, // Client validation rejects page > 50 before sending request
   });
 } catch (err) {
-  if (err instanceof FederalRegisterSearchValidationError) {
-    console.error('Validation errors from API:', err.body?.errors);
+  if (err instanceof RequestValidationError) {
+    console.error('Client-side parameter validation failed:', err.message, err.field, err.value);
+  } else if (err instanceof FederalRegisterSearchValidationError) {
+    console.error('Upstream search validation errors:', err.body?.errors);
+  } else if (err instanceof FederalRegisterRawResponseError) {
+    console.error(`Upstream raw/HTML error (${err.status}):`, err.rawText);
   } else if (err instanceof FederalRegisterHttpError) {
     console.error(`HTTP status ${err.status}:`, err.rawText);
   } else if (err instanceof FederalRegisterError) {
@@ -447,3 +457,23 @@ try {
   }
 }
 ```
+
+---
+
+## JSONP Companion Methods & Route-Dependent Behavior
+
+All companion methods with the `*Jsonp` suffix (e.g. `client.documents.searchJsonp`, `client.agencies.listJsonp`) accept a required `callback` parameter:
+
+```typescript
+const jsonpResult = await client.documents.searchJsonp({
+  conditions: { term: 'environment' },
+  callback: 'handleResults',
+});
+```
+
+> **Important Route Behavior Note:** As verified by comprehensive public sweep, upstream FederalRegister.gov JSONP behavior is route-dependent across endpoints:
+> - **Wrapped Callback (19 endpoints):** Returns JavaScript function invocation `callback({...});`.
+> - **Bare JSON (6 endpoints):** Returns raw JSON text regardless of the callback query parameter.
+> - **Upstream Error (4 endpoints):** Certain endpoints return HTTP 405 or non-JSON errors under JSONP requests.
+>
+> The SDK preserves raw server response text via `JsonpText` (`string`) without fabricating artificial client-side wrapper layers.

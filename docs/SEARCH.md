@@ -133,6 +133,23 @@ The FederalRegister.gov API enforces strict pagination limits:
 
 ---
 
-## 6. Hybrid & Neural Search Caveats
+## 6. SearchTypeId & Search Engine Modes
 
-The API supports experimental search modes (e.g. hybrid lexical/KNN vector searches). Note that set-relation guarantees that hold for lexical retrieval (e.g. `A AND B` returning a strict subset of `A`) do not necessarily hold under neural KNN scoring where dense embedding distances alter candidate recall.
+FederalRegister.gov supports multiple internal search strategies via `conditions.searchTypeId`:
+
+| Numeric ID | Official Source Identifier & Description | Governed Capability Record | Observed Availability (2026-09) |
+|---:|---|---|---|
+| `1` | `lexical` (standard lexical with 365-day decay) | `FR-SEARCHTYPE-001` | HTTP 405 (Dated live state) |
+| `2` | `lexical_optimized` (lexical without decay scoring) | `FR-SEARCHTYPE-002` | HTTP 200 (Active) |
+| `3` | `hybrid` (hybrid lexical and Function min-score) | `FR-SEARCHTYPE-005` | HTTP 200 (Active) |
+| `4` | `hybrid_knn_min_score` (hybrid with KNN vector threshold) | `FR-SEARCHTYPE-006` | HTTP 405 (Dated live state) |
+| `5` | `lexical_optimized_with_decay` (optimized lexical with 365-day decay) | `FR-SEARCHTYPE-003` | HTTP 405 (Dated live state) |
+| `6` | `lexical_optimized_with_expansive_decay` (optimized lexical with 1095-day decay) | `FR-SEARCHTYPE-004` | HTTP 200 (Active) |
+
+### Service Defaults
+- **Documents Search (`client.documents.search`):** Defaults to `6` (`lexical_optimized_with_expansive_decay`).
+- **Public Inspection Search (`client.publicInspection.search`):** Defaults to `2` (`lexical_optimized`).
+- *Note:* `6` is not a universal default across all endpoints.
+
+### Search Semantics & Neural Retrieval Caveats
+The API supports experimental search modes (e.g. `searchTypeId: 3`). Note that classical set-relation guarantees for lexical retrieval (such as `A AND B` returning a strict subset of `A`) do not necessarily hold under neural KNN scoring where dense embedding distances alter candidate recall. Furthermore, the presence of `is_neural: true` in response metadata indicates server-side contextual behavior rather than a static engine classifier.

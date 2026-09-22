@@ -124,12 +124,13 @@ export type DocumentOrderInput = DocumentOrder | "date";
 
 /**
  * 4.17 SearchTypeId
- * 1: lexical (FEATURE_UNAVAILABLE)
- * 2: lexical_optimized (PASS)
- * 3: hybrid (PASS)
- * 4: hybrid_knn_min_score (FEATURE_UNAVAILABLE)
- * 5: lexical_optimized_with_decay (PASS)
- * 6: lexical_optimized_with_expansive_decay (PASS)
+ *
+ * 1: lexical + 365d decay (FR-SEARCHTYPE-001)
+ * 2: lexical_optimized / no decay scoring (FR-SEARCHTYPE-002) [Public Inspection default]
+ * 3: hybrid / Function min-score (FR-SEARCHTYPE-005)
+ * 4: hybrid_knn_min_score (FR-SEARCHTYPE-006)
+ * 5: lexical_optimized_with_decay / 365d decay (FR-SEARCHTYPE-003)
+ * 6: lexical_optimized_with_expansive_decay / 1095d decay (FR-SEARCHTYPE-004) [Documents default]
  */
 export type SearchTypeId = 1 | 2 | 3 | 4 | 5 | 6;
 
