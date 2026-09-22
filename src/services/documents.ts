@@ -68,6 +68,13 @@ function decodeDocumentMultiLookupResponse<T>(decoded: DecodedResponse): MultiLo
     if ("results" in parsed && Array.isArray(parsed.results)) {
       return parsed as MultiLookupEnvelope<T>;
     }
+    if ("errors" in parsed && parsed.errors && typeof parsed.errors === "object") {
+      return {
+        count: typeof (parsed as any).count === "number" ? (parsed as any).count : 0,
+        results: Array.isArray((parsed as any).results) ? (parsed as any).results : [],
+        errors: (parsed as any).errors,
+      } as MultiLookupEnvelope<T>;
+    }
     return {
       count: 1,
       results: [parsed as T],
