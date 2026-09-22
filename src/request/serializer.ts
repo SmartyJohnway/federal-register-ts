@@ -958,7 +958,7 @@ export class QuerySerializer {
 
   public static serializeEffectiveDatesParams(params: EffectiveDatesParams): SerializedQueryEntry[] {
     validateRequiredParams(params, "EffectiveDatesParams");
-    validateUnknownKeys(params, EFFECTIVE_DATES_PARAMS_KEYS, "EffectiveDatesParams");
+    validateUnknownKeys(params, EFFECTIVE_DATES_PARAMS_KEYS, "EffectiveDatesParams", true);
     validateEffectiveDatesRange(params.startDate, params.endDate);
     return [
       { key: "start_date", value: params.startDate },
@@ -968,19 +968,19 @@ export class QuerySerializer {
 
   public static serializeIssueFind(params: IssueFindParams): string {
     validateRequiredParams(params, "IssueFindParams");
-    validateUnknownKeys(params, ISSUE_FIND_PARAMS_KEYS, "IssueFindParams");
+    validateUnknownKeys(params, ISSUE_FIND_PARAMS_KEYS, "IssueFindParams", true);
     return validateIsoDateString(params.publicationDate, "publicationDate");
   }
 
   public static serializeImageFind(params: ImageFindParams): string {
     validateRequiredParams(params, "ImageFindParams");
-    validateUnknownKeys(params, IMAGE_FIND_PARAMS_KEYS, "ImageFindParams");
+    validateUnknownKeys(params, IMAGE_FIND_PARAMS_KEYS, "ImageFindParams", true);
     return validateNonBlankString(params.identifier, "identifier");
   }
 
   public static serializeSiteNotificationFind(params: SiteNotificationFindParams): string {
     validateRequiredParams(params, "SiteNotificationFindParams");
-    validateUnknownKeys(params, SITE_NOTIFICATION_FIND_PARAMS_KEYS, "SiteNotificationFindParams");
+    validateUnknownKeys(params, SITE_NOTIFICATION_FIND_PARAMS_KEYS, "SiteNotificationFindParams", true);
     return validateNonBlankString(params.identifier, "identifier");
   }
 

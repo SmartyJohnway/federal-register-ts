@@ -180,7 +180,7 @@ export class PublicInspectionService {
   async searchDetails(
     params?: PublicInspectionSearchDetailsParams
   ): Promise<PublicInspectionSearchDetails> {
-    const entries = params ? QuerySerializer.serializePublicInspectionSearchConditionsOnly(params) : [];
+    const entries = params ? QuerySerializer.serializePublicInspectionSearchDetailsParams(params) : [];
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<PublicInspectionSearchDetails>(
@@ -347,7 +347,7 @@ export class PublicInspectionService {
    * Public inspection search details JSONP format companion (FR-PROTO-003 companion to FR-PI-009).
    */
   async searchDetailsJsonp(params: (PublicInspectionSearchDetailsParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
-    const entries = params ? QuerySerializer.serializePublicInspectionSearchConditionsOnly(params) : [];
+    const entries = params ? QuerySerializer.serializePublicInspectionSearchDetailsParams(params) : [];
     QuerySerializer.serializeJsonpCallback(params.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
