@@ -1,1 +1,0 @@
-{"version":3,"file":"document_search_details.d.ts","sourceRoot":"","sources":["../src/document_search_details.ts"],"names":[],"mappings":"AAGA,OAAO,EAAE,IAAI,EAAE,MAAM,QAAQ,CAAC;AAC9B,OAAO,EAAE,MAAM,EAAE,UAAU,EAAE,MAAM,iDAAiD,CAAC;AAErF,qBAAa,qBAAsB,SAAQ,IAAI;IAC7C;;OAEG;IACH,IAAW,OAAO,IAAI,MAAM,EAAE,CAE7B;IAED;;OAEG;IACH,IAAW,WAAW,IAAI,UAAU,EAAE,CAErC;CACF"}

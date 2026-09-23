@@ -21,7 +21,7 @@ npm install federal-register-ts
 
 ## Key Features
 
-- **Governed Capability Parity:** 100% coverage across the frozen 120-capability baseline (`r2_07_oracle_120.json`) and validated post-release extensions (CAP-001 Topic Catalog `client.topics.list()`). Note: Open upstream capability gaps (E-CAP-001 agency facets `slug` parameter and E-CAP-002 agency `ancestor_ids` filter) remain tracked for future expansion.
+- **Governed Capability Parity:** 100% coverage across the frozen 120-capability baseline (`r2_07_oracle_120.json`) and validated post-release extensions (CAP-001 Topic Catalog `client.topics.list()`). Note: Known current upstream capability gaps—specifically E-CAP-001 Document projection fields (`amendatory_instructions`, `cfr_topics`, `related_documents`) and E-CAP-002 `search_after_cursor` deep-pagination request support—are tracked for future releases (complete current upstream parity is not claimed while these gaps remain open).
 - **Type-Safe Request & Response Contracts:** End-to-end TypeScript typings for queries, filters, envelopes, models, and response projections.
 - **Correct Search Semantics:** Strict adherence to upstream OpenSearch query semantics, preserving canonical `conditions[term]` search, same-field OR, and cross-field AND filtering.
 - **Multi-Lookup Partial Success:** Tolerant multi-document lookup handling where existing items resolve cleanly and missing IDs are safely returned in `errors.not_found`.
