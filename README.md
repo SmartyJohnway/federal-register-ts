@@ -21,11 +21,12 @@ npm install federal-register-ts
 
 ## Key Features
 
-- **Complete Capability Coverage:** 100% coverage across all 120 governed Federal Register API capability records across 14 distinct operation namespaces.
+- **Full Upstream Capability Parity:** Coverage across the historical 120-capability baseline and current API surface extensions (including CAP-001 Topic Catalog `client.topics.list()`).
 - **Type-Safe Request & Response Contracts:** End-to-end TypeScript typings for queries, filters, envelopes, models, and response projections.
 - **Correct Search Semantics:** Strict adherence to upstream OpenSearch query semantics, preserving canonical `conditions[term]` search, same-field OR, and cross-field AND filtering.
 - **Multi-Lookup Partial Success:** Tolerant multi-document lookup handling where existing items resolve cleanly and missing IDs are safely returned in `errors.not_found`.
-- **Structured Error Hierarchy:** Granular error classification distinguishing client validation, 404 record not found, 405 method not allowed, and API status message errors.
+- **Structured Error Hierarchy:** Granular error classification distinguishing client parameter validation (`RequestValidationError`, extending `Error`), 404 record not found, 405 method not allowed, and API status message errors (`FederalRegisterError` family).
+- **JSONP Companion Methods:** 44 public operations support JSONP companion methods (`*Jsonp`), while 9 operations (CSV, RSS, and `clippings.current`) are explicitly excluded.
 - **Modern Runtime Support:** Verified in CI on Node.js 22 LTS and 24 LTS on `ubuntu-latest`. Verified against exact TypeScript compiler points `5.0.4` through `7.0.2`.
 
 ---
@@ -91,6 +92,20 @@ async function getDocument() {
 }
 ```
 
+### Listing the Topic Catalog (CAP-001)
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function getTopics() {
+  const catalog = await client.topics.list();
+  console.log(`Thesaurus topics: ${catalog.thesaurus.length}`);
+  console.log(`Ad-hoc topics: ${catalog.ad_hoc.length}`);
+}
+```
+
 ---
 
 ## 14 Operation Namespaces Overview
@@ -102,7 +117,7 @@ All 53 canonical operations are accessible via 14 top-level client namespaces:
 | Documents | `client.documents` (with nested `client.documents.facets`) | Published document search, show, batch, citation lookup, CSV, RSS, and aggregations | `search`, `find`, `findMany`, `findByCitation`, `facets.agency`, `facets.daily` |
 | Public Inspection | `client.publicInspection` (with nested `facets` and `issues.facets`) | Pre-publication documents filed for inspection, date lookup, CSV, RSS, and aggregations | `search`, `availableOn`, `current`, `facets.type`, `issues.facets.daily` |
 | Agencies | `client.agencies` | Directory of federal agencies, single lookup, multi-lookup, suggestions | `list`, `find`, `findMany`, `suggestions` |
-| Topics | `client.topics` | Topic suggestions | `suggestions` |
+| Topics | `client.topics` | Topic catalog listing and search suggestions | `list`, `suggestions` |
 | Sections | `client.sections` | Subject section listings | `list` |
 | Suggested Searches | `client.suggestedSearches` | Curated searches by topic and section | `list`, `listBySections`, `find` |
 | Holidays | `client.holidays` | Federal public legal holidays calendar | `list` |
@@ -128,7 +143,7 @@ All 53 canonical operations are accessible via 14 top-level client namespaces:
 4. **No Top-Level `term`:** Top-level `term` is a noncanonical / historical downstream form. Always use `conditions.term`.
 5. **Pagination Limits:** Upstream allows `page` up to `50` and `perPage` up to `2000`. Beyond 50 pages, partition queries using publication date ranges.
 
-For detailed search behavior, see [docs/SEARCH.md](docs/SEARCH.md).
+For detailed search behavior, see [docs/SEARCH.md](https://github.com/SmartyJohnway/federal-register-ts/blob/main/docs/SEARCH.md).
 
 ---
 
@@ -143,18 +158,18 @@ For detailed search behavior, see [docs/SEARCH.md](docs/SEARCH.md).
   ```
   Note that compiling TypeScript named imports does not constitute runtime proof of named export resolution in native Node.js ESM. No native ESM dual-packaging is claimed.
 
-For complete runtime details, see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
+For complete runtime details, see [docs/COMPATIBILITY.md](https://github.com/SmartyJohnway/federal-register-ts/blob/main/docs/COMPATIBILITY.md).
 
 ---
 
 ## Documentation Index
 
-- **[API Reference](docs/API_REFERENCE.md):** Complete reference for all 14 namespaces and 53 operations.
-- **[Governed Capabilities Matrix](docs/CAPABILITIES.md):** Complete 120-capability registry.
-- **[Search Semantics Guide](docs/SEARCH.md):** Search logic, query syntax, and parameter serialization.
-- **[Usage Guide](docs/USAGE.md):** Practical code examples.
-- **[Compatibility Guide](docs/COMPATIBILITY.md):** Supported environments and compiler versions.
-- **[Contributing Guidelines](CONTRIBUTING.md):** Development workflows and PR instructions.
+- **[API Reference](https://github.com/SmartyJohnway/federal-register-ts/blob/main/docs/API_REFERENCE.md):** Complete reference for all 14 namespaces and 53 operations.
+- **[Governed Capabilities Matrix](https://github.com/SmartyJohnway/federal-register-ts/blob/main/docs/CAPABILITIES.md):** Complete 120-capability registry.
+- **[Search Semantics Guide](https://github.com/SmartyJohnway/federal-register-ts/blob/main/docs/SEARCH.md):** Search logic, query syntax, and parameter serialization.
+- **[Usage Guide](https://github.com/SmartyJohnway/federal-register-ts/blob/main/docs/USAGE.md):** Practical code examples.
+- **[Compatibility Guide](https://github.com/SmartyJohnway/federal-register-ts/blob/main/docs/COMPATIBILITY.md):** Supported environments and compiler versions.
+- **[Contributing Guidelines](https://github.com/SmartyJohnway/federal-register-ts/blob/main/CONTRIBUTING.md):** Development workflows and PR instructions.
 
 ---
 

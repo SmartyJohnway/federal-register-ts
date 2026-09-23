@@ -1,134 +1,188 @@
-# Federal Register TS 函式庫 - 使用指南
+# Federal Register TS 函式庫 — 使用指南
 
-本指南說明如何使用 `fr-ts-microservices` 函式庫來與 Federal Register API 進行互動。
+本指南說明如何使用 `federal-register-ts` 官方 TypeScript SDK 來與 FederalRegister.gov API 進行互動。
 
 ---
 
 ## 安裝
 
-假設專案已經建置完成，您可以從主入口點導入所需的類別：
+```bash
+npm install federal-register-ts
+```
+
+---
+
+## 1. 快速開始
+
+### 建立 Client 實例
+
+所有 API 操作皆透過 `FederalRegisterClient` 進行：
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+// 使用預設設定 (https://www.federalregister.gov/api/v1)
+const client = new FederalRegisterClient();
+```
+
+---
+
+## 2. 搜尋聯邦公報文件
+
+使用 `client.documents.search()` 進行全文檢索與結構化條件過濾：
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function searchEnvironmentalRules() {
+  const response = await client.documents.search({
+    conditions: {
+      term: 'clean air',
+      types: ['RULE', 'PRORULE'],
+      publicationDate: { gte: '2024-01-01' },
+    },
+    perPage: 10,
+    page: 1,
+    order: 'newest',
+  });
+
+  console.log(`符合條件的文件總數: ${response.count}`);
+  if ('results' in response) {
+    for (const doc of response.results) {
+      console.log(`- [${doc.document_number}] ${doc.title} (${doc.publication_date})`);
+    }
+  }
+}
+
+searchEnvironmentalRules();
+```
+
+---
+
+## 3. 取得單一與多筆文件
+
+### 透過文件編號查詢單一文件
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function getDocument() {
+  const doc = await client.documents.find({
+    documentNumber: '2024-01234',
+    fields: ['title', 'document_number', 'publication_date', 'html_url', 'agency_names'],
+  });
+
+  console.log('標題:', doc.title);
+  console.log('網址:', doc.html_url);
+}
+```
+
+### 多筆文件查詢與部分成功處理
+
+當查詢多筆文件時，不存在的文件編號會收集於 `errors.not_found` 陣列中，不會導致整個請求失敗：
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function getBatch() {
+  const batch = await client.documents.findMany({
+    documentNumbers: ['2024-01234', 'invalid-doc-number'],
+  });
+
+  console.log(`成功找到 ${batch.count} 份文件。`);
+  for (const doc of batch.results) {
+    console.log(`找到: ${doc.document_number}`);
+  }
+
+  if (batch.errors?.not_found) {
+    console.warn('未找到的文件編號:', batch.errors.not_found);
+  }
+}
+```
+
+---
+
+## 4. 主題目錄與主題建議 (CAP-001)
+
+### 取得完整主題目錄 (Topic Catalog)
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function getTopics() {
+  const catalog = await client.topics.list();
+  console.log(`專有名詞主題數量: ${catalog.thesaurus.length}`);
+  console.log(`自訂/特定主題數量: ${catalog.ad_hoc.length}`);
+}
+```
+
+---
+
+## 5. 聯邦機構名錄
+
+```typescript
+import { FederalRegisterClient } from 'federal-register-ts';
+
+const client = new FederalRegisterClient();
+
+async function listAgencies() {
+  const agencies = await client.agencies.list();
+
+  console.log(`已載入 ${agencies.length} 個聯邦機構。`);
+  const epa = agencies.find(a => a.slug === 'environmental-protection-agency');
+  if (epa) {
+    console.log(`EPA ID: ${epa.id}, 官方網址: ${epa.url}`);
+  }
+}
+```
+
+---
+
+## 6. 錯誤處理架構
+
+SDK 區分前端參數驗證錯誤與 API 傳輸/回應錯誤：
+
+- `RequestValidationError`：前端參數驗證失敗（延伸自 JavaScript 原生 `Error`），發起請求前立即拋出，不發送網路請求（`fetch = 0`）。
+- `FederalRegisterError`：所有 API 相關錯誤的基底類別（包含 `FederalRegisterHttpError`、`FederalRegisterSearchValidationError`、`FederalRegisterAgencyNotFoundError` 等）。
 
 ```typescript
 import {
-  FederalRegister,
-  Document,
-  Agency,
-  DocumentAgencyFacet,
-  // ... 以及其他類別
-} from './src/index';
-```
+  FederalRegisterClient,
+  RequestValidationError,
+  FederalRegisterSearchValidationError,
+  FederalRegisterAgencyNotFoundError,
+  FederalRegisterHttpError,
+  FederalRegisterError,
+} from 'federal-register-ts';
 
----
+const client = new FederalRegisterClient();
 
-## 1. 彙整搜尋 (建議方式)
-
-使用此函式庫最簡單的方式是透過 `FederalRegister` 彙整器，它可以同時處理對文件和分類統計 (facets) 的複雜查詢。
-
-### 範例：尋找關於「氣候變遷」的文件，並取得依聯邦機構分類的統計數量
-
-```typescript
-import { FederalRegister, AggregatedQuery, AggregatedResponse } from './src/index';
-
-async function performSearch() {
-  const query: AggregatedQuery = {
-    term: 'climate change',
-    conditions: {
-      publication_date: { year: '2023' },
-    },
-    facets: ['agency', 'daily'], // 要求回傳「機構」和「每日」的分類統計
-    per_page: 10,
-  };
-
+async function safeSearch() {
   try {
-    const response: AggregatedResponse = await FederalRegister.search(query);
-
-    // 1. 處理文件結果
-    console.log(`找到 ${response.documents.count} 份文件。`);
-    for (const doc of response.documents) {
-      console.log(`- [${doc.document_number}] ${doc.title}`);
+    const results = await client.documents.search({
+      conditions: { term: 'energy' },
+    });
+    console.log('搜尋結果數量:', results.count);
+  } catch (err) {
+    if (err instanceof RequestValidationError) {
+      console.error('前端參數驗證失敗:', err.message, err.field);
+    } else if (err instanceof FederalRegisterSearchValidationError) {
+      console.error('API 搜尋條件錯誤:', err.body?.errors);
+    } else if (err instanceof FederalRegisterAgencyNotFoundError) {
+      console.error('找不到該機構');
+    } else if (err instanceof FederalRegisterHttpError) {
+      console.error(`HTTP Status ${err.status}:`, err.rawText);
+    } else if (err instanceof FederalRegisterError) {
+      console.error('SDK API 錯誤:', err.message);
     }
-
-    // 2. 處理分類統計結果
-    if (response.facets.agency) {
-      console.log('\n各聯邦機構文件數量統計:');
-      for (const agencyFacet of response.facets.agency) {
-        console.log(`- ${agencyFacet.name}: ${agencyFacet.count}`);
-      }
-    }
-
-  } catch (error) {
-    console.error("搜尋失敗:", error);
   }
 }
-
-performSearch();
-```
-
----
-
-## 2. 直接使用適配器
-
-對於更特定的任務，您可以直接使用個別的適配器。
-
-### 範例 1：透過文件編號尋找單一文件
-
-```typescript
-import { Document } from './src/index';
-
-async function findDocument() {
-  try {
-    const doc = await Document.find('2023-12345');
-    console.log('找到文件:');
-    console.log(`標題: ${doc.title}`);
-    console.log(`網址: ${doc.html_url}`);
-  } catch (error) {
-    console.error("尋找文件失敗:", error);
-  }
-}
-
-findDocument();
-```
-
-### 範例 2：取得所有聯邦機構的列表
-
-```typescript
-import { Agency } from './src/index';
-
-async function listAgencies() {
-  try {
-    const agencies = await Agency.all({ fields: ['name', 'slug'] });
-    console.log('所有聯邦機構:');
-    for (const agency of agencies) {
-      console.log(`- ${agency.name} (slug: ${agency.slug})`);
-    }
-  } catch (error) {
-    console.error("列出聯邦機構失敗:", error);
-  }
-}
-
-listAgencies();
-```
-
-### 範例 3：只取得特定主題的分類統計數量
-
-```typescript
-import { DocumentTopicFacet, FacetResultSet } from './src/index';
-
-async function getTopicFacets() {
-  const query = {
-    conditions: { term: 'nuclear energy' },
-  };
-
-  try {
-    const resultSet: FacetResultSet<DocumentTopicFacet> = await DocumentTopicFacet.search(query, DocumentTopicFacet);
-    console.log('關於 "nuclear energy" 的主題統計:');
-    for (const topic of resultSet) {
-      console.log(`- ${topic.name}: ${topic.count}`);
-    }
-  } catch (error) {
-    console.error("取得主題統計失敗:", error);
-  }
-}
-
-getTopicFacets();
 ```

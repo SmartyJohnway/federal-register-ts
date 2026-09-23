@@ -73,7 +73,7 @@ export class SiteNotificationsService {
   ): Promise<JsonpText> {
     const identifier = QuerySerializer.serializeSiteNotificationFind(params);
     const entries: { key: string; value: string }[] = [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>(

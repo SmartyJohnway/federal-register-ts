@@ -55,7 +55,7 @@ import {
  */
 function searchDecoder<T>(decoded: DecodedResponse): T {
   if (decoded.status >= 200 && decoded.status < 300) {
-    return decoded.parsedJson;
+    return decodeJsonResponse(decoded);
   }
   throw classifySearchHttpError(decoded);
 }
@@ -287,7 +287,7 @@ export class PublicInspectionService {
    */
   async searchJsonp(params: (PublicInspectionSearchParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializePublicInspectionSearchParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/public-inspection-documents", qs, (decoded) => {
@@ -303,7 +303,7 @@ export class PublicInspectionService {
    */
   async availableOnJsonp(params: PublicInspectionAvailableOnParams & JsonpCallbackParams): Promise<JsonpText> {
     const entries = QuerySerializer.serializePublicInspectionAvailableOnParams(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/public-inspection-documents", qs, (decoded) => {
@@ -319,7 +319,7 @@ export class PublicInspectionService {
    */
   async currentJsonp(params: (PublicInspectionCurrentParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializePublicInspectionCurrentParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/public-inspection-documents/current", qs, (decoded) => {
@@ -335,7 +335,7 @@ export class PublicInspectionService {
    */
   async findJsonp(params: PublicInspectionFindParams & JsonpCallbackParams): Promise<JsonpText> {
     const entries = QuerySerializer.serializePublicInspectionFindQuery(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const encodedDocNumber = encodeURIComponent(params.documentNumber);
     const runtime = getInternalClientRuntime(this.#client);
@@ -352,7 +352,7 @@ export class PublicInspectionService {
    */
   async findManyJsonp(params: PublicInspectionFindManyParams & JsonpCallbackParams): Promise<JsonpText> {
     const { pathSegment, entries } = QuerySerializer.serializePublicInspectionFindMany(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const encodedPathSegment = pathSegment
       .split(",")
@@ -372,7 +372,7 @@ export class PublicInspectionService {
    */
   async searchDetailsJsonp(params: (PublicInspectionSearchDetailsParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializePublicInspectionSearchDetailsParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/public-inspection-documents/search-details", qs, (decoded) => {

@@ -6,11 +6,11 @@ This guide illustrates real-world usage patterns for `federal-register-ts`, an i
 
 ## 1. Quick Start
 
-### Installation Note
-> **Publication Notice:** The package has not yet been published to the npm public registry. After formal publication occurs, installation will be:
-> ```bash
-> npm install federal-register-ts
-> ```
+### Installation
+
+```bash
+npm install federal-register-ts
+```
 
 ### Creating a Client
 

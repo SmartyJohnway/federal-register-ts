@@ -21,7 +21,7 @@ import type {
 
 describe("R2-06 Remaining Capability Families (21 Operations) Suite", () => {
   let capturedUrls: string[] = [];
-  let mockFetch: typeof fetch;
+  let mockFetch: jest.Mock;
 
   beforeEach(() => {
     capturedUrls = [];
@@ -350,13 +350,16 @@ describe("R2-06 Remaining Capability Families (21 Operations) Suite", () => {
         })
       ).rejects.toThrow(RequestValidationError);
 
-      // Reverse order (endDate < startDate): signed diff is negative (<= 120), does not trigger 120-day overflow
+      // Reverse order (endDate < startDate) is now rejected per
+      // R3-POSTGA-02-E/F E-CORR-004.
+      mockFetch.mockClear();
       await expect(
         client.effectiveDates.calculate({
           startDate: "2026-05-01",
           endDate: "2026-01-01",
         })
-      ).resolves.toBeDefined();
+      ).rejects.toThrow(RequestValidationError);
+      expect(mockFetch).toHaveBeenCalledTimes(0);
     });
   });
 

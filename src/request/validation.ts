@@ -203,6 +203,61 @@ export function validateIsoDateString(val: any, fieldName: string): string {
   return val;
 }
 
+export function validateBooleanQuery(val: any, fieldName: string): boolean {
+  if (typeof val !== "boolean") {
+    throw new RequestValidationError(
+      `Field '${fieldName}' must be a boolean primitive (true or false). Received: ${JSON.stringify(val)}`,
+      fieldName,
+      val
+    );
+  }
+  return val;
+}
+
+export function validateTrueOnlyFlag(val: any, fieldName: string): boolean | undefined {
+  if (val === undefined) return undefined;
+  if (val !== true) {
+    throw new RequestValidationError(
+      `Field '${fieldName}' is a true-only flag and can only be true (or omitted). Received: ${JSON.stringify(val)}`,
+      fieldName,
+      val
+    );
+  }
+  return true;
+}
+
+export function validateOrdinaryBoolean(val: any, fieldName: string): boolean {
+  if (typeof val !== "boolean") {
+    throw new RequestValidationError(
+      `Field '${fieldName}' must be a boolean primitive (true or false). Received: ${JSON.stringify(val)}`,
+      fieldName,
+      val
+    );
+  }
+  return val;
+}
+
+export function validateStringArray(val: any, fieldName: string): string[] | undefined {
+  if (val === undefined) return undefined;
+  if (!Array.isArray(val)) {
+    throw new RequestValidationError(
+      `Field '${fieldName}' must be an array of strings. Received: ${JSON.stringify(val)}`,
+      fieldName,
+      val
+    );
+  }
+  for (const item of val) {
+    if (typeof item !== "string" || item.trim() === "") {
+      throw new RequestValidationError(
+        `Array '${fieldName}' contains invalid or non-string element: ${JSON.stringify(item)}`,
+        fieldName,
+        item
+      );
+    }
+  }
+  return val;
+}
+
 export function validatePositiveInteger(val: any, fieldName: string): number {
   if (typeof val !== "number" || !Number.isInteger(val) || val <= 0) {
     throw new RequestValidationError(
@@ -439,6 +494,16 @@ export function validateNearCondition(cond: any, fieldName = "near"): NearCondit
       cond
     );
   }
+  const allowedNearKeys = new Set(["location", "within"]);
+  for (const key of Object.keys(cond)) {
+    if (!allowedNearKeys.has(key)) {
+      throw new RequestValidationError(
+        `Unknown property '${key}' in NearCondition '${fieldName}'. Allowed properties are 'location' and 'within'.`,
+        `${fieldName}.${key}`,
+        cond[key]
+      );
+    }
+  }
   validateNonBlankString(cond.location, `${fieldName}.location`);
   if (cond.within !== undefined) {
     if (typeof cond.within !== "number" || !Number.isInteger(cond.within) || cond.within < 1 || cond.within > 200) {
@@ -457,6 +522,13 @@ export function validateEffectiveDatesRange(startDate: any, endDate: any): void 
   validateIsoDateString(endDate, "endDate");
   const d1 = new Date(startDate);
   const d2 = new Date(endDate);
+  if (d1.getTime() > d2.getTime()) {
+    throw new RequestValidationError(
+      `EffectiveDates range has startDate (${startDate}) after endDate (${endDate}).`,
+      "effectiveDates",
+      { startDate, endDate }
+    );
+  }
   const diffDays = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays > 120) {
     throw new RequestValidationError(
@@ -465,6 +537,117 @@ export function validateEffectiveDatesRange(startDate: any, endDate: any): void 
       { startDate, endDate, diffDays }
     );
   }
+}
+
+export function validateStrictBoolean(val: any, fieldName: string): boolean {
+  if (typeof val !== "boolean") {
+    throw new RequestValidationError(
+      `Field '${fieldName}' must be a boolean (true or false). Received: ${JSON.stringify(val)}`,
+      fieldName,
+      val
+    );
+  }
+  return val;
+}
+
+
+
+export function validateStringArrayFilter(arr: any, fieldName: string): readonly string[] | undefined {
+  if (arr === undefined) return undefined;
+  if (!Array.isArray(arr)) {
+    throw new RequestValidationError(
+      `Field '${fieldName}' must be an array of strings if supplied. Received: ${JSON.stringify(arr)}`,
+      fieldName,
+      arr
+    );
+  }
+  if (arr.length === 0) return [];
+  for (let i = 0; i < arr.length; i++) {
+    const item = arr[i];
+    if (typeof item !== "string" || item.trim().length === 0) {
+      throw new RequestValidationError(
+        `Elements of array '${fieldName}' must be non-blank strings. Received at index ${i}: ${JSON.stringify(item)}`,
+        fieldName,
+        arr
+      );
+    }
+  }
+  return arr as readonly string[];
+}
+
+export function validateClientOptions(
+  options?: any,
+  defaultBaseUrl = "https://www.federalregister.gov/api/v1"
+): { baseUrl: string; fetch: typeof globalThis.fetch } {
+  let baseUrl = defaultBaseUrl;
+  let fetchFn = globalThis.fetch;
+
+  if (options !== undefined && options !== null) {
+    if (typeof options !== "object") {
+      throw new RequestValidationError(
+        `Client options must be an object if supplied. Received: ${JSON.stringify(options)}`,
+        "options",
+        options
+      );
+    }
+
+    if ("baseUrl" in options && options.baseUrl !== undefined) {
+      const rawBase = options.baseUrl;
+      if (typeof rawBase !== "string" || rawBase.trim().length === 0) {
+        throw new RequestValidationError(
+          `Option 'baseUrl' must be a non-blank string if supplied. Received: ${JSON.stringify(rawBase)}`,
+          "baseUrl",
+          rawBase
+        );
+      }
+      const trimmed = rawBase.trim();
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(trimmed);
+      } catch {
+        throw new RequestValidationError(
+          `Option 'baseUrl' must be a valid absolute URL. Received: ${JSON.stringify(rawBase)}`,
+          "baseUrl",
+          rawBase
+        );
+      }
+      if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+        throw new RequestValidationError(
+          `Option 'baseUrl' protocol must be http: or https:. Received protocol: ${parsedUrl.protocol}`,
+          "baseUrl",
+          rawBase
+        );
+      }
+      if (parsedUrl.search && parsedUrl.search.length > 0) {
+        throw new RequestValidationError(
+          `Option 'baseUrl' must not contain query parameters. Received: ${parsedUrl.search}`,
+          "baseUrl",
+          rawBase
+        );
+      }
+      if (parsedUrl.hash && parsedUrl.hash.length > 0) {
+        throw new RequestValidationError(
+          `Option 'baseUrl' must not contain URL fragments. Received: ${parsedUrl.hash}`,
+          "baseUrl",
+          rawBase
+        );
+      }
+      baseUrl = trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
+    }
+
+    if ("fetch" in options && options.fetch !== undefined) {
+      if (typeof options.fetch !== "function") {
+        throw new RequestValidationError(
+          `Option 'fetch' must be a function if supplied. Received: ${JSON.stringify(options.fetch)}`,
+          "fetch",
+          options.fetch
+        );
+      }
+      fetchFn = options.fetch;
+    }
+  }
+
+  return { baseUrl, fetch: fetchFn };
 }
 
 export function validateNonEmptyArray<T>(arr: any, fieldName: string): NonEmptyReadonlyArray<T> {

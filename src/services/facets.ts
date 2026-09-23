@@ -64,7 +64,7 @@ import type {
  */
 function searchDecoder<T>(decoded: DecodedResponse): T {
   if (decoded.status >= 200 && decoded.status < 300) {
-    return decoded.parsedJson;
+    return decodeJsonResponse(decoded);
   }
   throw classifySearchHttpError(decoded);
 }
@@ -233,7 +233,7 @@ export class DocumentFacetsService {
 
   async agencyJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/documents/facets/agency", qs, (decoded) => {
@@ -244,7 +244,7 @@ export class DocumentFacetsService {
 
   async topicJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/documents/facets/topic", qs, (decoded) => {
@@ -255,7 +255,7 @@ export class DocumentFacetsService {
 
   async sectionJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/documents/facets/section", qs, (decoded) => {
@@ -266,7 +266,7 @@ export class DocumentFacetsService {
 
   async typeJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/documents/facets/type", qs, (decoded) => {
@@ -277,7 +277,7 @@ export class DocumentFacetsService {
 
   async subtypeJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/documents/facets/subtype", qs, (decoded) => {
@@ -288,7 +288,7 @@ export class DocumentFacetsService {
 
   async dailyJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/documents/facets/daily", qs, (decoded) => {
@@ -299,7 +299,7 @@ export class DocumentFacetsService {
 
   async weeklyJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/documents/facets/weekly", qs, (decoded) => {
@@ -310,7 +310,7 @@ export class DocumentFacetsService {
 
   async monthlyJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/documents/facets/monthly", qs, (decoded) => {
@@ -321,7 +321,7 @@ export class DocumentFacetsService {
 
   async quarterlyJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/documents/facets/quarterly", qs, (decoded) => {
@@ -332,7 +332,7 @@ export class DocumentFacetsService {
 
   async yearlyJsonp(params: (DocumentFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializeDocumentFacetParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/documents/facets/yearly", qs, (decoded) => {
@@ -401,7 +401,7 @@ export class PublicInspectionFacetsService {
 
   async typeJsonp(params: (PublicInspectionFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializePublicInspectionFacetParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/public-inspection-documents/facets/type", qs, (decoded) => {
@@ -412,7 +412,7 @@ export class PublicInspectionFacetsService {
 
   async agencyJsonp(params: (PublicInspectionFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializePublicInspectionFacetParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/public-inspection-documents/facets/agency", qs, (decoded) => {
@@ -423,7 +423,7 @@ export class PublicInspectionFacetsService {
 
   async agenciesJsonp(params: (PublicInspectionFacetParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializePublicInspectionFacetParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/public-inspection-documents/facets/agencies", qs, (decoded) => {
@@ -485,7 +485,7 @@ export class PublicInspectionIssueFacetsService {
 
   async dailyJsonp(params: PublicInspectionIssueDailyFacetParams & JsonpCallbackParams): Promise<JsonpText> {
     const entries = QuerySerializer.serializePublicInspectionIssueDailyFacetParams(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/public-inspection-issues/facets/daily", qs, (decoded) => {
@@ -506,7 +506,7 @@ export class PublicInspectionIssueFacetsService {
 
   async typeJsonp(params: PublicInspectionIssueTypeFacetParams & JsonpCallbackParams): Promise<JsonpText> {
     const entries = QuerySerializer.serializePublicInspectionIssueTypeFacetParams(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/public-inspection-issues/facets/type", qs, (decoded) => {

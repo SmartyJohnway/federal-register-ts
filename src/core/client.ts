@@ -40,6 +40,68 @@ export interface FederalRegisterClientOptions {
  */
 const DEFAULT_BASE_URL = "https://www.federalregister.gov/api/v1";
 
+import { RequestValidationError } from "../request/validation";
+
+function validateBaseUrl(url: any): string {
+  if (url === undefined) {
+    return DEFAULT_BASE_URL;
+  }
+  if (typeof url !== "string") {
+    throw new RequestValidationError(
+      `baseUrl option must be a valid http or https absolute URL string. Received: ${JSON.stringify(url)}`,
+      "baseUrl",
+      url
+    );
+  }
+  const trimmed = url.trim();
+  if (trimmed === "") {
+    throw new RequestValidationError(
+      `baseUrl option cannot be empty or whitespace. Received: ${JSON.stringify(url)}`,
+      "baseUrl",
+      url
+    );
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    throw new RequestValidationError(
+      `baseUrl option must be a valid absolute URL. Received: ${JSON.stringify(url)}`,
+      "baseUrl",
+      url
+    );
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new RequestValidationError(
+      `baseUrl protocol must be http: or https:. Received: ${parsed.protocol}`,
+      "baseUrl",
+      url
+    );
+  }
+  if (parsed.search !== "" || parsed.hash !== "") {
+    throw new RequestValidationError(
+      `baseUrl cannot contain query parameters or fragments. Received: ${JSON.stringify(url)}`,
+      "baseUrl",
+      url
+    );
+  }
+  return trimmed.replace(/\/+$/, "");
+}
+
+function validateFetchFn(fetchFn: any): typeof globalThis.fetch {
+  if (fetchFn === undefined) {
+    return globalThis.fetch;
+  }
+  if (typeof fetchFn !== "function") {
+    throw new RequestValidationError(
+      `fetch option must be a function. Received: ${JSON.stringify(fetchFn)}`,
+      "fetch",
+      fetchFn
+    );
+  }
+  return fetchFn;
+}
+
 export class FederalRegisterClient {
   #baseUrl: string;
   #fetch: typeof globalThis.fetch;
@@ -115,13 +177,16 @@ export class FederalRegisterClient {
   readonly clippings: ClippingsService;
 
   constructor(options?: FederalRegisterClientOptions) {
-    const rawBase = options?.baseUrl || DEFAULT_BASE_URL;
-    // Normalize trailing slash
-    const baseUrl = rawBase.endsWith("/")
-      ? rawBase.slice(0, -1)
-      : rawBase;
+    if (options !== undefined && (typeof options !== "object" || options === null || Array.isArray(options))) {
+      throw new RequestValidationError(
+        `FederalRegisterClient constructor options must be an object. Received: ${JSON.stringify(options)}`,
+        "options",
+        options
+      );
+    }
 
-    const fetchFn = options?.fetch || globalThis.fetch;
+    const baseUrl = validateBaseUrl(options?.baseUrl);
+    const fetchFn = validateFetchFn(options?.fetch);
 
     this.#baseUrl = baseUrl;
     this.#fetch = fetchFn;

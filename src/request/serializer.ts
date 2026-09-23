@@ -70,6 +70,10 @@ import {
   validateUnknownKeys,
   validateRequiredParams,
   validateDocumentTypeCodes,
+  validateBooleanQuery,
+  validateTrueOnlyFlag,
+  validateOrdinaryBoolean,
+  validateStringArray,
   DOCUMENT_SEARCH_PARAMS_KEYS,
   DOCUMENT_SEARCH_CONDITIONS_KEYS,
   EXECUTIVE_ORDER_CSV_SEARCH_PARAMS_KEYS,
@@ -294,14 +298,17 @@ export class QuerySerializer {
     }
 
     if (conditions.significant !== undefined) {
+      validateBooleanQuery(conditions.significant, "conditions.significant");
       QuerySerializer.appendEntry(entries, "conditions[significant]", conditions.significant);
     }
 
     if (conditions.acceptingComments !== undefined) {
+      validateBooleanQuery(conditions.acceptingComments, "conditions.acceptingComments");
       QuerySerializer.appendEntry(entries, "conditions[accepting_comments_on_regulations_dot_gov]", conditions.acceptingComments);
     }
 
     if (conditions.correction !== undefined) {
+      validateBooleanQuery(conditions.correction, "conditions.correction");
       QuerySerializer.appendEntry(entries, "conditions[correction]", conditions.correction);
     }
 
@@ -393,11 +400,13 @@ export class QuerySerializer {
       QuerySerializer.appendEntry(entries, "fields", params.fields);
     }
 
-    if (params.metadataOnly === true) {
+    if (params.metadataOnly !== undefined) {
+      validateTrueOnlyFlag(params.metadataOnly, "metadataOnly");
       entries.push({ key: "metadata_only", value: "1" });
     }
 
-    if (params.includePre1994Docs === true) {
+    if (params.includePre1994Docs !== undefined) {
+      validateTrueOnlyFlag(params.includePre1994Docs, "includePre1994Docs");
       entries.push({ key: "include_pre_1994_docs", value: "true" });
     }
 
@@ -590,6 +599,7 @@ export class QuerySerializer {
     validateUnknownKeys(params, DOCUMENT_SEARCH_DETAILS_PARAMS_KEYS, "DocumentSearchDetailsParams", true);
     const entries: SerializedQueryEntry[] = [];
     if (params.omitSpellingSuggestions !== undefined) {
+      validateOrdinaryBoolean(params.omitSpellingSuggestions, "omitSpellingSuggestions");
       entries.push({
         key: "omit_spelling_suggestions",
         value: params.omitSpellingSuggestions ? "1" : "0",
@@ -665,6 +675,7 @@ export class QuerySerializer {
     }
 
     if (conditions.specialFiling !== undefined) {
+      validateBooleanQuery(conditions.specialFiling, "conditions.specialFiling");
       QuerySerializer.appendEntry(entries, "conditions[special_filing]", conditions.specialFiling);
     }
 

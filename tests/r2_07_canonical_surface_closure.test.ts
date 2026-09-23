@@ -284,22 +284,32 @@ describe("R2-07 Canonical Surface & 120-Capability Closure Tests", () => {
       await expect(client.siteNotifications.find({ identifier: "" })).rejects.toThrow(RequestValidationError);
     });
 
-    test("4.3 Date-period operations enforce format and range boundaries", async () => {
+    test("4.3 Date-period operations enforce format and range boundaries (isolated mock)", async () => {
+      // local mock to ensure fetch is not called
+      const mockFetch = jest.fn().mockResolvedValue(
+        new Response("{}", {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      );
+      const testClient = new FederalRegisterClient({ fetch: mockFetch });
+
       // Invalid date format
-      await expect(client.effectiveDates.calculate({ startDate: "invalid-date", endDate: "2026-01-01" })).rejects.toThrow(RequestValidationError);
+      await expect(
+        testClient.effectiveDates.calculate({ startDate: "invalid-date", endDate: "2026-01-01" })
+      ).rejects.toThrow(RequestValidationError);
 
       // Effective dates 120-day forward limit
       await expect(
-        client.effectiveDates.calculate({ startDate: "2026-01-01", endDate: "2026-06-01" })
+        testClient.effectiveDates.calculate({ startDate: "2026-01-01", endDate: "2026-06-01" })
       ).rejects.toThrow(RequestValidationError);
 
-      // Valid signed reverse date range does not throw range error
-      // (Mock fetch to verify it passes validation)
-      const mockFetch = jest.fn().mockResolvedValue(new Response("{}", { status: 200 }));
-      const testClient = new FederalRegisterClient({ fetch: mockFetch });
+      // Historical signed‑reverse behavior superseded by
+      // R3-POSTGA-02-E/F E-CORR-004.
       await expect(
         testClient.effectiveDates.calculate({ startDate: "2026-06-01", endDate: "2026-01-01" })
-      ).resolves.toBeDefined();
+      ).rejects.toThrow(RequestValidationError);
+      expect(mockFetch).toHaveBeenCalledTimes(0);
     });
 
     test("4.4 Search operations validate page boundaries and reject invalid types", async () => {

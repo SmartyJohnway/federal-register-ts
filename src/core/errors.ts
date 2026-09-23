@@ -33,7 +33,8 @@ export interface MultiLookupNotFoundErrors {
 
 export interface PublicInspectionIssueConditionErrorPayload {
   readonly status: 400;
-  readonly error: string;
+  readonly error?: string;
+  readonly errors?: string;
 }
 
 /**
@@ -176,7 +177,7 @@ export class FederalRegisterRawResponseError extends FederalRegisterHttpError<ne
 
 /**
  * Thrown only when an explicit Public Inspection Issue facet operation decoder
- * encounters HTTP 200 with { status: 400, error: string }.
+ * encounters HTTP 200 with { status: 400, error: string } or { status: 400, errors: string }.
  * Not thrown by global body heuristic.
  */
 export class PublicInspectionIssueConditionError extends FederalRegisterError {
@@ -184,7 +185,8 @@ export class PublicInspectionIssueConditionError extends FederalRegisterError {
   public readonly payload: PublicInspectionIssueConditionErrorPayload;
 
   constructor(payload: PublicInspectionIssueConditionErrorPayload) {
-    super(`Public Inspection Issue condition error: ${payload.error}`);
+    const errorMsg = payload.error || payload.errors || "Unknown condition error";
+    super(`Public Inspection Issue condition error: ${errorMsg}`);
     this.name = "PublicInspectionIssueConditionError";
     this.payload = payload;
   }

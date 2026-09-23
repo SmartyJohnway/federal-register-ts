@@ -83,7 +83,7 @@ export class SuggestedSearchesService {
    */
   async listJsonp(params: JsonpCallbackParams): Promise<JsonpText> {
     const entries: { key: string; value: string }[] = [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/suggested_searches", qs, (decoded) => {
@@ -99,7 +99,7 @@ export class SuggestedSearchesService {
     params: SuggestedSearchSectionsParams & JsonpCallbackParams
   ): Promise<JsonpText> {
     const entries = QuerySerializer.serializeSuggestedSearchSectionsParams(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/suggested_searches", qs, (decoded) => {
@@ -116,7 +116,7 @@ export class SuggestedSearchesService {
   ): Promise<JsonpText> {
     const slug = QuerySerializer.serializeSuggestedSearchFind(params);
     const entries: { key: string; value: string }[] = [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>(

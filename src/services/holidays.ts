@@ -40,7 +40,7 @@ export class HolidaysService {
    */
   async listJsonp(params: JsonpCallbackParams): Promise<JsonpText> {
     const entries: { key: string; value: string }[] = [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/holidays", qs, (decoded) => {
