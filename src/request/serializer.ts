@@ -74,6 +74,7 @@ import {
   validateTrueOnlyFlag,
   validateOrdinaryBoolean,
   validateStringArray,
+  validateStringArrayFilter,
   DOCUMENT_SEARCH_PARAMS_KEYS,
   DOCUMENT_SEARCH_CONDITIONS_KEYS,
   EXECUTIVE_ORDER_CSV_SEARCH_PARAMS_KEYS,
@@ -201,6 +202,7 @@ export class QuerySerializer {
     }
 
     if (conditions.agencies !== undefined) {
+      validateStringArrayFilter(conditions.agencies, "agencies");
       QuerySerializer.appendEntry(entries, "conditions[agencies]", conditions.agencies);
     }
 
@@ -212,22 +214,27 @@ export class QuerySerializer {
     }
 
     if (conditions.citingDocumentNumbers !== undefined) {
+      validateStringArrayFilter(conditions.citingDocumentNumbers, "citingDocumentNumbers");
       QuerySerializer.appendEntry(entries, "conditions[citing_document_numbers]", conditions.citingDocumentNumbers);
     }
 
     if (conditions.documentNumbers !== undefined) {
+      validateStringArrayFilter(conditions.documentNumbers, "documentNumbers");
       QuerySerializer.appendEntry(entries, "conditions[document_numbers]", conditions.documentNumbers);
     }
 
     if (conditions.executiveOrderNumbers !== undefined) {
+      validateStringArrayFilter(conditions.executiveOrderNumbers, "executiveOrderNumbers");
       QuerySerializer.appendEntry(entries, "conditions[executive_order_numbers]", conditions.executiveOrderNumbers);
     }
 
     if (conditions.presidents !== undefined) {
+      validateStringArrayFilter(conditions.presidents, "presidents");
       QuerySerializer.appendEntry(entries, "conditions[president]", conditions.presidents);
     }
 
     if (conditions.sections !== undefined) {
+      validateStringArrayFilter(conditions.sections, "sections");
       QuerySerializer.appendEntry(entries, "conditions[sections]", conditions.sections);
     }
 
@@ -244,6 +251,7 @@ export class QuerySerializer {
     }
 
     if (conditions.topics !== undefined) {
+      validateStringArrayFilter(conditions.topics, "topics");
       QuerySerializer.appendEntry(entries, "conditions[topics]", conditions.topics);
     }
 
@@ -260,6 +268,7 @@ export class QuerySerializer {
     }
 
     if (conditions.noticeTypes !== undefined) {
+      validateStringArrayFilter(conditions.noticeTypes, "noticeTypes");
       QuerySerializer.appendEntry(entries, "conditions[notice_type]", conditions.noticeTypes);
     }
 
@@ -271,6 +280,7 @@ export class QuerySerializer {
     }
 
     if (conditions.presidentialDocumentTypes !== undefined) {
+      validateStringArrayFilter(conditions.presidentialDocumentTypes, "presidentialDocumentTypes");
       QuerySerializer.appendEntry(entries, "conditions[presidential_document_type]", conditions.presidentialDocumentTypes);
     }
 
@@ -282,6 +292,7 @@ export class QuerySerializer {
     }
 
     if (conditions.smallEntities !== undefined) {
+      validateStringArrayFilter(conditions.smallEntities, "smallEntities");
       QuerySerializer.appendEntry(entries, "conditions[small_entities]", conditions.smallEntities);
     }
 
@@ -462,7 +473,8 @@ export class QuerySerializer {
       QuerySerializer.appendEntry(entries, "fields", params.fields);
     }
 
-    if (params.includePre1994Docs === true) {
+    if (params.includePre1994Docs !== undefined) {
+      validateTrueOnlyFlag(params.includePre1994Docs, "includePre1994Docs");
       entries.push({ key: "include_pre_1994_docs", value: "true" });
     }
 
@@ -483,7 +495,8 @@ export class QuerySerializer {
     validateRequiredParams(params, "DocumentSearchRssParams");
     validateUnknownKeys(params, DOCUMENT_SEARCH_RSS_PARAMS_KEYS, "DocumentSearchRssParams");
     const entries: SerializedQueryEntry[] = [];
-    if (params.includePre1994Docs === true) {
+    if (params.includePre1994Docs !== undefined) {
+      validateTrueOnlyFlag(params.includePre1994Docs, "includePre1994Docs");
       entries.push({ key: "include_pre_1994_docs", value: "true" });
     }
     if (params.conditions !== undefined) {
@@ -647,6 +660,7 @@ export class QuerySerializer {
     }
 
     if (conditions.agencies !== undefined) {
+      validateStringArrayFilter(conditions.agencies, "agencies");
       QuerySerializer.appendEntry(entries, "conditions[agencies]", conditions.agencies);
     }
 
@@ -658,10 +672,7 @@ export class QuerySerializer {
     }
 
     if (conditions.types !== undefined) {
-      if (!Array.isArray(conditions.types)) {
-        throw new RequestValidationError("conditions.types must be an array.", "types", conditions.types);
-      }
-      conditions.types.forEach((t, idx) => validateNonBlankString(t, `types[${idx}]`));
+      validateStringArrayFilter(conditions.types, "types");
       QuerySerializer.appendEntry(entries, "conditions[type]", conditions.types);
     }
 
@@ -671,6 +682,7 @@ export class QuerySerializer {
     }
 
     if (conditions.documentNumbers !== undefined) {
+      validateStringArrayFilter(conditions.documentNumbers, "documentNumbers");
       QuerySerializer.appendEntry(entries, "conditions[document_numbers]", conditions.documentNumbers);
     }
 
@@ -720,7 +732,8 @@ export class QuerySerializer {
       QuerySerializer.appendEntry(entries, "fields", params.fields);
     }
 
-    if (params.metadataOnly === true) {
+    if (params.metadataOnly !== undefined) {
+      validateTrueOnlyFlag(params.metadataOnly, "metadataOnly");
       entries.push({ key: "metadata_only", value: "1" });
     }
 

@@ -407,7 +407,7 @@ The SDK provides a structured error hierarchy for handling request validation, H
 Error
 ├── RequestValidationError                  (Client-side parameter validation failure, zero network requests)
 └── FederalRegisterError                    (Base class for API-related SDK failures)
-    ├── FederalRegisterHttpError<TBody>     (Non-2xx HTTP status from API)
+    ├── FederalRegisterHttpError<TBody>     (Non-2xx HTTP status or 2xx response body anomaly)
     │   ├── FederalRegisterStatusMessageError   ({ status, message } body from upstream)
     │   ├── FederalRegisterSearchValidationError ({ errors: { [field]: reason } })
     │   ├── FederalRegisterAgencyNotFoundError  ({ error: 404 } for missing agency)
@@ -419,11 +419,12 @@ Error
 ```
 
 ### Error Inheritance & Semantics
-- **`RequestValidationError`** extends JavaScript's built-in `Error` directly and is thrown before dispatching HTTP requests when parameter validation fails (e.g. invalid date format, out-of-range pagination, unauthorized field projection, or unrecognized request keys).
-- **`FederalRegisterError`** extends `Error` as the base class for server/API errors.
-- **`FederalRegisterHttpError<TBody>`** extends `FederalRegisterError` for non-2xx HTTP transport responses, preserving `status`, `contentType`, `bodyKind`, `body`, and `rawText`.
-- **`FederalRegisterRawResponseError`** is thrown when the upstream server returns non-JSON content (such as HTML 404 pages for missing resources or gateway error pages). Structured error types (like `FederalRegisterAgencyNotFoundError`) apply only when upstream provides the corresponding structured JSON payload.
+- **`RequestValidationError`** extends JavaScript's built-in `Error` directly and is thrown before dispatching HTTP requests when parameter validation fails (e.g. invalid date format, out-of-range pagination, unauthorized field projection, non-array or blank string-array filter, or unrecognized request keys).
+- **`FederalRegisterError`** extends `Error` as the base class for server/API errors thrown by the SDK.
+- **`FederalRegisterHttpError<TBody>`** extends `FederalRegisterError` for non-2xx HTTP transport responses as well as 2xx response body anomalies (`FederalRegisterEmptyJsonError`, `FederalRegisterEmptyBodyError`, `FederalRegisterRawResponseError`), preserving `status`, `contentType`, `bodyKind`, `body`, and `rawText`.
+- **`FederalRegisterRawResponseError`** is thrown when the upstream server returns non-JSON content (such as HTML 404 pages for missing resources or gateway error pages) or unparseable non-JSON text. Structured error types (like `FederalRegisterAgencyNotFoundError`) apply only when upstream provides the corresponding structured JSON payload.
 - **`PublicInspectionIssueConditionError`** extends `FederalRegisterError` directly (not `FederalRegisterHttpError`). It represents the operation-specific Public Inspection Issue semantic error path where HTTP 200 may contain a body with status 400 semantics.
+- **Raw Network Transport Errors:** Native network failures from the underlying `fetch` implementation (e.g. `TypeError: Failed to fetch` or network connection loss) propagate directly from `fetch` without being wrapped into `FederalRegisterError`.
 
 ### Inspecting Errors
 

@@ -1,6 +1,6 @@
 # Federal Register TS 函式庫 — 使用指南
 
-本指南說明如何使用 `federal-register-ts` 官方 TypeScript SDK 來與 FederalRegister.gov API 進行互動。
+本指南說明如何使用 `federal-register-ts` 獨立 TypeScript SDK 來與 FederalRegister.gov API 進行互動。
 
 ---
 
@@ -119,8 +119,8 @@ const client = new FederalRegisterClient();
 
 async function getTopics() {
   const catalog = await client.topics.list();
-  console.log(`專有名詞主題數量: ${catalog.thesaurus.length}`);
-  console.log(`自訂/特定主題數量: ${catalog.ad_hoc.length}`);
+  console.log(`專有名詞主題數量: ${catalog.results.thesaurus.length}`);
+  console.log(`自訂/特定主題數量: ${catalog.results.ad_hoc.length}`);
 }
 ```
 

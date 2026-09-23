@@ -1,0 +1,1 @@
+{"version":3,"file":"clippings.d.ts","sourceRoot":"","sources":["../../src/services/clippings.ts"],"names":[],"mappings":"AAAA;;;;;;;;;GASG;AAEH,OAAO,KAAK,EAAE,qBAAqB,EAAE,MAAM,gBAAgB,CAAC;AAG5D,OAAO,KAAK,EAAE,oBAAoB,EAAE,MAAM,UAAU,CAAC;AAErD,qBAAa,gBAAgB;;gBAGf,MAAM,EAAE,qBAAqB;IAIzC;;;OAGG;IACG,OAAO,IAAI,OAAO,CAAC,oBAAoB,CAAC;CAQ/C"}

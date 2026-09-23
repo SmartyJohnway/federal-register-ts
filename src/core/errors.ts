@@ -38,8 +38,11 @@ export interface PublicInspectionIssueConditionErrorPayload {
 }
 
 /**
- * Base class for all thrown SDK failures.
+ * Base class for server/API errors thrown by the SDK.
  * Partial-success envelopes do NOT throw or inherit from this class.
+ * Note: Client-side parameter validation errors (`RequestValidationError`) extend native `Error`
+ * directly and are thrown prior to dispatching HTTP requests. Raw `fetch` network transport errors
+ * propagate directly from the underlying `fetch` implementation without SDK wrapping.
  */
 export abstract class FederalRegisterError extends Error {
   constructor(message: string) {
@@ -49,7 +52,8 @@ export abstract class FederalRegisterError extends Error {
 }
 
 /**
- * Base class for non-2xx HTTP transport failures.
+ * Base class for non-2xx HTTP transport failures as well as 2xx response body anomalies
+ * (e.g. FederalRegisterEmptyJsonError, FederalRegisterEmptyBodyError, FederalRegisterRawResponseError).
  * Preserves status, contentType, bodyKind, parsed body (if available), and rawText.
  * Absences are strictly represented by null.
  */

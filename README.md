@@ -21,7 +21,7 @@ npm install federal-register-ts
 
 ## Key Features
 
-- **Full Upstream Capability Parity:** Coverage across the historical 120-capability baseline and current API surface extensions (including CAP-001 Topic Catalog `client.topics.list()`).
+- **Governed Capability Parity:** 100% coverage across the frozen 120-capability baseline (`r2_07_oracle_120.json`) and validated post-release extensions (CAP-001 Topic Catalog `client.topics.list()`). Note: Open upstream capability gaps (E-CAP-001 agency facets `slug` parameter and E-CAP-002 agency `ancestor_ids` filter) remain tracked for future expansion.
 - **Type-Safe Request & Response Contracts:** End-to-end TypeScript typings for queries, filters, envelopes, models, and response projections.
 - **Correct Search Semantics:** Strict adherence to upstream OpenSearch query semantics, preserving canonical `conditions[term]` search, same-field OR, and cross-field AND filtering.
 - **Multi-Lookup Partial Success:** Tolerant multi-document lookup handling where existing items resolve cleanly and missing IDs are safely returned in `errors.not_found`.
@@ -101,8 +101,8 @@ const client = new FederalRegisterClient();
 
 async function getTopics() {
   const catalog = await client.topics.list();
-  console.log(`Thesaurus topics: ${catalog.thesaurus.length}`);
-  console.log(`Ad-hoc topics: ${catalog.ad_hoc.length}`);
+  console.log(`Thesaurus topics: ${catalog.results.thesaurus.length}`);
+  console.log(`Ad-hoc topics: ${catalog.results.ad_hoc.length}`);
 }
 ```
 
