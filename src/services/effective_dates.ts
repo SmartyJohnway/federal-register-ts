@@ -9,12 +9,20 @@
 import type { FederalRegisterClient } from "../core/client";
 import { getInternalClientRuntime } from "../core/internal/runtime";
 import {
+  decodeJsonResponse,
   classifyEffectiveDateHttpError,
   type DecodedResponse,
 } from "../core/transport";
 import { QuerySerializer } from "../request/serializer";
 import type { EffectiveDatesParams, JsonpCallbackParams } from "../request/types";
 import type { EffectiveDateMap, JsonpText } from "./models";
+
+function decodeEffectiveDatesResponse(decoded: DecodedResponse): EffectiveDateMap {
+  if (decoded.status >= 200 && decoded.status < 300) {
+    return decodeJsonResponse(decoded);
+  }
+  throw classifyEffectiveDateHttpError(decoded);
+}
 
 export class EffectiveDatesService {
   readonly #client: FederalRegisterClient;
@@ -34,12 +42,7 @@ export class EffectiveDatesService {
     return runtime.execute<EffectiveDateMap>(
       "/effective-dates",
       qs,
-      (decoded: DecodedResponse) => {
-        if (decoded.status >= 200 && decoded.status < 300) {
-          return decoded.parsedJson;
-        }
-        throw classifyEffectiveDateHttpError(decoded);
-      }
+      decodeEffectiveDatesResponse
     );
   }
 

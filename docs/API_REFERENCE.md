@@ -2,7 +2,7 @@
 
 This document is the normative API reference for `federal-register-ts`, an independent TypeScript SDK for the FederalRegister.gov API.
 
-All methods are accessed via an instance of `FederalRegisterClient`, organized into 14 top-level operation namespaces comprising exactly 53 canonical operations.
+All methods are accessed via an instance of `FederalRegisterClient`, organized into 14 top-level operation namespaces comprising the 53 canonical operations from the historical frozen baseline plus post-release additive capability extensions (54 operations total, including CAP-001 `client.topics.list()`).
 
 ---
 
@@ -32,14 +32,14 @@ const customClient = new FederalRegisterClient({
 
 ## Namespaces Overview
 
-All 53 canonical operations are organized under 14 top-level client service namespaces:
+All 54 canonical operations (53 historical baseline operations + 1 post-release delta) are organized under 14 top-level client service namespaces:
 
 | Namespace | Accessor | Operations | Description |
 |---|---|---|---|
 | Documents | `client.documents` | 20 operations | Published documents (10 operations) plus nested aggregations via `client.documents.facets` (10 operations). |
 | Public Inspection | `client.publicInspection` | 14 operations | Pre-publication documents (9 operations) plus nested aggregations via `facets` (3 operations) and `issues.facets` (2 operations). |
 | Agencies | `client.agencies` | 4 operations | Agency index, individual agency lookup, multi-lookup, and agency search suggestions. |
-| Topics | `client.topics` | 1 operation | Topic suggestions. |
+| Topics | `client.topics` | 2 operations | Topic catalog listing (CAP-001) and topic suggestions. |
 | Sections | `client.sections` | 1 operation | Subject sections of the Federal Register. |
 | Suggested Searches | `client.suggestedSearches` | 3 operations | Curated searches by topic, section, and specific query slug. |
 | Holidays | `client.holidays` | 1 operation | Federal legal public holidays schedule. |

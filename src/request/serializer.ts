@@ -75,6 +75,7 @@ import {
   validateOrdinaryBoolean,
   validateStringArray,
   validateStringArrayFilter,
+  validatePositiveIntegerArrayFilter,
   DOCUMENT_SEARCH_PARAMS_KEYS,
   DOCUMENT_SEARCH_CONDITIONS_KEYS,
   EXECUTIVE_ORDER_CSV_SEARCH_PARAMS_KEYS,
@@ -207,9 +208,7 @@ export class QuerySerializer {
     }
 
     if (conditions.agencyIds !== undefined) {
-      if (Array.isArray(conditions.agencyIds)) {
-        conditions.agencyIds.forEach((id) => validatePositiveInteger(id, "agencyIds"));
-      }
+      validatePositiveIntegerArrayFilter(conditions.agencyIds, "agencyIds");
       QuerySerializer.appendEntry(entries, "conditions[agency_ids]", conditions.agencyIds);
     }
 
@@ -239,9 +238,7 @@ export class QuerySerializer {
     }
 
     if (conditions.sectionIds !== undefined) {
-      if (Array.isArray(conditions.sectionIds)) {
-        conditions.sectionIds.forEach((id) => validatePositiveInteger(id, "sectionIds"));
-      }
+      validatePositiveIntegerArrayFilter(conditions.sectionIds, "sectionIds");
       QuerySerializer.appendEntry(entries, "conditions[section_ids]", conditions.sectionIds);
     }
 
@@ -256,9 +253,7 @@ export class QuerySerializer {
     }
 
     if (conditions.topicIds !== undefined) {
-      if (Array.isArray(conditions.topicIds)) {
-        conditions.topicIds.forEach((id) => validatePositiveInteger(id, "topicIds"));
-      }
+      validatePositiveIntegerArrayFilter(conditions.topicIds, "topicIds");
       QuerySerializer.appendEntry(entries, "conditions[topic_ids]", conditions.topicIds);
     }
 
@@ -273,9 +268,7 @@ export class QuerySerializer {
     }
 
     if (conditions.noticeTypeIds !== undefined) {
-      if (Array.isArray(conditions.noticeTypeIds)) {
-        conditions.noticeTypeIds.forEach((id) => validatePositiveInteger(id, "noticeTypeIds"));
-      }
+      validatePositiveIntegerArrayFilter(conditions.noticeTypeIds, "noticeTypeIds");
       QuerySerializer.appendEntry(entries, "conditions[notice_type_id]", conditions.noticeTypeIds);
     }
 
@@ -285,9 +278,7 @@ export class QuerySerializer {
     }
 
     if (conditions.presidentialDocumentTypeIds !== undefined) {
-      if (Array.isArray(conditions.presidentialDocumentTypeIds)) {
-        conditions.presidentialDocumentTypeIds.forEach((id) => validatePositiveInteger(id, "presidentialDocumentTypeIds"));
-      }
+      validatePositiveIntegerArrayFilter(conditions.presidentialDocumentTypeIds, "presidentialDocumentTypeIds");
       QuerySerializer.appendEntry(entries, "conditions[presidential_document_type_id]", conditions.presidentialDocumentTypeIds);
     }
 
@@ -297,9 +288,7 @@ export class QuerySerializer {
     }
 
     if (conditions.smallEntityIds !== undefined) {
-      if (Array.isArray(conditions.smallEntityIds)) {
-        conditions.smallEntityIds.forEach((id) => validatePositiveInteger(id, "smallEntityIds"));
-      }
+      validatePositiveIntegerArrayFilter(conditions.smallEntityIds, "smallEntityIds");
       QuerySerializer.appendEntry(entries, "conditions[small_entity_ids]", conditions.smallEntityIds);
     }
 
@@ -656,6 +645,9 @@ export class QuerySerializer {
     }
 
     if (conditions.term !== undefined) {
+      if (typeof conditions.term !== "string") {
+        throw new RequestValidationError("conditions.term must be a string.", "term", conditions.term);
+      }
       entries.push({ key: "conditions[term]", value: conditions.term });
     }
 
@@ -665,9 +657,7 @@ export class QuerySerializer {
     }
 
     if (conditions.agencyIds !== undefined) {
-      if (Array.isArray(conditions.agencyIds)) {
-        conditions.agencyIds.forEach((id) => validatePositiveInteger(id, "agencyIds"));
-      }
+      validatePositiveIntegerArrayFilter(conditions.agencyIds, "agencyIds");
       QuerySerializer.appendEntry(entries, "conditions[agency_ids]", conditions.agencyIds);
     }
 
@@ -968,6 +958,16 @@ export class QuerySerializer {
     validateUnknownKeys(params, SUGGESTED_SEARCH_SECTIONS_PARAMS_KEYS, "SuggestedSearchSectionsParams", true);
     if (!Array.isArray(params.sections) || params.sections.length === 0) {
       throw new RequestValidationError("SuggestedSearchSectionsParams requires a non-empty sections array.", "sections");
+    }
+    for (let i = 0; i < params.sections.length; i++) {
+      const item = params.sections[i];
+      if (typeof item !== "string" || item.trim().length === 0) {
+        throw new RequestValidationError(
+          `Elements of array 'sections' must be non-blank strings. Received at index ${i}: ${JSON.stringify(item)}`,
+          "sections",
+          params.sections
+        );
+      }
     }
     const entries: SerializedQueryEntry[] = [];
     QuerySerializer.appendEntry(entries, "conditions[sections]", params.sections);

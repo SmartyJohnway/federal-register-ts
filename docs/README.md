@@ -10,7 +10,7 @@ These documents define the active, authoritative public contract and developer g
 
 | Document | Description | Target Audience |
 |---|---|---|
-| [`API_REFERENCE.md`](API_REFERENCE.md) | Complete normative API reference covering all 14 namespaces and 53 canonical operations. | SDK Users & Developers |
+| [`API_REFERENCE.md`](API_REFERENCE.md) | Complete normative API reference covering all 14 namespaces and 54 canonical operations. | SDK Users & Developers |
 | [`CAPABILITIES.md`](CAPABILITIES.md) | Comprehensive 120-capability matrix mapping frozen IDs, families, types, and uncertainty guards. | Auditors & Integrators |
 | [`SEARCH.md`](SEARCH.md) | Authoritative search semantics guide (`conditions[term]`, logical OR/AND rules, pagination, serialization). | Search Engineers |
 | [`COMPATIBILITY.md`](COMPATIBILITY.md) | Runtime support matrix (Node 22/24 blocking, Node 20 EOL, TS 5.0.4..7.0.2 points, CJS/ESM interop). | System Architects |

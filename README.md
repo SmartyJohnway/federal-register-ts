@@ -11,17 +11,28 @@ Independent, type-safe TypeScript SDK for the [FederalRegister.gov](https://www.
 
 ## Installation
 
-Install the package via npm:
+Install the stable release via npm:
 
 ```bash
 npm install federal-register-ts
 ```
 
+Or install the release candidate:
+
+```bash
+npm install federal-register-ts@rc
+```
+
+| Release Channel | Version | npm Dist-Tag |
+|---|---|---|
+| **Stable (Latest)** | `1.0.1` | `latest` |
+| **Release Candidate** | `1.1.0-rc.2` | `rc` |
+
 ---
 
 ## Key Features
 
-- **Governed Capability Parity:** 100% coverage across the frozen 120-capability baseline (`r2_07_oracle_120.json`) and validated post-release extensions (CAP-001 Topic Catalog `client.topics.list()`). Note: Known current upstream capability gaps—specifically E-CAP-001 Document projection fields (`amendatory_instructions`, `cfr_topics`, `related_documents`) and E-CAP-002 `search_after_cursor` deep-pagination request support—are tracked for future releases (complete current upstream parity is not claimed while these gaps remain open).
+- **Governed Capability Parity:** Coverage across the historical frozen 120-capability baseline (`r2_07_oracle_120.json`, 120/120 records immutable) and validated post-release capability extensions (CAP-001 Topic Catalog `client.topics.list()`, totaling 54 canonical operations across 14 namespaces). Note: Known current upstream capability gaps—specifically E-CAP-001 Document projection fields (`amendatory_instructions`, `cfr_topics`, `related_documents`) and E-CAP-002 `search_after_cursor` deep-pagination request support—are tracked for future releases (complete current upstream parity is not claimed while these gaps remain open).
 - **Type-Safe Request & Response Contracts:** End-to-end TypeScript typings for queries, filters, envelopes, models, and response projections.
 - **Correct Search Semantics:** Strict adherence to upstream OpenSearch query semantics, preserving canonical `conditions[term]` search, same-field OR, and cross-field AND filtering.
 - **Multi-Lookup Partial Success:** Tolerant multi-document lookup handling where existing items resolve cleanly and missing IDs are safely returned in `errors.not_found`.
@@ -110,7 +121,7 @@ async function getTopics() {
 
 ## 14 Operation Namespaces Overview
 
-All 53 canonical operations are accessible via 14 top-level client namespaces:
+All 54 canonical operations (53 historical baseline operations + 1 post-release capability delta CAP-001) are accessible via 14 top-level client namespaces:
 
 | Namespace | Accessor | Primary Capabilities | Example Methods |
 |---|---|---|---|
@@ -164,7 +175,7 @@ For complete runtime details, see [docs/COMPATIBILITY.md](https://github.com/Sma
 
 ## Documentation Index
 
-- **[API Reference](https://github.com/SmartyJohnway/federal-register-ts/blob/main/docs/API_REFERENCE.md):** Complete reference for all 14 namespaces and 53 operations.
+- **[API Reference](https://github.com/SmartyJohnway/federal-register-ts/blob/main/docs/API_REFERENCE.md):** Complete reference for all 14 namespaces and 54 canonical operations.
 - **[Governed Capabilities Matrix](https://github.com/SmartyJohnway/federal-register-ts/blob/main/docs/CAPABILITIES.md):** Complete 120-capability registry.
 - **[Search Semantics Guide](https://github.com/SmartyJohnway/federal-register-ts/blob/main/docs/SEARCH.md):** Search logic, query syntax, and parameter serialization.
 - **[Usage Guide](https://github.com/SmartyJohnway/federal-register-ts/blob/main/docs/USAGE.md):** Practical code examples.

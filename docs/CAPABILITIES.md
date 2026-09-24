@@ -6,10 +6,10 @@ This document provides the normative 120-capability matrix for `federal-register
 
 ## Summary Breakdown
 
-- **Total Governed Capabilities:** 120
+- **Historical Frozen Baseline Capabilities:** 120 (immutable baseline; 120 / 120 TypeScript coverage)
+- **Post-Release Capability Deltas:** 1 (CAP-001 Topic Catalog `client.topics.list()`)
+- **Total Canonical Operations:** 54 across 14 namespaces (53 historical baseline operations + 1 post-release delta)
 - **Top-Level Namespaces:** 14
-- **Canonical Operations:** 53
-- **TypeScript Required Coverage:** 120 / 120 (100%)
 - **Intentionally Unsupported:** 0
 - **Uncertainty Guards:** 16 preserved upstream behaviors (documented below)
 

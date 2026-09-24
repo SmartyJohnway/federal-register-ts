@@ -575,6 +575,32 @@ export function validateStringArrayFilter(arr: any, fieldName: string): readonly
   return arr as readonly string[];
 }
 
+export function validatePositiveIntegerArrayFilter(
+  arr: any,
+  fieldName: string
+): readonly number[] | undefined {
+  if (arr === undefined) return undefined;
+  if (!Array.isArray(arr)) {
+    throw new RequestValidationError(
+      `Field '${fieldName}' must be an array of positive integers if supplied. Received: ${JSON.stringify(arr)}`,
+      fieldName,
+      arr
+    );
+  }
+  if (arr.length === 0) return [];
+  for (let i = 0; i < arr.length; i++) {
+    const item = arr[i];
+    if (typeof item !== "number" || !Number.isInteger(item) || item <= 0) {
+      throw new RequestValidationError(
+        `Elements of array '${fieldName}' must be positive integers (> 0). Received at index ${i}: ${JSON.stringify(item)}`,
+        fieldName,
+        arr
+      );
+    }
+  }
+  return arr as readonly number[];
+}
+
 export function validateClientOptions(
   options?: any,
   defaultBaseUrl = "https://www.federalregister.gov/api/v1"
