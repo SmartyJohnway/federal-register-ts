@@ -26,7 +26,7 @@ npm install federal-register-ts@rc
 | Release Channel | Version | npm Dist-Tag |
 |---|---|---|
 | **Stable (Latest)** | `1.0.1` | `latest` |
-| **Release Candidate** | `1.1.0-rc.2` | `rc` |
+| **Release Candidate** | `1.1.0-rc.3` | `rc` |
 
 ---
 
