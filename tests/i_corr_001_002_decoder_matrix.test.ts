@@ -64,10 +64,11 @@ describe("I-CORR-001 — Effective Dates calculate() 2xx Decoder Integrity", () 
     expect(result).toEqual({});
   });
 
-  test("3. [] empty array -> SUCCESS", async () => {
+  test("3. [] empty array -> FederalRegisterHttpError", async () => {
     const { client } = createMockClient("[]");
-    const result = await client.effectiveDates.calculate(validParams);
-    expect(result).toEqual([]);
+    await expect(client.effectiveDates.calculate(validParams)).rejects.toThrow(
+      FederalRegisterHttpError
+    );
   });
 
   test("4. empty body -> throws FederalRegisterEmptyBodyError", async () => {

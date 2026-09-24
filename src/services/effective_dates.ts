@@ -13,13 +13,25 @@ import {
   classifyEffectiveDateHttpError,
   type DecodedResponse,
 } from "../core/transport";
+import { FederalRegisterHttpError } from "../core/errors";
 import { QuerySerializer } from "../request/serializer";
 import type { EffectiveDatesParams, JsonpCallbackParams } from "../request/types";
 import type { EffectiveDateMap, JsonpText } from "./models";
 
 function decodeEffectiveDatesResponse(decoded: DecodedResponse): EffectiveDateMap {
   if (decoded.status >= 200 && decoded.status < 300) {
-    return decodeJsonResponse(decoded);
+    const parsed = decodeJsonResponse(decoded);
+    if (Array.isArray(parsed)) {
+      throw new FederalRegisterHttpError(
+        `HTTP ${decoded.status} returned non-object JSON root: ${JSON.stringify(parsed)}`,
+        decoded.status,
+        decoded.contentType,
+        decoded.bodyKind,
+        parsed,
+        decoded.rawText
+      );
+    }
+    return parsed as EffectiveDateMap;
   }
   throw classifyEffectiveDateHttpError(decoded);
 }

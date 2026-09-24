@@ -557,7 +557,7 @@ export interface TopicSuggestionsParams {
  * 4.54 SuggestedSearchSectionsParams
  */
 export interface SuggestedSearchSectionsParams {
-  sections: readonly string[];
+  sections: NonEmptyReadonlyArray<string>;
 }
 
 /**
