@@ -18,7 +18,7 @@ export function CapabilitiesView() {
         <CardHeader>
           <CardTitle>
             <Layers className="w-5 h-5 text-cyan-400" />
-            <span>Complete SDK Capability Matrix</span>
+            <span>Canonical SDK Capability Matrix</span>
           </CardTitle>
           <div className="flex items-center gap-2">
             <Badge variant="tierA">Tier A: {TIER_COUNTS['Tier A']}</Badge>
@@ -28,8 +28,8 @@ export function CapabilitiesView() {
           </div>
         </CardHeader>
         <p className="text-sm text-slate-300 leading-relaxed mb-6">
-          The SDK provides complete, verified surface coverage across {ROOT_NAMESPACES.length} root namespaces,
-          categorized by operational frequency, projection flexibility, and user interaction patterns.
+          The Showcase carries the audited canonical metadata across {ROOT_NAMESPACES.length} SDK root namespaces,
+          categorized by operational frequency, projection flexibility, and accessibility tiers (with open v1.2.0 items deferred).
         </p>
 
         {/* Tier Explanations */}
@@ -50,7 +50,7 @@ export function CapabilitiesView() {
               <Badge variant="tierB">33 Operations</Badge>
             </div>
             <p className="text-xs text-slate-300">
-              Specialized search dimensions, multi-entity batch lookups, facet aggregations, topic catalogs, holiday calendars, and OpenAPI document retrieval.
+              Specialized search dimensions, multi-entity batch lookups, facet aggregations, topic catalogs, and holiday calendars.
             </p>
           </div>
 
@@ -60,7 +60,7 @@ export function CapabilitiesView() {
               <Badge variant="tierC">12 Operations</Badge>
             </div>
             <p className="text-xs text-slate-300">
-              Specialized sub-entity lookups, raw format streams (CSV/PDF), citation-specific indices, and companion utilities.
+              Specialized sub-entity lookups, raw format streams (CSV), citation-specific indices, OpenAPI document retrieval, and companion utilities.
             </p>
           </div>
         </div>
@@ -96,7 +96,7 @@ export function CapabilitiesView() {
         </div>
       </Card>
 
-      {/* Parity & Hardening Standards */}
+      {/* Hardening Standards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
@@ -107,7 +107,7 @@ export function CapabilitiesView() {
           </CardHeader>
           <ul className="text-xs text-slate-300 space-y-2 list-disc list-inside">
             <li>Strict separation between full-text query string (<code className="text-cyan-300 font-mono">conditions[term]</code>) and structured filters.</li>
-            <li>Array parameter serialization semantics: Disjunction (OR) within fields (<code className="text-cyan-300 font-mono">conditions[type][]=RULE&amp;conditions[type][]=PRORULE</code>).</li>
+            <li>Array parameter serialization semantics: Disjunction (OR) within fields.</li>
             <li>Zero undefined/null query leakages.</li>
             <li>Hardened JSONP companion isolation.</li>
           </ul>
@@ -121,7 +121,8 @@ export function CapabilitiesView() {
             </CardTitle>
           </CardHeader>
           <ul className="text-xs text-slate-300 space-y-2 list-disc list-inside">
-            <li>Node.js 18, 20, 22, and 24 production compatibility.</li>
+            <li>Node.js 22 and 24 verified SDK lanes.</li>
+            <li>Showcase production runtime target: Node.js 24.</li>
             <li>TypeScript 7.0.2 strict compilation baseline.</li>
             <li>Strict Zero-External-Dependency core SDK footprint.</li>
             <li>Independent npm package resolution in Showcase (<code className="text-emerald-300 font-mono">federal-register-ts@1.1.0</code>).</li>

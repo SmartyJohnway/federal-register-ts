@@ -1,4 +1,4 @@
-import { Sparkles, Layers, ShieldCheck, Database, ArrowRight } from 'lucide-react';
+import { Layers, ShieldCheck, Database, ArrowRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from './Card';
 import { Badge } from './Badge';
 import { Button } from './Button';
@@ -21,16 +21,16 @@ export function ExploreView({ onNavigateTab }: ExploreViewProps) {
             Federal Register TypeScript SDK
           </h1>
           <p className="text-base text-slate-300 leading-relaxed">
-            A fully type-safe, canonical SDK covering all 14 official FederalRegister.gov API namespaces,
-            with 54 rigorously audited operations, comprehensive query serialization, and robust Netlify Functions server-side integration.
+            A type-safe SDK covering 14 SDK root namespaces with 54 canonical operations,
+            standardized query serialization, and a Netlify Functions Node.js 24 server-side architecture.
           </p>
           <div className="flex flex-wrap gap-3 pt-2">
             <Button onClick={() => onNavigateTab('developer')} size="md">
-              <span>Explore 54 Operations</span>
+              <span>Developer Preview</span>
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
             <Button onClick={() => onNavigateTab('trade')} variant="secondary" size="md">
-              <span>View Trade / Tariff Examples</span>
+              <span>Trade Examples Placeholder</span>
             </Button>
           </div>
         </div>
@@ -40,16 +40,16 @@ export function ExploreView({ onNavigateTab }: ExploreViewProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card hoverEffect>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Operations</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Canonical Operations</span>
             <Layers className="w-5 h-5 text-cyan-400" />
           </div>
           <div className="text-3xl font-bold text-white mb-1">{TOTAL_OPERATIONS_COUNT}</div>
-          <p className="text-xs text-slate-400">100% canonical operations verified</p>
+          <p className="text-xs text-slate-400">54 audited operations</p>
         </Card>
 
         <Card hoverEffect>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Root Namespaces</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">SDK Root Namespaces</span>
             <Database className="w-5 h-5 text-indigo-400" />
           </div>
           <div className="text-3xl font-bold text-white mb-1">{ROOT_NAMESPACES.length}</div>
@@ -73,11 +73,11 @@ export function ExploreView({ onNavigateTab }: ExploreViewProps) {
 
         <Card hoverEffect>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Trade Relevance</span>
-            <Sparkles className="w-5 h-5 text-purple-400" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Trade Relevant</span>
+            <Layers className="w-5 h-5 text-purple-400" />
           </div>
           <div className="text-3xl font-bold text-white mb-1">{TRADE_RELEVANT_OPERATIONS.length}</div>
-          <p className="text-xs text-slate-400">HTS, AD/CVD, Section 301/232</p>
+          <p className="text-xs text-slate-400">Operations tagged for trade context</p>
         </Card>
       </div>
 

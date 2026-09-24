@@ -1,31 +1,15 @@
-import { useState, useMemo } from 'react';
-import { Search, Copy, Check, Terminal, FileCode2, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
+import { Copy, Check, Terminal, FileCode2, ExternalLink } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from './Card';
 import { Badge } from './Badge';
-import { EmptyState } from './FeedbackStates';
-import { CANONICAL_OPERATIONS, ROOT_NAMESPACES } from '../data/registry';
+import { CANONICAL_OPERATIONS } from '../data/registry';
 import type { OperationTier } from '../types/registry';
 
 export function DeveloperView() {
   const [copied, setCopied] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedNamespace, setSelectedNamespace] = useState<string>('all');
-  const [selectedTier, setSelectedTier] = useState<string>('all');
 
-  const filteredOperations = useMemo(() => {
-    return CANONICAL_OPERATIONS.filter((op) => {
-      const matchSearch =
-        searchTerm === '' ||
-        op.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        op.path.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        op.desc.toLowerCase().includes(searchTerm.toLowerCase());
-
-      const matchNamespace = selectedNamespace === 'all' || op.ns === selectedNamespace;
-      const matchTier = selectedTier === 'all' || op.tier === selectedTier;
-
-      return matchSearch && matchNamespace && matchTier;
-    });
-  }, [searchTerm, selectedNamespace, selectedTier]);
+  // Foundation preview: static sample showing first 5 operations across tiers
+  const sampleOperations = CANONICAL_OPERATIONS.slice(0, 6);
 
   const handleCopyInstall = () => {
     navigator.clipboard.writeText('npm install federal-register-ts@1.1.0');
@@ -78,13 +62,13 @@ export function DeveloperView() {
           </div>
 
           <div className="p-4 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">SDK Usage Example</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">SDK Basic Import Example</div>
             <pre className="text-xs font-mono text-slate-300 overflow-x-auto">
 {`import { FederalRegisterClient } from 'federal-register-ts';
 
 const client = new FederalRegisterClient();
 
-// Tier A primary document search
+// Primary document search (Tier A)
 const results = await client.documents.search({
   conditions: { term: 'tariff rate quota' },
   perPage: 10,
@@ -96,102 +80,58 @@ console.log(\`Found \${results.count} documents\`);`}
         </div>
       </Card>
 
-      {/* Operation Catalog Controls */}
+      {/* Operation Catalog Foundation Preview */}
       <Card>
         <CardHeader>
           <CardTitle>
             <FileCode2 className="w-5 h-5 text-indigo-400" />
-            <span>Canonical 54 Operations Catalog</span>
+            <span>Canonical Registry Foundation Preview</span>
           </CardTitle>
-          <span className="text-xs text-slate-400 font-mono">
-            Showing {filteredOperations.length} of {CANONICAL_OPERATIONS.length} operations
-          </span>
+          <Badge variant="outline">Full Explorer in R3-10C</Badge>
         </CardHeader>
 
-        {/* Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-            <input
-              type="text"
-              placeholder="Search by ID, path, or description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500"
-            />
-          </div>
+        <p className="text-xs text-slate-400 mb-4">
+          Below is a foundation sample of the 54 canonical operations carried by the Showcase metadata registry.
+          Full interactive capability exploration and parameter builder will be enabled in checkpoint R3-10C.
+        </p>
 
-          <div>
-            <select
-              value={selectedNamespace}
-              onChange={(e) => setSelectedNamespace(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500"
+        <div className="space-y-3">
+          {sampleOperations.map((op) => (
+            <div
+              key={op.id}
+              className="p-4 rounded-lg bg-slate-950/70 border border-slate-800 space-y-2"
             >
-              <option value="all">All Namespaces (14)</option>
-              {ROOT_NAMESPACES.map((ns) => (
-                <option key={ns} value={ns}>
-                  {ns}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <select
-              value={selectedTier}
-              onChange={(e) => setSelectedTier(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500"
-            >
-              <option value="all">All Tiers (A/B/C)</option>
-              <option value="Tier A">Tier A (Primary 9)</option>
-              <option value="Tier B">Tier B (Secondary 33)</option>
-              <option value="Tier C">Tier C (Companion 12)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Operation List */}
-        {filteredOperations.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <div className="space-y-3">
-            {filteredOperations.map((op) => (
-              <div
-                key={op.id}
-                className="p-4 rounded-lg bg-slate-950/70 border border-slate-800 hover:border-slate-700 transition-all space-y-2"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                      #{op.ordinal} {op.id}
-                    </span>
-                    <span className="font-mono text-sm font-semibold text-cyan-400">{op.path}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Badge variant={getTierBadgeVariant(op.tier)}>{op.tier}</Badge>
-                    {op.trade && <Badge variant="trade">Trade</Badge>}
-                    <Badge variant={op.paramReq === 'Required' ? 'default' : 'outline'}>
-                      {op.paramReq}
-                    </Badge>
-                  </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                    #{op.ordinal} {op.id}
+                  </span>
+                  <span className="font-mono text-sm font-semibold text-cyan-400">{op.path}</span>
                 </div>
-
-                <p className="text-xs text-slate-300">{op.desc}</p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-mono pt-1">
-                  <div className="bg-slate-900/60 p-2 rounded border border-slate-800/60 overflow-x-auto">
-                    <span className="text-slate-500">params: </span>
-                    <span className="text-slate-300">{op.params}</span>
-                  </div>
-                  <div className="bg-slate-900/60 p-2 rounded border border-slate-800/60 overflow-x-auto">
-                    <span className="text-slate-500">returns: </span>
-                    <span className="text-indigo-300">{op.returns}</span>
-                  </div>
+                <div className="flex items-center gap-1.5">
+                  <Badge variant={getTierBadgeVariant(op.tier)}>{op.tier}</Badge>
+                  {op.trade && <Badge variant="trade">Trade</Badge>}
+                  <Badge variant={op.paramReq === 'Required' ? 'default' : 'outline'}>
+                    {op.paramReq}
+                  </Badge>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+
+              <p className="text-xs text-slate-300">{op.desc}</p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-mono pt-1">
+                <div className="bg-slate-900/60 p-2 rounded border border-slate-800/60 overflow-x-auto">
+                  <span className="text-slate-500">params: </span>
+                  <span className="text-slate-300">{op.params}</span>
+                </div>
+                <div className="bg-slate-900/60 p-2 rounded border border-slate-800/60 overflow-x-auto">
+                  <span className="text-slate-500">returns: </span>
+                  <span className="text-indigo-300">{op.returns}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </Card>
     </div>
   );
