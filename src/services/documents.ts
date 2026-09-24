@@ -54,7 +54,7 @@ import { DocumentFacetsService } from "./facets";
  */
 function searchDecoder<T>(decoded: DecodedResponse): T {
   if (decoded.status >= 200 && decoded.status < 300) {
-    return decoded.parsedJson;
+    return decodeJsonResponse(decoded);
   }
   throw classifySearchHttpError(decoded);
 }
@@ -296,7 +296,7 @@ export class DocumentsService {
    */
   async searchJsonp(params: (DocumentSearchParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializeDocumentSearchParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/documents", qs, (decoded) => {
@@ -312,7 +312,7 @@ export class DocumentsService {
    */
   async findJsonp(params: DocumentFindParams & JsonpCallbackParams): Promise<JsonpText> {
     const entries = QuerySerializer.serializeDocumentFindQuery(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const encodedDocNumber = encodeURIComponent(params.documentNumber);
     const runtime = getInternalClientRuntime(this.#client);
@@ -329,7 +329,7 @@ export class DocumentsService {
    */
   async findManyJsonp(params: DocumentFindManyParams & JsonpCallbackParams): Promise<JsonpText> {
     const { pathSegment, entries } = QuerySerializer.serializeDocumentFindMany(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const encodedPathSegment = pathSegment
       .split(",")
@@ -349,7 +349,7 @@ export class DocumentsService {
    */
   async findByCitationJsonp(params: DocumentCitationFindParams & JsonpCallbackParams): Promise<JsonpText> {
     const { volume, page, entries } = QuerySerializer.serializeDocumentCitationFind(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const path = `/documents/${encodeURIComponent(`${volume} FR ${page}`)}`;
     const runtime = getInternalClientRuntime(this.#client);
@@ -366,7 +366,7 @@ export class DocumentsService {
    */
   async findManyByCitationJsonp(params: DocumentCitationFindManyParams & JsonpCallbackParams): Promise<JsonpText> {
     const { entries } = QuerySerializer.serializeDocumentCitationFindMany(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const pathSegment = params.citations
       .map((c) => encodeURIComponent(`${c.volume} FR ${c.page}`))
@@ -385,7 +385,7 @@ export class DocumentsService {
    */
   async autocompleteJsonp(params: DocumentAutocompleteParams & JsonpCallbackParams): Promise<JsonpText> {
     const entries = QuerySerializer.serializeDocumentAutocompleteParams(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/documents/autocomplete-suggestions", qs, (decoded) => {
@@ -401,7 +401,7 @@ export class DocumentsService {
    */
   async searchDetailsJsonp(params: (DocumentSearchDetailsParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializeDocumentSearchDetailsParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/documents/search-details", qs, (decoded) => {

@@ -6,12 +6,34 @@ describe("R3-POSTGA-01 PR-1 — Runtime Validation Safety & JSONP Parity", () =>
   let mockFetch: jest.Mock;
 
   beforeEach(() => {
-    mockFetch = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      headers: new Headers({ "content-type": "application/json" }),
-      json: async () => ({ count: 0, results: [] }),
-      text: async () => "callback_fn({ count: 0, results: [] });",
+    // URL‑aware mock: JSON for normal endpoints, JSONP text for callback‑based endpoints.
+    // Handles string | URL | Request inputs per deterministic test harness hardening.
+    mockFetch = jest.fn().mockImplementation((...args: unknown[]) => {
+      const input = args[0];
+      const requestUrl =
+        typeof input === "string"
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input instanceof Request
+              ? input.url
+              : String(input);
+      const isJsonp = requestUrl.includes("callback=");
+      if (isJsonp) {
+        return Promise.resolve(
+          new Response(`callback_fn({ count: 0, results: [] });`, {
+            status: 200,
+            headers: { "content-type": "application/javascript" },
+          })
+        );
+      }
+      // Regular JSON response
+      return Promise.resolve(
+        new Response(JSON.stringify({ count: 0, results: [] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      );
     });
     client = new FederalRegisterClient({
       fetch: mockFetch,

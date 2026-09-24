@@ -37,7 +37,7 @@ import type {
  */
 function agencyFindDecoder<T>(decoded: DecodedResponse): T {
   if (decoded.status >= 200 && decoded.status < 300) {
-    return decoded.parsedJson;
+    return decodeJsonResponse(decoded);
   }
   throw classifyAgencyHttpError(decoded);
 }
@@ -148,7 +148,7 @@ export class AgenciesService {
    */
   async listJsonp(params: (AgencyListParams | undefined) & JsonpCallbackParams): Promise<JsonpText> {
     const entries = params ? QuerySerializer.serializeAgencyListParams(params) : [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/agencies", qs, (decoded) => {
@@ -162,7 +162,7 @@ export class AgenciesService {
    */
   async findJsonp(params: AgencyFindParams & JsonpCallbackParams): Promise<JsonpText> {
     const { pathSegment, entries } = QuerySerializer.serializeAgencyFind(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const encodedId = encodeURIComponent(pathSegment);
     const runtime = getInternalClientRuntime(this.#client);
@@ -177,7 +177,7 @@ export class AgenciesService {
    */
   async findManyJsonp(params: AgencyFindManyParams & JsonpCallbackParams): Promise<JsonpText> {
     const { pathSegment, entries } = QuerySerializer.serializeAgencyFindMany(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const encodedPath = pathSegment
       .split(",")
@@ -195,7 +195,7 @@ export class AgenciesService {
    */
   async suggestionsJsonp(params: AgencySuggestionsParams & JsonpCallbackParams): Promise<JsonpText> {
     const entries = QuerySerializer.serializeAgencySuggestionsParams(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>("/agencies/suggestions", qs, (decoded) => {

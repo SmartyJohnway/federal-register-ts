@@ -9,12 +9,32 @@
 import type { FederalRegisterClient } from "../core/client";
 import { getInternalClientRuntime } from "../core/internal/runtime";
 import {
+  decodeJsonResponse,
   classifyEffectiveDateHttpError,
   type DecodedResponse,
 } from "../core/transport";
+import { FederalRegisterHttpError } from "../core/errors";
 import { QuerySerializer } from "../request/serializer";
 import type { EffectiveDatesParams, JsonpCallbackParams } from "../request/types";
 import type { EffectiveDateMap, JsonpText } from "./models";
+
+function decodeEffectiveDatesResponse(decoded: DecodedResponse): EffectiveDateMap {
+  if (decoded.status >= 200 && decoded.status < 300) {
+    const parsed = decodeJsonResponse(decoded);
+    if (Array.isArray(parsed)) {
+      throw new FederalRegisterHttpError(
+        `HTTP ${decoded.status} returned non-object JSON root: ${JSON.stringify(parsed)}`,
+        decoded.status,
+        decoded.contentType,
+        decoded.bodyKind,
+        parsed,
+        decoded.rawText
+      );
+    }
+    return parsed as EffectiveDateMap;
+  }
+  throw classifyEffectiveDateHttpError(decoded);
+}
 
 export class EffectiveDatesService {
   readonly #client: FederalRegisterClient;
@@ -34,12 +54,7 @@ export class EffectiveDatesService {
     return runtime.execute<EffectiveDateMap>(
       "/effective-dates",
       qs,
-      (decoded: DecodedResponse) => {
-        if (decoded.status >= 200 && decoded.status < 300) {
-          return decoded.parsedJson;
-        }
-        throw classifyEffectiveDateHttpError(decoded);
-      }
+      decodeEffectiveDatesResponse
     );
   }
 
@@ -52,7 +67,7 @@ export class EffectiveDatesService {
     params: EffectiveDatesParams & JsonpCallbackParams
   ): Promise<JsonpText> {
     const entries = QuerySerializer.serializeEffectiveDatesParams(params);
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>(

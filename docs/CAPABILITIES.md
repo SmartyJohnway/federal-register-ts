@@ -6,10 +6,10 @@ This document provides the normative 120-capability matrix for `federal-register
 
 ## Summary Breakdown
 
-- **Total Governed Capabilities:** 120
+- **Historical Frozen Baseline Capabilities:** 120 (immutable baseline; 120 / 120 TypeScript coverage)
+- **Post-Release Capability Deltas:** 1 (CAP-001 Topic Catalog `client.topics.list()`)
+- **Total Canonical Operations:** 54 across 14 namespaces (53 historical baseline operations + 1 post-release delta)
 - **Top-Level Namespaces:** 14
-- **Canonical Operations:** 53
-- **TypeScript Required Coverage:** 120 / 120 (100%)
 - **Intentionally Unsupported:** 0
 - **Uncertainty Guards:** 16 preserved upstream behaviors (documented below)
 
@@ -239,3 +239,35 @@ The following 16 capabilities have specific frozen uncertainty dispositions esta
 - **Verified Branch:** `ANONYMOUS_BRANCH_PASS`
 - **Deferred Branch:** `AUTHENTICATED_BRANCH_AUTH_DEFERRED`
 - **Guard:** `PRESERVE_AUTH_DEFERRED_SIGNED_IN_BRANCH`
+
+---
+
+## Post-Release Capability Deltas (v1.1.0+)
+
+### CAP-001: Topic catalog
+- **Family:** 6.12 Topics
+- **Disposition:** `PASS` (deterministic fixture & production wire contract verified)
+- **Release:** `v1.1.0 MINOR`
+- **Surface:** `fr.topics.list(): Promise<TopicCatalogResponse>`
+- **Upstream Route:** `GET /api/v1/topics.json`
+- **Description:** Complete Federal Register topic catalog partitioned into curated `thesaurus` and informal `ad_hoc` buckets with count metadata.
+- **Notes:** Upstream source (`api-core`) routes and developer docs omit `/topics.json`, but current production exposes it. Catalog items do not provide `url`. Name/slug is not strictly 1:1 (ad-hoc bucket contains empty slugs and collision cases); the SDK does not auto-slugify.
+
+---
+
+## Future Capabilities Disposition (Post-v1.1.0 Roadmap)
+
+The following capability gaps have been identified and formally documented as future coverage requirements. They are **not part of v1.1.0**, are **not implemented in rc.3**, and complete current upstream parity is not claimed while these remain open:
+
+### E-CAP-001: Document projection fields
+- **Scope:** Additional document projection fields supported upstream:
+  - `amendatory_instructions`
+  - `cfr_topics`
+  - `related_documents`
+- **Disposition:** `FUTURE_COVERAGE` (deferred to a future capability release).
+- **Status:** Open. Not implemented in `1.1.0-rc.3`.
+
+### E-CAP-002: search_after_cursor deep-pagination request support
+- **Scope:** Support for Elasticsearch `search_after_cursor` parameter on document search to bypass the 10,000-result window limit.
+- **Disposition:** `FUTURE_COVERAGE` (deferred to a future capability release).
+- **Status:** Open. Not implemented in `1.1.0-rc.3`.

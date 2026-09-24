@@ -216,18 +216,47 @@ export function classifyEffectiveDateHttpError(decoded: DecodedResponse): Federa
 
 /**
  * Operation-specific decoder for Public Inspection Issue facet operations.
- * Only this decoder interprets HTTP 200 with {status:400, error:string} as a failure.
+ * Interprets HTTP 200 with {status:400, error:string} or {status:400, errors:string} as a failure.
  */
 export function decodePublicInspectionIssueFacetResponse(decoded: DecodedResponse): any {
   if (decoded.status >= 200 && decoded.status < 300) {
+    if (decoded.bodyKind === "empty") {
+      throw new FederalRegisterEmptyBodyError(
+        `HTTP ${decoded.status} returned empty response body for JSON request`,
+        decoded.status,
+        decoded.contentType,
+        decoded.bodyKind,
+        null,
+        null
+      );
+    }
+    if (decoded.bodyKind === "text") {
+      throw new FederalRegisterRawResponseError(
+        `HTTP ${decoded.status} returned non-JSON response body`,
+        decoded.status,
+        decoded.contentType,
+        decoded.bodyKind,
+        decoded.rawText || ""
+      );
+    }
     if (
       decoded.bodyKind === "json" &&
       decoded.parsedJson &&
       decoded.parsedJson.status === 400 &&
-      typeof decoded.parsedJson.error === "string"
+      (typeof decoded.parsedJson.error === "string" || typeof decoded.parsedJson.errors === "string")
     ) {
       throw new PublicInspectionIssueConditionError(
         decoded.parsedJson as PublicInspectionIssueConditionErrorPayload
+      );
+    }
+    if (decoded.parsedJson == null || typeof decoded.parsedJson !== "object") {
+      throw new FederalRegisterHttpError(
+        `HTTP ${decoded.status} returned non-object JSON root: ${JSON.stringify(decoded.parsedJson)}`,
+        decoded.status,
+        decoded.contentType,
+        decoded.bodyKind,
+        decoded.parsedJson,
+        decoded.rawText
       );
     }
     return decoded.parsedJson;
@@ -236,10 +265,39 @@ export function decodePublicInspectionIssueFacetResponse(decoded: DecodedRespons
 }
 
 /**
- * Default JSON decoder. 2xx = success (despite any body.status); non-2xx throws generic classified error.
+ * Default JSON decoder. 2xx = success (valid object/array); throws integrity error if body is empty, text, null, or primitive.
  */
 export function decodeJsonResponse(decoded: DecodedResponse): any {
   if (decoded.status >= 200 && decoded.status < 300) {
+    if (decoded.bodyKind === "empty") {
+      throw new FederalRegisterEmptyBodyError(
+        `HTTP ${decoded.status} returned empty response body for JSON request`,
+        decoded.status,
+        decoded.contentType,
+        decoded.bodyKind,
+        null,
+        null
+      );
+    }
+    if (decoded.bodyKind === "text") {
+      throw new FederalRegisterRawResponseError(
+        `HTTP ${decoded.status} returned non-JSON response body`,
+        decoded.status,
+        decoded.contentType,
+        decoded.bodyKind,
+        decoded.rawText || ""
+      );
+    }
+    if (decoded.parsedJson == null || typeof decoded.parsedJson !== "object") {
+      throw new FederalRegisterHttpError(
+        `HTTP ${decoded.status} returned non-object JSON root: ${JSON.stringify(decoded.parsedJson)}`,
+        decoded.status,
+        decoded.contentType,
+        decoded.bodyKind,
+        decoded.parsedJson,
+        decoded.rawText
+      );
+    }
     return decoded.parsedJson;
   }
   throw classifyGenericHttpError(decoded);

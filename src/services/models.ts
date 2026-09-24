@@ -553,6 +553,58 @@ export type TopicProjection<K extends TopicField = TopicField> = Pick<
   K
 >;
 
+/**
+ * Reference link within a topic's see_also collection (CAP-001).
+ */
+export interface TopicCatalogSeeAlsoItem {
+  readonly name: string;
+  readonly slug: string;
+}
+
+/**
+ * An individual topic item within the Federal Register topic catalog (CAP-001).
+ * Both thesaurus and ad_hoc buckets conform to this structure.
+ */
+export interface TopicCatalogItem {
+  readonly name: string;
+  readonly slug: string;
+  readonly see_also: readonly TopicCatalogSeeAlsoItem[];
+  readonly cfr_references: readonly JsonValue[];
+  readonly see: readonly JsonValue[];
+}
+
+/**
+ * Counts metadata for the topic catalog (CAP-001).
+ */
+export interface TopicCatalogCountMeta {
+  readonly thesaurus: number;
+  readonly ad_hoc: number;
+  readonly total: number;
+}
+
+/**
+ * Metadata envelope for the topic catalog response (CAP-001).
+ */
+export interface TopicCatalogMeta {
+  readonly count: TopicCatalogCountMeta;
+}
+
+/**
+ * Results buckets for the topic catalog response (CAP-001).
+ */
+export interface TopicCatalogResults {
+  readonly thesaurus: readonly TopicCatalogItem[];
+  readonly ad_hoc: readonly TopicCatalogItem[];
+}
+
+/**
+ * Full response envelope returned by GET /api/v1/topics.json (CAP-001).
+ */
+export interface TopicCatalogResponse {
+  readonly meta: TopicCatalogMeta;
+  readonly results: TopicCatalogResults;
+}
+
 // ---------------------------------------------------------------------------
 // 10. Sections (R0-02E § 13)
 // ---------------------------------------------------------------------------

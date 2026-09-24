@@ -14,9 +14,11 @@
 import type { FederalRegisterClient } from "../core/client";
 import { getInternalClientRuntime } from "../core/internal/runtime";
 import {
+  decodeJsonResponse,
   classifyGenericHttpError,
   type DecodedResponse,
 } from "../core/transport";
+import { FederalRegisterHttpError } from "../core/errors";
 import { QuerySerializer } from "../request/serializer";
 import type { SiteNotificationFindParams, JsonpCallbackParams } from "../request/types";
 import type {
@@ -24,6 +26,29 @@ import type {
   InactiveSiteNotification,
   JsonpText,
 } from "./models";
+
+function decodeSiteNotificationResponse(
+  decoded: DecodedResponse
+): ActiveSiteNotification | InactiveSiteNotification {
+  if (decoded.status >= 200 && decoded.status < 300) {
+    const parsed = decodeJsonResponse(decoded);
+    if (Array.isArray(parsed)) {
+      throw new FederalRegisterHttpError(
+        `HTTP ${decoded.status} returned non-object JSON root: ${JSON.stringify(parsed)}`,
+        decoded.status,
+        decoded.contentType,
+        decoded.bodyKind,
+        parsed,
+        decoded.rawText
+      );
+    }
+    if (Object.keys(parsed).length === 0) {
+      return parsed as InactiveSiteNotification;
+    }
+    return parsed as ActiveSiteNotification;
+  }
+  throw classifyGenericHttpError(decoded);
+}
 
 export class SiteNotificationsService {
   readonly #client: FederalRegisterClient;
@@ -44,22 +69,7 @@ export class SiteNotificationsService {
     return runtime.execute<ActiveSiteNotification | InactiveSiteNotification>(
       `/site_notifications/${encodeURIComponent(identifier)}`,
       undefined,
-      (decoded: DecodedResponse) => {
-        if (decoded.status >= 200 && decoded.status < 300) {
-          if (
-            decoded.bodyKind === "json" &&
-            decoded.parsedJson &&
-            typeof decoded.parsedJson === "object"
-          ) {
-            if (Object.keys(decoded.parsedJson).length === 0) {
-              return decoded.parsedJson as InactiveSiteNotification;
-            }
-            return decoded.parsedJson as ActiveSiteNotification;
-          }
-          return decoded.parsedJson;
-        }
-        throw classifyGenericHttpError(decoded);
-      }
+      decodeSiteNotificationResponse
     );
   }
 
@@ -73,7 +83,7 @@ export class SiteNotificationsService {
   ): Promise<JsonpText> {
     const identifier = QuerySerializer.serializeSiteNotificationFind(params);
     const entries: { key: string; value: string }[] = [];
-    QuerySerializer.serializeJsonpCallback(params.callback, entries);
+    QuerySerializer.serializeJsonpCallback(params?.callback, entries);
     const qs = QuerySerializer.toQueryString(entries);
     const runtime = getInternalClientRuntime(this.#client);
     return runtime.execute<JsonpText>(

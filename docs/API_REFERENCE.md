@@ -2,7 +2,7 @@
 
 This document is the normative API reference for `federal-register-ts`, an independent TypeScript SDK for the FederalRegister.gov API.
 
-All methods are accessed via an instance of `FederalRegisterClient`, organized into 14 top-level operation namespaces comprising exactly 53 canonical operations.
+All methods are accessed via an instance of `FederalRegisterClient`, organized into 14 top-level operation namespaces comprising the 53 canonical operations from the historical frozen baseline plus post-release additive capability extensions (54 operations total, including CAP-001 `client.topics.list()`).
 
 ---
 
@@ -32,14 +32,14 @@ const customClient = new FederalRegisterClient({
 
 ## Namespaces Overview
 
-All 53 canonical operations are organized under 14 top-level client service namespaces:
+All 54 canonical operations (53 historical baseline operations + 1 post-release delta) are organized under 14 top-level client service namespaces:
 
 | Namespace | Accessor | Operations | Description |
 |---|---|---|---|
 | Documents | `client.documents` | 20 operations | Published documents (10 operations) plus nested aggregations via `client.documents.facets` (10 operations). |
 | Public Inspection | `client.publicInspection` | 14 operations | Pre-publication documents (9 operations) plus nested aggregations via `facets` (3 operations) and `issues.facets` (2 operations). |
 | Agencies | `client.agencies` | 4 operations | Agency index, individual agency lookup, multi-lookup, and agency search suggestions. |
-| Topics | `client.topics` | 1 operation | Topic suggestions. |
+| Topics | `client.topics` | 2 operations | Topic catalog listing (CAP-001) and topic suggestions. |
 | Sections | `client.sections` | 1 operation | Subject sections of the Federal Register. |
 | Suggested Searches | `client.suggestedSearches` | 3 operations | Curated searches by topic, section, and specific query slug. |
 | Holidays | `client.holidays` | 1 operation | Federal legal public holidays schedule. |
@@ -360,6 +360,7 @@ Retrieve agency suggestions based on query text.
 ## 6. Other Specialized Services
 
 ### Topics Service (`client.topics`)
+- `list()`: `GET /topics.json` —Retrieve the complete topic catalog (CAP-001). Returns `Promise<TopicCatalogResponse>` containing curated `thesaurus` and informal `ad_hoc` topic buckets with count metadata.
 - `suggestions(params)`: `GET /topics/suggestions` —Suggestions matching partial topic names. Accepts `TopicSuggestionsParams` (`term: string; fields?: readonly TopicField[]`). Returns `Promise<readonly TopicProjection<K>[]>`.
 
 ### Sections Service (`client.sections`)
@@ -406,7 +407,7 @@ The SDK provides a structured error hierarchy for handling request validation, H
 Error
 ├── RequestValidationError                  (Client-side parameter validation failure, zero network requests)
 └── FederalRegisterError                    (Base class for API-related SDK failures)
-    ├── FederalRegisterHttpError<TBody>     (Non-2xx HTTP status from API)
+    ├── FederalRegisterHttpError<TBody>     (Non-2xx HTTP status or 2xx response body anomaly)
     │   ├── FederalRegisterStatusMessageError   ({ status, message } body from upstream)
     │   ├── FederalRegisterSearchValidationError ({ errors: { [field]: reason } })
     │   ├── FederalRegisterAgencyNotFoundError  ({ error: 404 } for missing agency)
@@ -418,11 +419,12 @@ Error
 ```
 
 ### Error Inheritance & Semantics
-- **`RequestValidationError`** extends JavaScript's built-in `Error` directly and is thrown before dispatching HTTP requests when parameter validation fails (e.g. invalid date format, out-of-range pagination, unauthorized field projection, or unrecognized request keys).
-- **`FederalRegisterError`** extends `Error` as the base class for server/API errors.
-- **`FederalRegisterHttpError<TBody>`** extends `FederalRegisterError` for non-2xx HTTP transport responses, preserving `status`, `contentType`, `bodyKind`, `body`, and `rawText`.
-- **`FederalRegisterRawResponseError`** is thrown when the upstream server returns non-JSON content (such as HTML 404 pages for missing resources or gateway error pages). Structured error types (like `FederalRegisterAgencyNotFoundError`) apply only when upstream provides the corresponding structured JSON payload.
+- **`RequestValidationError`** extends JavaScript's built-in `Error` directly and is thrown before dispatching HTTP requests when parameter validation fails (e.g. invalid date format, out-of-range pagination, unauthorized field projection, non-array or blank string-array filter, or unrecognized request keys).
+- **`FederalRegisterError`** extends `Error` as the base class for server/API errors thrown by the SDK.
+- **`FederalRegisterHttpError<TBody>`** extends `FederalRegisterError` for non-2xx HTTP transport responses as well as 2xx response body anomalies (`FederalRegisterEmptyJsonError`, `FederalRegisterEmptyBodyError`, `FederalRegisterRawResponseError`), preserving `status`, `contentType`, `bodyKind`, `body`, and `rawText`.
+- **`FederalRegisterRawResponseError`** is thrown when the upstream server returns non-JSON content (such as HTML 404 pages for missing resources or gateway error pages) or unparseable non-JSON text. Structured error types (like `FederalRegisterAgencyNotFoundError`) apply only when upstream provides the corresponding structured JSON payload.
 - **`PublicInspectionIssueConditionError`** extends `FederalRegisterError` directly (not `FederalRegisterHttpError`). It represents the operation-specific Public Inspection Issue semantic error path where HTTP 200 may contain a body with status 400 semantics.
+- **Raw Network Transport Errors:** Native network failures from the underlying `fetch` implementation (e.g. `TypeError: Failed to fetch` or network connection loss) propagate directly from `fetch` without being wrapped into `FederalRegisterError`.
 
 ### Inspecting Errors
 

@@ -90,6 +90,7 @@ const results = await client.documents.search({
 ### Structured Filter Types & Semantics
 Upstream executes distinct filter types depending on field mapping:
 - **`terms` (Logical OR):** Multi-value arrays such as `agency_ids`, `types`, `sections`, `topics`, `presidents`.
+  - *Topic Filter Note:* In Document search, `conditions.topics` expects topic **slugs** (e.g. `["environmental-protection"]`), whereas returned Document `topics` arrays contain human-readable **display names** (e.g. `["Environmental Protection"]`). Note that the topic catalog (`client.topics.list()`) exhibits name/slug collisions and empty slugs in ad-hoc topics; name-to-slug mapping is not strictly 1:1, and the SDK does not attempt to auto-slugify.
 - **`match_phrase`:** Scalar analyzed phrase matching for identifiers such as `docket_id` and `regulation_id_number` (RIN). Because this relies on OpenSearch `match_phrase` on analyzed text fields rather than an exact-term keyword filter, queries are subject to upstream analyzer tokenization boundaries, and partial phrase matching may occur.
 - **`range`:** Bounded or half-bounded range intervals for dates (`publication_date`, `effective_date`, `signing_date`) and CFR titles/parts.
 - **`term`:** Single-value exact match for boolean flags (e.g. `significant`, `correction`, `accepting_comments`).
