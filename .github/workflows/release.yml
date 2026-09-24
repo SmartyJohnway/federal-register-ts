@@ -4,17 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       target_version:
-        description: 'Target release version (must be 1.1.0-rc.3)'
+        description: 'Target release version (must be 1.1.0)'
         type: string
         required: true
-        default: '1.1.0-rc.3'
+        default: '1.1.0'
       dist_tag:
-        description: 'npm distribution tag (must be rc)'
+        description: 'npm distribution tag (must be latest)'
         type: choice
         options:
-          - rc
+          - latest
         required: true
-        default: 'rc'
+        default: 'latest'
 
 concurrency:
   group: release-${{ github.ref }}
@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   validate-and-pack:
-    name: Validate & Pack RC3 Artifact
+    name: Validate & Pack Stable Artifact
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,13 +33,13 @@ jobs:
       tarball_name: ${{ steps.pack.outputs.tarball_name }}
       tarball_sha256: ${{ steps.audit.outputs.tarball_sha256 }}
     steps:
-      - name: Enforce strict R3-POSTGA-02-J release parameters
+      - name: Enforce strict R3-POSTGA-02-L release parameters
         env:
           TARGET_VERSION: ${{ inputs.target_version }}
           DIST_TAG: ${{ inputs.dist_tag }}
         run: |
-          if [ "$TARGET_VERSION" != "1.1.0-rc.3" ] || [ "$DIST_TAG" != "rc" ]; then
-            echo "CRITICAL ERROR: R3-POSTGA-02-J only authorizes target_version=1.1.0-rc.3 and dist_tag=rc."
+          if [ "$TARGET_VERSION" != "1.1.0" ] || [ "$DIST_TAG" != "latest" ]; then
+            echo "CRITICAL ERROR: R3-POSTGA-02-L only authorizes target_version=1.1.0 and dist_tag=latest."
             exit 1
           fi
 
@@ -69,6 +69,28 @@ jobs:
             echo "CRITICAL ERROR: frozen release CLI requires npm 11.19.1"
             exit 1
           fi
+
+      - name: Verify npm registry pre-state
+        shell: bash
+        run: |
+          echo "=== Verifying npm Registry Pre-State ==="
+          DIST_TAGS=$(npm view federal-register-ts dist-tags --json --registry=https://registry.npmjs.org/)
+          echo "Current dist-tags: $DIST_TAGS"
+          LATEST_TAG=$(echo "$DIST_TAGS" | node -e "const d=JSON.parse(require('fs').readFileSync(0, 'utf8')); console.log(d.latest);")
+          RC_TAG=$(echo "$DIST_TAGS" | node -e "const d=JSON.parse(require('fs').readFileSync(0, 'utf8')); console.log(d.rc);")
+          if [ "$LATEST_TAG" != "1.0.1" ]; then
+            echo "CRITICAL ERROR: Expected latest dist-tag to be 1.0.1, found $LATEST_TAG"
+            exit 1
+          fi
+          if [ "$RC_TAG" != "1.1.0-rc.3" ]; then
+            echo "CRITICAL ERROR: Expected rc dist-tag to be 1.1.0-rc.3, found $RC_TAG"
+            exit 1
+          fi
+          if npm view federal-register-ts@1.1.0 version --registry=https://registry.npmjs.org/ >/dev/null 2>&1; then
+            echo "CRITICAL ERROR: federal-register-ts@1.1.0 already exists on public npm registry!"
+            exit 1
+          fi
+          echo "npm registry pre-state verified: latest=1.0.1, rc=1.1.0-rc.3, 1.1.0 is not public."
 
       - name: Install dependencies
         run: npm ci
@@ -115,8 +137,8 @@ jobs:
           node scripts/release/audit-tarball.js "$TARBALL_NAME"
           SHA256_HASH=$(sha256sum "$TARBALL_NAME" | cut -d ' ' -f 1)
           echo "tarball_sha256=$SHA256_HASH" >> "$GITHUB_OUTPUT"
-          if [ "$SHA256_HASH" != "b4a8615d7011313a906a3b1e6c98c01d6504fc0ebb156af57cd24e4e33bd6582" ]; then
-            echo "CRITICAL ERROR: Tarball SHA-256 does not match frozen rc.3 artifact!"
+          if [ "$SHA256_HASH" != "2d052be27f1fa4716720d67fa29317ba77ac2bec263997cc106a5c2cbc152bcd" ]; then
+            echo "CRITICAL ERROR: Tarball SHA-256 does not match frozen stable candidate artifact!"
             exit 1
           fi
 
@@ -163,9 +185,9 @@ jobs:
 
       - name: Verify downloaded tarball integrity
         env:
-          EXPECTED_SHA256: "b4a8615d7011313a906a3b1e6c98c01d6504fc0ebb156af57cd24e4e33bd6582"
+          EXPECTED_SHA256: "2d052be27f1fa4716720d67fa29317ba77ac2bec263997cc106a5c2cbc152bcd"
         run: |
-          TARBALL="federal-register-ts-1.1.0-rc.3.tgz"
+          TARBALL="federal-register-ts-1.1.0.tgz"
           if [ ! -f "$TARBALL" ]; then
             echo "CRITICAL ERROR: Tarball not found!"
             exit 1
@@ -184,6 +206,6 @@ jobs:
           DIST_TAG: ${{ inputs.dist_tag }}
         run: |
           echo "=== Executing npm stage publish via OIDC ==="
-          npm stage publish ./federal-register-ts-1.1.0-rc.3.tgz \
+          npm stage publish ./federal-register-ts-1.1.0.tgz \
             --tag "$DIST_TAG" \
             --registry=https://registry.npmjs.org/
