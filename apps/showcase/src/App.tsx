@@ -17,6 +17,12 @@ const queryClient = new QueryClient({
 
 export function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('explore');
+  const [developerOperationId, setDeveloperOperationId] = useState<string>('DOC-001');
+
+  const handleOpenInWorkbench = (operationId: string) => {
+    setDeveloperOperationId(operationId);
+    setActiveTab('developer');
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -27,9 +33,13 @@ export function App() {
           {activeTab === 'explore' && (
             <ExploreView onNavigateTab={(tab) => setActiveTab(tab)} />
           )}
-          {activeTab === 'developer' && <DeveloperView />}
+          {activeTab === 'developer' && (
+            <DeveloperView key={developerOperationId} initialOperationId={developerOperationId} />
+          )}
           {activeTab === 'trade' && <TradeExamplesView />}
-          {activeTab === 'capabilities' && <CapabilitiesView />}
+          {activeTab === 'capabilities' && (
+            <CapabilitiesView onOpenInWorkbench={handleOpenInWorkbench} />
+          )}
         </main>
 
         <footer className="border-t border-slate-900 bg-slate-950/60 py-6 text-center text-xs text-slate-500">

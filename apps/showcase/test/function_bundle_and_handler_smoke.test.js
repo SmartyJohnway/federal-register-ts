@@ -127,7 +127,59 @@ test('Netlify Function Real Bundle and Actual Handler Invocation Smoke', async (
     assert.strictEqual(body.error, 'OPERATION_NOT_ALLOWLISTED');
   });
 
-  // Step 7: Zero network traffic verification
+  // Step 7: POST /api/execute validation tests
+  await t.test('POST /api/execute returns 400 for invalid JSON body', async () => {
+    const event = {
+      path: '/api/execute',
+      httpMethod: 'POST',
+      queryStringParameters: null,
+      headers: { 'Content-Type': 'application/json' },
+      multiValueHeaders: {},
+      isBase64Encoded: false,
+      body: 'invalid-json-{',
+    };
+
+    const response = await handler(event, mockContext);
+    assert.strictEqual(response.statusCode, 400);
+    const body = JSON.parse(response.body);
+    assert.strictEqual(body.error, 'INVALID_JSON');
+  });
+
+  await t.test('POST /api/execute returns 400 for Tier C non-runnable operation', async () => {
+    const event = {
+      path: '/api/execute',
+      httpMethod: 'POST',
+      queryStringParameters: null,
+      headers: { 'Content-Type': 'application/json' },
+      multiValueHeaders: {},
+      isBase64Encoded: false,
+      body: JSON.stringify({ operationId: 'DOC-008' }),
+    };
+
+    const response = await handler(event, mockContext);
+    assert.strictEqual(response.statusCode, 400);
+    const body = JSON.parse(response.body);
+    assert.strictEqual(body.error, 'OPERATION_NOT_RUNNABLE');
+  });
+
+  await t.test('POST /api/execute returns 404 for unknown operation', async () => {
+    const event = {
+      path: '/api/execute',
+      httpMethod: 'POST',
+      queryStringParameters: null,
+      headers: { 'Content-Type': 'application/json' },
+      multiValueHeaders: {},
+      isBase64Encoded: false,
+      body: JSON.stringify({ operationId: 'UNKNOWN-999' }),
+    };
+
+    const response = await handler(event, mockContext);
+    assert.strictEqual(response.statusCode, 404);
+    const body = JSON.parse(response.body);
+    assert.strictEqual(body.error, 'OPERATION_NOT_FOUND');
+  });
+
+  // Step 8: Zero network traffic verification
   await t.test('Zero live FederalRegister.gov network traffic occurred', () => {
     assert.ok(true, 'Function bundle and handler smoke completed deterministically without network calls');
   });

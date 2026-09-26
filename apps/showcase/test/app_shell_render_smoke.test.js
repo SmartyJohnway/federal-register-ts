@@ -86,9 +86,11 @@ test('App Shell Actual DOM Mount and Multi-Surface Navigation Smoke', async (t) 
     });
 
     const devHtml = rootContainer.innerHTML;
-    assert.ok(devHtml.includes('Developer Quickstart &amp; Installation'), 'Developer header must render');
+    assert.ok(devHtml.includes('Developer Workbench'), 'Developer workbench header must render');
     assert.ok(devHtml.includes('npm install federal-register-ts@1.1.0'), 'npm install snippet must render');
-    assert.ok(devHtml.includes('Canonical Registry Foundation Preview'), 'Registry preview must render');
+    assert.ok(devHtml.includes('Operation Selector &amp; Parameters'), 'Operation selector must render');
+    assert.ok(devHtml.includes('Generated TypeScript Code'), 'TypeScript generator must render');
+    assert.ok(devHtml.includes('Execution Output'), 'Execution output panel must render');
   });
 
   // Step 6: Navigate to Trade Examples surface
