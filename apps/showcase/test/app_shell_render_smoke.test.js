@@ -104,9 +104,10 @@ test('App Shell Actual DOM Mount and Multi-Surface Navigation Smoke', async (t) 
     });
 
     const tradeHtml = rootContainer.innerHTML;
-    assert.ok(tradeHtml.includes('International Trade Examples Placeholder'), 'Trade placeholder must render');
-    assert.ok(tradeHtml.includes('Scheduled for R3-10E'), 'R3-10E badge must render');
-    assert.ok(tradeHtml.includes('R4 Migration Reference Separation'), 'R4 separation card must render');
+    assert.ok(tradeHtml.includes('Federal Register Trade Research Reference'), 'Trade reference header must render');
+    assert.ok(tradeHtml.includes('R3-10E Reference Surface'), 'R3-10E badge must render');
+    assert.ok(tradeHtml.includes('Section 232 Trade Remedies Research'), 'Section 232 workflow must render');
+    assert.ok(tradeHtml.includes('Trade Policy Boundary'), 'Trade policy boundary disclaimer must render');
   });
 
   // Step 7: Navigate to Capabilities surface

@@ -39,7 +39,12 @@ export function App() {
           {activeTab === 'developer' && (
             <DeveloperView key={developerOperationId} initialOperationId={developerOperationId} />
           )}
-          {activeTab === 'trade' && <TradeExamplesView />}
+          {activeTab === 'trade' && (
+            <TradeExamplesView
+              onNavigateTab={(tab) => setActiveTab(tab)}
+              onOpenInWorkbench={handleOpenInWorkbench}
+            />
+          )}
           {activeTab === 'capabilities' && (
             <CapabilitiesView onOpenInWorkbench={handleOpenInWorkbench} />
           )}
