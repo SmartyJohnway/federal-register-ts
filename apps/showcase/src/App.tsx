@@ -31,7 +31,10 @@ export function App() {
 
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {activeTab === 'explore' && (
-            <ExploreView onNavigateTab={(tab) => setActiveTab(tab)} />
+            <ExploreView
+              onNavigateTab={(tab) => setActiveTab(tab)}
+              onOpenInWorkbench={handleOpenInWorkbench}
+            />
           )}
           {activeTab === 'developer' && (
             <DeveloperView key={developerOperationId} initialOperationId={developerOperationId} />
