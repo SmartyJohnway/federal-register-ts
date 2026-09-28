@@ -47,65 +47,77 @@ test('ExploreView Faceted & Summary Analysis Workflow Suite (D-08 / D-W6)', asyn
     const reqBody = JSON.parse(init?.body || '{}');
     lastGatewayCall = { url, body: reqBody };
 
-    // 1. DOC-FACET-001 (by agency)
+    // 1. DOC-FACET-001 (by agency) - Canonical Record<string, FacetEntry>
     if (reqBody.operationId === 'DOC-FACET-001') {
       return new Response(
         JSON.stringify({
           success: true,
           operationId: 'DOC-FACET-001',
           data: {
-            'international-trade-administration': 420,
-            'commerce-department': 310,
-            'environmental-protection-agency': 280,
-            'securities-and-exchange-commission': 195,
+            'international-trade-administration': {
+              name: 'International Trade Administration',
+              count: 420,
+            },
+            'commerce-department': {
+              name: 'Commerce Department',
+              count: 310,
+            },
+            'environmental-protection-agency': {
+              name: 'Environmental Protection Agency',
+              count: 280,
+            },
+            'securities-and-exchange-commission': {
+              name: 'Securities and Exchange Commission',
+              count: 195,
+            },
           },
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // 2. DOC-FACET-004 (by document type)
+    // 2. DOC-FACET-004 (by document type) - Canonical Record<string, FacetEntry>
     if (reqBody.operationId === 'DOC-FACET-004') {
       return new Response(
         JSON.stringify({
           success: true,
           operationId: 'DOC-FACET-004',
           data: {
-            RULE: 1450,
-            PRORULE: 620,
-            NOTICE: 2890,
-            PRESDOCU: 110,
+            RULE: { name: 'Rule', count: 1450 },
+            PRORULE: { name: 'Proposed Rule', count: 620 },
+            NOTICE: { name: 'Notice', count: 2890 },
+            PRESDOCU: { name: 'Presidential Document', count: 110 },
           },
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // 3. PI-FACET-001 (by public inspection type)
+    // 3. PI-FACET-001 (by public inspection type) - Canonical Record<string, FacetEntry>
     if (reqBody.operationId === 'PI-FACET-001') {
       return new Response(
         JSON.stringify({
           success: true,
           operationId: 'PI-FACET-001',
           data: {
-            Regular: 45,
-            Special: 12,
+            regular: { name: 'Regular Filing', count: 45 },
+            special: { name: 'Special Filing', count: 12 },
           },
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // 4. DOC-FACET-010 (by year)
+    // 4. DOC-FACET-010 (by year) - Canonical DateFacetMap Record<string, DateFacetEntry>
     if (reqBody.operationId === 'DOC-FACET-010') {
       return new Response(
         JSON.stringify({
           success: true,
           operationId: 'DOC-FACET-010',
           data: {
-            '2026': 12500,
-            '2025': 31200,
-            '2024': 30800,
+            '2026': { name: '2026', count: 12500 },
+            '2025': { name: '2025', count: 31200 },
+            '2024': { name: '2024', count: 30800 },
           },
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -166,9 +178,9 @@ test('ExploreView Faceted & Summary Analysis Workflow Suite (D-08 / D-W6)', asyn
     const html = rootContainer.innerHTML;
     assert.ok(html.includes('Faceted Distribution &amp; Summary Analysis'), 'Analytics header must render');
     assert.ok(html.includes('Total Items Analyzed:'), 'Summary count must render');
-    assert.ok(html.includes('international-trade-administration'), 'ITA slug row must render');
+    assert.ok(html.includes('International Trade Administration'), 'ITA agency name must render');
     assert.ok(html.includes('420'), 'ITA count must render');
-    assert.ok(html.includes('commerce-department'), 'Commerce slug row must render');
+    assert.ok(html.includes('Commerce Department'), 'Commerce agency name must render');
   });
 
   await t.test('D-08.2: Switch to Document Type dimension (DOC-FACET-004)', async () => {
@@ -186,9 +198,9 @@ test('ExploreView Faceted & Summary Analysis Workflow Suite (D-08 / D-W6)', asyn
     assert.equal(lastGatewayCall.body.operationId, 'DOC-FACET-004');
 
     const html = rootContainer.innerHTML;
-    assert.ok(html.includes('NOTICE'), 'Notice row must render');
+    assert.ok(html.includes('Notice'), 'Notice label must render');
     assert.ok(html.includes('2,890'), 'Notice count must render');
-    assert.ok(html.includes('RULE'), 'Rule row must render');
+    assert.ok(html.includes('Rule'), 'Rule label must render');
     assert.ok(html.includes('1,450'), 'Rule count must render');
   });
 
@@ -207,9 +219,9 @@ test('ExploreView Faceted & Summary Analysis Workflow Suite (D-08 / D-W6)', asyn
     assert.equal(lastGatewayCall.body.operationId, 'PI-FACET-001');
 
     const html = rootContainer.innerHTML;
-    assert.ok(html.includes('Regular'), 'Regular filing row must render');
+    assert.ok(html.includes('Regular Filing'), 'Regular filing label must render');
     assert.ok(html.includes('45'), 'Regular filing count must render');
-    assert.ok(html.includes('Special'), 'Special filing row must render');
+    assert.ok(html.includes('Special Filing'), 'Special filing label must render');
   });
 
   await t.test('D-08.4: Switch to Timeline dimension and apply keyword filter (DOC-FACET-010)', async () => {

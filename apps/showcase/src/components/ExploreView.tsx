@@ -13,6 +13,7 @@ import {
   Clock,
   Sparkles,
   ArrowRight,
+  FolderTree,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from './Card';
 import { Badge } from './Badge';
@@ -23,6 +24,19 @@ import {
   DOCUMENT_TYPES,
   type ExploreWorkflowId,
 } from '../data/exploreWorkflows';
+import {
+  buildDocumentSearchParams,
+  buildPublicInspectionSearchParams,
+  buildPublicInspectionAvailableOnParams,
+  buildAgencyListParams,
+  buildAgencyFindParams,
+  buildAgencySuggestionsParams,
+  buildTopicSuggestionsParams,
+  buildIssueFindParams,
+  buildDocumentFacetParams,
+  buildPublicInspectionFacetParams,
+  formatExploreErrorMessage,
+} from '../lib/exploreRequestBuilders';
 
 interface ExploreViewProps {
   onNavigateTab?: (tab: 'developer' | 'trade' | 'capabilities') => void;
@@ -99,11 +113,11 @@ export function ExploreView({ onNavigateTab, onOpenInWorkbench }: ExploreViewPro
       if (res.ok && json.success !== false) {
         setResultData(json.data ?? json);
       } else {
-        setErrorMsg(json.message || json.error || 'Failed to retrieve Federal Register data.');
+        setErrorMsg(formatExploreErrorMessage(json.message || json.error));
         setResultData(null);
       }
     } catch (err: any) {
-      setErrorMsg(err.message || 'Network error executing operation.');
+      setErrorMsg(formatExploreErrorMessage(err));
       setResultData(null);
     } finally {
       setIsLoading(false);
@@ -113,24 +127,13 @@ export function ExploreView({ onNavigateTab, onOpenInWorkbench }: ExploreViewPro
   // 1. Submit Documents Search (D-W1)
   const handleDocumentsSearch = (customTerm?: string) => {
     const term = typeof customTerm === 'string' ? customTerm : docSearchTerm;
-    const conditions: Record<string, any> = {};
-    if (term.trim()) {
-      conditions.term = term.trim();
-    }
-    if (docTypeFilter) {
-      conditions.type = [docTypeFilter];
-    }
-    if (docAgencyFilter.trim()) {
-      conditions.agencies = [docAgencyFilter.trim()];
-    }
-    if (docDateFilter.trim()) {
-      conditions.publication_date = { is: docDateFilter.trim() };
-    }
-
-    const params: Record<string, any> = { per_page: docPerPage };
-    if (Object.keys(conditions).length > 0) {
-      params.conditions = conditions;
-    }
+    const params = buildDocumentSearchParams({
+      term,
+      type: docTypeFilter,
+      agency: docAgencyFilter,
+      publicationDate: docDateFilter,
+      perPage: docPerPage,
+    });
 
     executeWorkflowOperation('DOC-001', params);
   };
@@ -140,17 +143,18 @@ export function ExploreView({ onNavigateTab, onOpenInWorkbench }: ExploreViewPro
     if (piMode === 'current') {
       executeWorkflowOperation('PI-003', {});
     } else if (piMode === 'search') {
-      const conditions: Record<string, any> = {};
-      if (piSearchTerm.trim()) {
-        conditions.term = piSearchTerm.trim();
-      }
-      executeWorkflowOperation('PI-001', { conditions, per_page: 10 });
+      const params = buildPublicInspectionSearchParams({
+        term: piSearchTerm,
+        perPage: 10,
+      });
+      executeWorkflowOperation('PI-001', params);
     } else if (piMode === 'date') {
       if (!piDateInput.trim()) {
         setValidationError('Please specify a valid filing date (YYYY-MM-DD).');
         return;
       }
-      executeWorkflowOperation('PI-002', { available_on: piDateInput.trim() });
+      const params = buildPublicInspectionAvailableOnParams(piDateInput);
+      executeWorkflowOperation('PI-002', params);
     }
   };
 
@@ -158,68 +162,67 @@ export function ExploreView({ onNavigateTab, onOpenInWorkbench }: ExploreViewPro
   const handleAgenciesExecution = (mode: 'all' | 'suggestions' = agencyListMode) => {
     setAgencyListMode(mode);
     if (mode === 'all') {
-      executeWorkflowOperation('AGENCY-001', { per_page: 20 });
+      const params = buildAgencyListParams();
+      executeWorkflowOperation('AGENCY-001', params);
     } else {
       if (!agencySearchTerm.trim()) {
         setValidationError('Please enter a query term for agency suggestions.');
         return;
       }
-      executeWorkflowOperation('AGENCY-004', { query: agencySearchTerm.trim() });
+      const params = buildAgencySuggestionsParams(agencySearchTerm);
+      executeWorkflowOperation('AGENCY-004', params);
     }
   };
 
   const handleSelectAgency = (agencySlugOrId: string | number) => {
-    executeWorkflowOperation('AGENCY-002', { id: agencySlugOrId });
+    const params = buildAgencyFindParams(agencySlugOrId);
+    executeWorkflowOperation('AGENCY-002', params);
   };
 
   // 4. Submit Topics Lookup (D-W4)
   const handleTopicsExecution = (mode: 'list' | 'suggestions' = topicMode) => {
     setTopicMode(mode);
     if (mode === 'list') {
-      executeWorkflowOperation('TOPIC-001');
+      executeWorkflowOperation('TOPIC-001', {});
     } else {
       if (!topicSearchTerm.trim()) {
         setValidationError('Please enter a query term for topic suggestions.');
         return;
       }
-      executeWorkflowOperation('TOPIC-002', { query: topicSearchTerm.trim() });
+      const params = buildTopicSuggestionsParams(topicSearchTerm);
+      executeWorkflowOperation('TOPIC-002', params);
     }
   };
 
   // 5. Submit Issues Lookup (D-W5)
   const handleIssuesExecution = () => {
     if (issueMode === 'current') {
-      executeWorkflowOperation('ISSUE-002');
+      executeWorkflowOperation('ISSUE-002', {});
     } else {
       if (!issueDateInput.trim()) {
         setValidationError('Please specify an issue publication date (YYYY-MM-DD).');
         return;
       }
-      executeWorkflowOperation('ISSUE-001', { date: issueDateInput.trim() });
+      const params = buildIssueFindParams(issueDateInput);
+      executeWorkflowOperation('ISSUE-001', params);
     }
   };
 
   // 6. Submit Analytics / Facets (D-W6)
   const handleAnalyticsExecution = (dim = analyticsDimension) => {
     setAnalyticsDimension(dim);
-    const conditions: Record<string, any> = {};
-    if (analyticsTermFilter.trim()) {
-      conditions.term = analyticsTermFilter.trim();
-    }
-    const params = Object.keys(conditions).length > 0 ? { conditions } : {};
-
     switch (dim) {
       case 'agency':
-        executeWorkflowOperation('DOC-FACET-001', params);
+        executeWorkflowOperation('DOC-FACET-001', buildDocumentFacetParams(analyticsTermFilter));
         break;
       case 'docType':
-        executeWorkflowOperation('DOC-FACET-004', params);
+        executeWorkflowOperation('DOC-FACET-004', buildDocumentFacetParams(analyticsTermFilter));
         break;
       case 'piType':
-        executeWorkflowOperation('PI-FACET-001', params);
+        executeWorkflowOperation('PI-FACET-001', buildPublicInspectionFacetParams(analyticsTermFilter));
         break;
       case 'yearly':
-        executeWorkflowOperation('DOC-FACET-010', params);
+        executeWorkflowOperation('DOC-FACET-010', buildDocumentFacetParams(analyticsTermFilter));
         break;
     }
   };
@@ -249,6 +252,24 @@ export function ExploreView({ onNavigateTab, onOpenInWorkbench }: ExploreViewPro
       default:
         return 'bg-slate-900 text-slate-300 border-slate-800';
     }
+  };
+
+  // Helper to extract topics from canonical TopicCatalogResponse or suggestions array
+  const extractTopics = (data: any): Array<{ name: string; slug?: string }> => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (data.results) {
+      if (Array.isArray(data.results)) return data.results;
+      const combined: Array<{ name: string; slug?: string }> = [];
+      if (Array.isArray(data.results.thesaurus)) {
+        combined.push(...data.results.thesaurus);
+      }
+      if (Array.isArray(data.results.ad_hoc)) {
+        combined.push(...data.results.ad_hoc);
+      }
+      if (combined.length > 0) return combined;
+    }
+    return [data];
   };
 
   return (
@@ -1000,10 +1021,10 @@ export function ExploreView({ onNavigateTab, onOpenInWorkbench }: ExploreViewPro
                                   <span>Filed: {item.filed_at}</span>
                                 </span>
                               )}
-                              {item.scheduled_publication_date && (
+                              {item.publication_date && (
                                 <span className="text-emerald-400 text-[11px] flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
-                                  <span>Pub Date: {item.scheduled_publication_date}</span>
+                                  <span>Pub Date: {item.publication_date}</span>
                                 </span>
                               )}
                             </div>
@@ -1033,7 +1054,7 @@ export function ExploreView({ onNavigateTab, onOpenInWorkbench }: ExploreViewPro
             {/* ------------------------------------------------------------- */}
             {activeWorkflow === 'agencies' && (
               <div className="space-y-6">
-                {/* Agency Detail Modal / Box if selected */}
+                {/* Agency Detail Box if selected */}
                 {executedOpId === 'AGENCY-002' && (
                   <Card className="border-emerald-800/80 bg-emerald-950/10">
                     <CardHeader>
@@ -1114,96 +1135,163 @@ export function ExploreView({ onNavigateTab, onOpenInWorkbench }: ExploreViewPro
             {/* ------------------------------------------------------------- */}
             {/* Render 4: Topics Results */}
             {/* ------------------------------------------------------------- */}
-            {activeWorkflow === 'topics' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    <Tag className="w-5 h-5 text-amber-400" />
-                    <span>
-                      Subject Topics ({Array.isArray(resultData) ? resultData.length : (resultData.results?.length || resultData.count || 1)})
-                    </span>
-                  </CardTitle>
-                </CardHeader>
+            {activeWorkflow === 'topics' && (() => {
+              const topicList = extractTopics(resultData);
+              const totalCount = resultData.meta?.count?.total ?? (Array.isArray(resultData) ? resultData.length : (resultData.results?.length || topicList.length));
 
-                <div className="flex flex-wrap gap-2">
-                  {(Array.isArray(resultData) ? resultData : (resultData.results || [resultData])).map(
-                    (tp: any) => (
-                      <button
-                        key={tp.slug || tp.name || tp}
-                        onClick={() => {
-                          const topicName = tp.name || tp.slug || tp;
-                          setDocSearchTerm(topicName);
-                          setActiveWorkflow('documents');
-                          handleDocumentsSearch(topicName);
-                        }}
-                        className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-amber-500/60 text-xs text-slate-300 hover:text-amber-300 transition-colors flex items-center gap-1.5"
-                      >
-                        <span>{tp.name || tp.slug || tp}</span>
-                        <ArrowRight className="w-3 h-3 text-slate-500" />
-                      </button>
-                    )
+              return (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      <Tag className="w-5 h-5 text-amber-400" />
+                      <span>
+                        Subject Topics ({totalCount} Topics)
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+
+                  {topicList.length === 0 ? (
+                    <EmptyState message="No subject topics found." />
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {topicList.map((tp: any) => {
+                        const topicName = tp.name || tp.slug || (typeof tp === 'string' ? tp : 'Topic');
+                        return (
+                          <button
+                            key={tp.slug || tp.name || topicName}
+                            onClick={() => {
+                              setDocSearchTerm(topicName);
+                              setActiveWorkflow('documents');
+                              handleDocumentsSearch(topicName);
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-amber-500/60 text-xs text-slate-300 hover:text-amber-300 transition-colors flex items-center gap-1.5"
+                          >
+                            <span>{topicName}</span>
+                            <ArrowRight className="w-3 h-3 text-slate-500" />
+                          </button>
+                        );
+                      })}
+                    </div>
                   )}
-                </div>
-              </Card>
-            )}
+                </Card>
+              );
+            })()}
 
             {/* ------------------------------------------------------------- */}
             {/* Render 5: Issues Results */}
             {/* ------------------------------------------------------------- */}
-            {activeWorkflow === 'issues' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    <Calendar className="w-5 h-5 text-blue-400" />
-                    <span>Daily Issue Information</span>
-                  </CardTitle>
-                </CardHeader>
+            {activeWorkflow === 'issues' && (() => {
+              const pubDate = resultData.meta?.publication_date || resultData.issue_date || resultData.date || 'Current';
+              const agencies = Array.isArray(resultData.agencies) ? resultData.agencies : [];
+              let totalDocCategories = 0;
+              let totalDocsCount = 0;
 
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs">
-                    <div>
-                      <div className="text-slate-500 font-semibold mb-1">Issue Date</div>
-                      <div className="text-base font-bold text-slate-200 font-mono">
-                        {resultData.issue_date || resultData.date || 'Current'}
+              for (const ag of agencies) {
+                if (Array.isArray(ag.document_categories)) {
+                  totalDocCategories += ag.document_categories.length;
+                  for (const cat of ag.document_categories) {
+                    if (Array.isArray(cat.documents)) {
+                      for (const doc of cat.documents) {
+                        if (Array.isArray(doc.document_numbers)) {
+                          totalDocsCount += doc.document_numbers.length;
+                        } else {
+                          totalDocsCount += 1;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+
+              return (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      <Calendar className="w-5 h-5 text-blue-400" />
+                      <span>Daily Issue: {pubDate}</span>
+                    </CardTitle>
+                  </CardHeader>
+
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs">
+                      <div>
+                        <div className="text-slate-500 font-semibold mb-1">Publication Date</div>
+                        <div className="text-base font-bold text-slate-200 font-mono">
+                          {pubDate}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500 font-semibold mb-1">Agencies Represented</div>
+                        <div className="text-base font-bold text-blue-400 font-mono">
+                          {agencies.length} Agencies
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500 font-semibold mb-1">Indexed Document Filings</div>
+                        <div className="text-base font-bold text-emerald-400 font-mono">
+                          {totalDocsCount > 0 ? `${totalDocsCount} Documents` : `${totalDocCategories} Categories`}
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <div className="text-slate-500 font-semibold mb-1">Volume</div>
-                      <div className="text-base font-bold text-blue-400 font-mono">
-                        Vol. {resultData.volume || '91'}
+
+                    {/* Canonical TOC Agency / Category Structure */}
+                    {agencies.length > 0 ? (
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                          <FolderTree className="w-4 h-4 text-blue-400" />
+                          <span>Table of Contents by Agency &amp; Category</span>
+                        </h4>
+                        <div className="divide-y divide-slate-800/80 border border-slate-800 rounded-xl overflow-hidden bg-slate-950/50">
+                          {agencies.map((ag: any, agIdx: number) => (
+                            <div key={ag.slug || ag.name || agIdx} className="p-4 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="font-semibold text-xs sm:text-sm text-slate-200">
+                                  {ag.name}
+                                </span>
+                                <span className="text-[11px] font-mono text-slate-500">
+                                  {ag.document_categories?.length || 0} Categories
+                                </span>
+                              </div>
+
+                              {Array.isArray(ag.document_categories) && ag.document_categories.length > 0 && (
+                                <div className="space-y-2 pl-3 border-l-2 border-slate-800">
+                                  {ag.document_categories.map((cat: any, catIdx: number) => (
+                                    <div key={catIdx} className="text-xs space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium text-blue-300">{cat.type || 'Document Category'}</span>
+                                        <span className="text-[11px] text-slate-500 font-mono">
+                                          ({cat.documents?.length || 0} subjects)
+                                        </span>
+                                      </div>
+                                      {Array.isArray(cat.documents) && (
+                                        <ul className="list-disc list-inside text-slate-400 text-[11px] space-y-0.5 pl-1">
+                                          {cat.documents.map((doc: any, docIdx: number) => (
+                                            <li key={docIdx} className="truncate">
+                                              <span>{doc.subject_1}</span>
+                                              {doc.document_numbers && doc.document_numbers.length > 0 && (
+                                                <span className="text-slate-500 font-mono ml-1.5">
+                                                  [#{doc.document_numbers.join(', #')}]
+                                                </span>
+                                              )}
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <div className="text-slate-500 font-semibold mb-1">Issue Number</div>
-                      <div className="text-base font-bold text-slate-200 font-mono">
-                        No. {resultData.issue_number || resultData.number || '188'}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-slate-500 font-semibold mb-1">Total Documents</div>
-                      <div className="text-base font-bold text-emerald-400 font-mono">
-                        {resultData.document_count || resultData.total_documents || resultData.count || 42}
-                      </div>
-                    </div>
+                    ) : (
+                      <EmptyState message="No table of contents entries recorded for this issue date." />
+                    )}
                   </div>
-
-                  {/* Section summaries / document links if present */}
-                  {resultData.table_of_contents_url && (
-                    <div className="flex justify-end">
-                      <a
-                        href={resultData.table_of_contents_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3 py-1.5 rounded-md bg-blue-600/20 text-blue-300 border border-blue-800 text-xs font-mono flex items-center gap-1.5"
-                      >
-                        <span>Official Table of Contents</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )}
+                </Card>
+              );
+            })()}
 
             {/* ------------------------------------------------------------- */}
             {/* Render 6: Analytics / Facets Results */}
@@ -1218,17 +1306,20 @@ export function ExploreView({ onNavigateTab, onOpenInWorkbench }: ExploreViewPro
                 </CardHeader>
 
                 {(() => {
-                  const rawEntries = Object.entries(resultData);
-                  const validEntries: [string, number][] = [];
+                  const rawEntries = Object.entries(resultData || {});
+                  const validEntries: Array<{ key: string; label: string; count: number }> = [];
                   for (const [k, v] of rawEntries) {
                     if (typeof v === 'number') {
-                      validEntries.push([k, v]);
+                      validEntries.push({ key: k, label: k, count: v });
+                    } else if (v && typeof v === 'object' && typeof (v as any).count === 'number') {
+                      const entryName = (v as any).name || k;
+                      validEntries.push({ key: k, label: entryName, count: (v as any).count });
                     }
                   }
-                  validEntries.sort((a, b) => b[1] - a[1]);
+                  validEntries.sort((a, b) => b.count - a.count);
 
-                  const totalCount = validEntries.reduce((acc, curr) => acc + curr[1], 0);
-                  const maxCount = validEntries.length > 0 ? validEntries[0][1] : 1;
+                  const totalCount = validEntries.reduce((acc, curr) => acc + curr.count, 0);
+                  const maxCount = validEntries.length > 0 ? validEntries[0].count : 1;
 
                   if (validEntries.length === 0) {
                     return <EmptyState message="No facet distribution data available for this dimension." />;
@@ -1242,15 +1333,15 @@ export function ExploreView({ onNavigateTab, onOpenInWorkbench }: ExploreViewPro
                       </div>
 
                       <div className="space-y-2.5 max-h-[480px] overflow-y-auto pr-2">
-                        {validEntries.map(([label, count]) => {
-                          const percentage = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : '0.0';
-                          const barWidth = Math.max(4, Math.round((count / maxCount) * 100));
+                        {validEntries.map((entry) => {
+                          const percentage = totalCount > 0 ? ((entry.count / totalCount) * 100).toFixed(1) : '0.0';
+                          const barWidth = Math.max(4, Math.round((entry.count / maxCount) * 100));
 
                           return (
-                            <div key={label} className="space-y-1">
+                            <div key={entry.key} className="space-y-1">
                               <div className="flex items-center justify-between text-xs font-mono">
-                                <span className="text-slate-300 truncate max-w-[400px]">{label}</span>
-                                <span className="text-indigo-300 font-semibold">{count.toLocaleString()} ({percentage}%)</span>
+                                <span className="text-slate-300 truncate max-w-[400px]">{entry.label}</span>
+                                <span className="text-indigo-300 font-semibold">{entry.count.toLocaleString()} ({percentage}%)</span>
                               </div>
                               <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-800">
                                 <div

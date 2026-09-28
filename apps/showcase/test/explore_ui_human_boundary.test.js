@@ -22,7 +22,7 @@ function ensureExploreBundle() {
   execSync(cmd, { cwd: showcaseRoot, stdio: 'pipe' });
 }
 
-test('ExploreView Human-vs-Developer Boundary Verification (D-02)', async (t) => {
+test('ExploreView Human-vs-Developer Boundary & UX State Lifecycle (D-02, D-09)', async (t) => {
   await t.test('ExploreView bundles successfully with esbuild for Node 24', () => {
     ensureExploreBundle();
     assert.ok(fs.existsSync(testBundleFile), 'dist-test/explore-bundle.mjs must exist');
@@ -86,6 +86,63 @@ test('ExploreView Human-vs-Developer Boundary Verification (D-02)', async (t) =>
   await t.test('D-02.2: Explore view keeps SDK details as optional secondary action only', () => {
     const html = rootContainer.innerHTML;
     assert.ok(html.includes('Developer Sandbox') || html.includes('Switch to Developer Workbench'));
+  });
+
+  await t.test('D-09.1: Delayed asynchronous request renders LoadingState and replaces on resolution', async () => {
+    let resolveFetchPromise;
+    const delayedPromise = new Promise((resolve) => {
+      resolveFetchPromise = resolve;
+    });
+
+    globalThis.fetch = async () => {
+      await delayedPromise;
+      return new Response(
+        JSON.stringify({
+          success: true,
+          operationId: 'DOC-001',
+          data: {
+            count: 1,
+            results: [
+              {
+                title: 'Delayed Response Document Title',
+                document_number: '2026-99999',
+                publication_date: '2026-09-28',
+              },
+            ],
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    };
+
+    const searchBtn = Array.from(rootContainer.querySelectorAll('button')).find(
+      (btn) => btn.className.includes('bg-cyan-600') && btn.textContent.includes('Search Documents')
+    );
+    assert.ok(searchBtn, 'Search button must exist');
+
+    // Step 1: Click button, do not resolve promise yet
+    let renderPromise;
+    act(() => {
+      searchBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+    });
+
+    // Step 2: Assert loading indicator appears while promise is pending
+    const loadingHtml = rootContainer.innerHTML;
+    assert.ok(
+      loadingHtml.includes('Fetching Federal Register data...') || loadingHtml.includes('Searching...'),
+      'Loading state indicator must render while request is in-flight'
+    );
+
+    // Step 3: Resolve promise and complete render
+    await act(async () => {
+      resolveFetchPromise();
+      await new Promise((r) => setTimeout(r, 50));
+    });
+
+    // Step 4: Assert loading is removed and results are displayed
+    const finalHtml = rootContainer.innerHTML;
+    assert.ok(!finalHtml.includes('Fetching Federal Register data...'), 'Loading indicator must be removed after resolution');
+    assert.ok(finalHtml.includes('Delayed Response Document Title'), 'Resolved document title must render');
   });
 
   // Cleanup

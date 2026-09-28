@@ -97,17 +97,26 @@ test('ExploreView Reference Workflows Suite: Agencies, Topics, Issues (D-05, D-0
       );
     }
 
-    // 4. TOPIC-001: list topics
+    // 4. TOPIC-001: list topics (Canonical TopicCatalogResponse)
     if (reqBody.operationId === 'TOPIC-001') {
       return new Response(
         JSON.stringify({
           success: true,
           operationId: 'TOPIC-001',
-          data: [
-            { id: 1, name: 'Tariffs and Trade', slug: 'tariffs-and-trade' },
-            { id: 2, name: 'Energy Conservation', slug: 'energy-conservation' },
-            { id: 3, name: 'National Defense', slug: 'national-defense' },
-          ],
+          data: {
+            meta: {
+              count: { thesaurus: 2, ad_hoc: 1, total: 3 },
+            },
+            results: {
+              thesaurus: [
+                { name: 'Tariffs and Trade', slug: 'tariffs-and-trade', see_also: [], cfr_references: [], see: [] },
+                { name: 'Energy Conservation', slug: 'energy-conservation', see_also: [], cfr_references: [], see: [] },
+              ],
+              ad_hoc: [
+                { name: 'National Defense', slug: 'national-defense', see_also: [], cfr_references: [], see: [] },
+              ],
+            },
+          },
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
@@ -120,43 +129,84 @@ test('ExploreView Reference Workflows Suite: Agencies, Topics, Issues (D-05, D-0
           success: true,
           operationId: 'TOPIC-002',
           data: [
-            { id: 1, name: 'Tariffs and Trade', slug: 'tariffs-and-trade' },
+            { name: 'Tariffs and Trade', slug: 'tariffs-and-trade' },
           ],
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // 6. ISSUE-002: current issue
+    // 6. ISSUE-002: current issue (Canonical IssueToc)
     if (reqBody.operationId === 'ISSUE-002') {
       return new Response(
         JSON.stringify({
           success: true,
           operationId: 'ISSUE-002',
           data: {
-            issue_date: '2026-09-28',
-            volume: 91,
-            issue_number: 188,
-            document_count: 52,
-            table_of_contents_url: 'https://www.federalregister.gov/documents/2026/09/28',
+            meta: { publication_date: '2026-09-28' },
+            agencies: [
+              {
+                name: 'International Trade Administration',
+                slug: 'international-trade-administration',
+                document_categories: [
+                  {
+                    type: 'Notices',
+                    documents: [
+                      {
+                        subject_1: 'Antidumping Proceedings on Steel',
+                        document_numbers: ['2026-10452', '2026-10453'],
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                name: 'Commerce Department',
+                slug: 'commerce-department',
+                document_categories: [
+                  {
+                    type: 'Rules',
+                    documents: [
+                      {
+                        subject_1: 'Export Administration Regulations',
+                        document_numbers: ['2026-10454'],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
           },
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    // 7. ISSUE-001: specific issue lookup
+    // 7. ISSUE-001: specific issue lookup (Canonical IssueToc)
     if (reqBody.operationId === 'ISSUE-001') {
       return new Response(
         JSON.stringify({
           success: true,
           operationId: 'ISSUE-001',
           data: {
-            issue_date: reqBody.params?.date || '2026-09-25',
-            volume: 91,
-            issue_number: 187,
-            document_count: 48,
-            table_of_contents_url: `https://www.federalregister.gov/documents/${reqBody.params?.date || '2026/09/25'}`,
+            meta: { publication_date: reqBody.params?.publicationDate || '2026-09-25' },
+            agencies: [
+              {
+                name: 'International Trade Commission',
+                slug: 'international-trade-commission',
+                document_categories: [
+                  {
+                    type: 'Notices',
+                    documents: [
+                      {
+                        subject_1: 'Investigation on Semiconductor Imports',
+                        document_numbers: ['2026-09871'],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
           },
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -228,6 +278,7 @@ test('ExploreView Reference Workflows Suite: Agencies, Topics, Issues (D-05, D-0
 
     assert.ok(lastGatewayCall);
     assert.equal(lastGatewayCall.body.operationId, 'AGENCY-001');
+    assert.deepEqual(lastGatewayCall.body.params, {});
 
     const html = rootContainer.innerHTML;
     assert.ok(html.includes('Federal Agencies (3)'), 'Agencies count header must render');
@@ -247,6 +298,9 @@ test('ExploreView Reference Workflows Suite: Agencies, Topics, Issues (D-05, D-0
 
     assert.ok(lastGatewayCall);
     assert.equal(lastGatewayCall.body.operationId, 'AGENCY-002');
+    assert.deepEqual(lastGatewayCall.body.params, {
+      idOrSlug: 'international-trade-administration',
+    });
 
     const html = rootContainer.innerHTML;
     assert.ok(html.includes('Agency Detail: International Trade Administration'), 'Agency detail header must render');
@@ -254,7 +308,7 @@ test('ExploreView Reference Workflows Suite: Agencies, Topics, Issues (D-05, D-0
     assert.ok(html.includes('https://www.trade.gov'), 'Official agency URL must render');
   });
 
-  await t.test('D-05.3: Execute agency suggestions query (AGENCY-004)', async () => {
+  await t.test('D-05.3: Execute agency suggestions query with exact SDK term parameter (AGENCY-004)', async () => {
     const input = rootContainer.querySelector('input');
     assert.ok(input);
     await triggerChange(input, 'Commerce');
@@ -271,13 +325,13 @@ test('ExploreView Reference Workflows Suite: Agencies, Topics, Issues (D-05, D-0
 
     assert.ok(lastGatewayCall);
     assert.equal(lastGatewayCall.body.operationId, 'AGENCY-004');
-    assert.equal(lastGatewayCall.body.params.query, 'Commerce');
+    assert.deepEqual(lastGatewayCall.body.params, { term: 'Commerce' });
   });
 
   // -------------------------------------------------------------
   // D-06: Topics Workflow Tests
   // -------------------------------------------------------------
-  await t.test('D-06.1: Switch to Topics workflow and load topic catalog (TOPIC-001)', async () => {
+  await t.test('D-06.1: Switch to Topics workflow and load canonical topic catalog (TOPIC-001)', async () => {
     const topicTab = Array.from(rootContainer.querySelectorAll('button')).find((b) =>
       b.textContent.includes('Topics')
     );
@@ -301,10 +355,10 @@ test('ExploreView Reference Workflows Suite: Agencies, Topics, Issues (D-05, D-0
     assert.equal(lastGatewayCall.body.operationId, 'TOPIC-001');
 
     const html = rootContainer.innerHTML;
-    assert.ok(html.includes('Subject Topics (3)'), 'Topic count header must render');
-    assert.ok(html.includes('Tariffs and Trade'), 'Topic tag must render');
-    assert.ok(html.includes('Energy Conservation'), 'Topic tag must render');
-    assert.ok(html.includes('National Defense'), 'Topic tag must render');
+    assert.ok(html.includes('Subject Topics (3 Topics)'), 'Topic count header must render from meta');
+    assert.ok(html.includes('Tariffs and Trade'), 'Thesaurus topic tag must render');
+    assert.ok(html.includes('Energy Conservation'), 'Thesaurus topic tag must render');
+    assert.ok(html.includes('National Defense'), 'Ad-hoc topic tag must render');
   });
 
   await t.test('D-06.2: Click topic tag navigates to Documents search with topic query', async () => {
@@ -320,7 +374,10 @@ test('ExploreView Reference Workflows Suite: Agencies, Topics, Issues (D-05, D-0
 
     assert.ok(lastGatewayCall);
     assert.equal(lastGatewayCall.body.operationId, 'DOC-001');
-    assert.equal(lastGatewayCall.body.params.conditions.term, 'Tariffs and Trade');
+    assert.deepEqual(lastGatewayCall.body.params, {
+      conditions: { term: 'Tariffs and Trade' },
+      perPage: 10,
+    });
 
     const html = rootContainer.innerHTML;
     assert.ok(html.includes('Search Published Federal Register Documents'), 'Must transition to documents workflow');
@@ -329,7 +386,7 @@ test('ExploreView Reference Workflows Suite: Agencies, Topics, Issues (D-05, D-0
   // -------------------------------------------------------------
   // D-07: Issues Workflow Tests
   // -------------------------------------------------------------
-  await t.test('D-07.1: Switch to Issues workflow and load current issue (ISSUE-002)', async () => {
+  await t.test('D-07.1: Switch to Issues workflow and load canonical current issue (ISSUE-002)', async () => {
     const issuesTab = Array.from(rootContainer.querySelectorAll('button')).find((b) =>
       b.textContent.includes('Issues')
     );
@@ -353,15 +410,16 @@ test('ExploreView Reference Workflows Suite: Agencies, Topics, Issues (D-05, D-0
     assert.equal(lastGatewayCall.body.operationId, 'ISSUE-002');
 
     const html = rootContainer.innerHTML;
-    assert.ok(html.includes('Daily Issue Information'), 'Issue card title must render');
-    assert.ok(html.includes('2026-09-28'), 'Issue date must render');
-    assert.ok(html.includes('Vol. 91'), 'Volume must render');
-    assert.ok(html.includes('No. 188'), 'Issue number must render');
-    assert.ok(html.includes('52'), 'Document count must render');
-    assert.ok(html.includes('Official Table of Contents'), 'TOC link must render');
+    assert.ok(html.includes('Daily Issue: 2026-09-28'), 'Issue card title must render');
+    assert.ok(html.includes('2 Agencies'), 'Agencies represented metric must render');
+    assert.ok(html.includes('3 Documents'), 'Indexed documents metric must render');
+    assert.ok(html.includes('International Trade Administration'), 'ITA TOC section must render');
+    assert.ok(html.includes('Antidumping Proceedings on Steel'), 'Document subject must render');
+    assert.ok(!html.includes('Vol. 91'), 'Fabricated volume fallback must not render');
+    assert.ok(!html.includes('No. 188'), 'Fabricated issue number fallback must not render');
   });
 
-  await t.test('D-07.2: Lookup specific issue by date (ISSUE-001)', async () => {
+  await t.test('D-07.2: Lookup specific issue by date with exact SDK publicationDate (ISSUE-001)', async () => {
     const dateModeBtn = Array.from(rootContainer.querySelectorAll('button')).find((b) =>
       b.textContent === 'Lookup Issue by Date'
     );
@@ -387,11 +445,12 @@ test('ExploreView Reference Workflows Suite: Agencies, Topics, Issues (D-05, D-0
 
     assert.ok(lastGatewayCall);
     assert.equal(lastGatewayCall.body.operationId, 'ISSUE-001');
-    assert.equal(lastGatewayCall.body.params.date, '2026-09-25');
+    assert.deepEqual(lastGatewayCall.body.params, { publicationDate: '2026-09-25' });
 
     const html = rootContainer.innerHTML;
-    assert.ok(html.includes('2026-09-25'), 'Historical issue date must render');
-    assert.ok(html.includes('No. 187'), 'Historical issue number must render');
+    assert.ok(html.includes('Daily Issue: 2026-09-25'), 'Historical issue date must render');
+    assert.ok(html.includes('International Trade Commission'), 'Historical issue agency must render');
+    assert.ok(html.includes('Investigation on Semiconductor Imports'), 'Document subject must render');
   });
 
   // Cleanup

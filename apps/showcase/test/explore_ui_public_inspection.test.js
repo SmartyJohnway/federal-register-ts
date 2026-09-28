@@ -75,7 +75,7 @@ test('ExploreView Public Inspection Workflow Suite (D-04 / D-W2)', async (t) => 
                 document_number: '2026-PI-001',
                 html_url: 'https://www.federalregister.gov/public-inspection/2026/09/28/2026-PI-001/notice-of-preliminary-determination',
                 filed_at: '2026-09-28 08:45 AM',
-                scheduled_publication_date: '2026-09-29',
+                publication_date: '2026-09-29',
                 agencies: [{ name: 'International Trade Commission' }],
               },
             ],
@@ -99,7 +99,7 @@ test('ExploreView Public Inspection Workflow Suite (D-04 / D-W2)', async (t) => 
                 document_number: '2026-PI-002',
                 html_url: 'https://www.federalregister.gov/public-inspection/2026/09/28/2026-PI-002/tariff-update',
                 filed_at: '2026-09-28 11:15 AM',
-                scheduled_publication_date: '2026-09-30',
+                publication_date: '2026-09-30',
                 agencies: [{ name: 'U.S. Customs and Border Protection' }],
               },
             ],
@@ -123,7 +123,7 @@ test('ExploreView Public Inspection Workflow Suite (D-04 / D-W2)', async (t) => 
                 document_number: '2026-PI-003',
                 html_url: 'https://www.federalregister.gov/public-inspection/2026/09/28/2026-PI-003/export-controls',
                 filed_at: '2026-09-28 09:00 AM',
-                scheduled_publication_date: '2026-09-29',
+                publication_date: '2026-09-29',
                 agencies: [{ name: 'Bureau of Industry and Security' }],
               },
             ],
@@ -197,11 +197,11 @@ test('ExploreView Public Inspection Workflow Suite (D-04 / D-W2)', async (t) => 
     assert.ok(html.includes('Notice of Preliminary Antidumping Duty Determination'), 'Notice title must render');
     assert.ok(html.includes('Preliminary Filing'), 'Preliminary Filing badge must render');
     assert.ok(html.includes('Filed: 2026-09-28 08:45 AM'), 'Filing timestamp must render');
-    assert.ok(html.includes('Pub Date: 2026-09-29'), 'Scheduled pub date must render');
+    assert.ok(html.includes('Pub Date: 2026-09-29'), 'Canonical publication date must render');
     assert.ok(html.includes('International Trade Commission'), 'Agency must render');
   });
 
-  await t.test('D-04.3: Switch to Search Filed Notices mode and execute search (PI-001)', async () => {
+  await t.test('D-04.3: Switch to Search Filed Notices mode and execute search with exact SDK params (PI-001)', async () => {
     const searchModeBtn = Array.from(rootContainer.querySelectorAll('button')).find((b) =>
       b.textContent === 'Search Filed Notices'
     );
@@ -227,14 +227,17 @@ test('ExploreView Public Inspection Workflow Suite (D-04 / D-W2)', async (t) => 
 
     assert.ok(lastGatewayCall);
     assert.equal(lastGatewayCall.body.operationId, 'PI-001');
-    assert.deepEqual(lastGatewayCall.body.params.conditions, { term: 'customs tariff' });
+    assert.deepEqual(lastGatewayCall.body.params, {
+      conditions: { term: 'customs tariff' },
+      perPage: 10,
+    });
 
     const html = rootContainer.innerHTML;
     assert.ok(html.includes('Customs Tariff Schedule Update'), 'PI search result title must render');
     assert.ok(html.includes('U.S. Customs and Border Protection'), 'PI search result agency must render');
   });
 
-  await t.test('D-04.4: Switch to Lookup by Filing Date mode and execute date query (PI-002)', async () => {
+  await t.test('D-04.4: Switch to Lookup by Filing Date mode and execute date query with exact SDK params (PI-002)', async () => {
     const dateModeBtn = Array.from(rootContainer.querySelectorAll('button')).find((b) =>
       b.textContent === 'Lookup by Filing Date'
     );
@@ -260,10 +263,11 @@ test('ExploreView Public Inspection Workflow Suite (D-04 / D-W2)', async (t) => 
 
     assert.ok(lastGatewayCall);
     assert.equal(lastGatewayCall.body.operationId, 'PI-002');
-    assert.equal(lastGatewayCall.body.params.available_on, '2026-09-28');
+    assert.deepEqual(lastGatewayCall.body.params, { availableOn: '2026-09-28' });
 
     const html = rootContainer.innerHTML;
     assert.ok(html.includes('Export Control Restrictions on Advanced Dual-Use Technologies'), 'Result title must render');
+    assert.ok(html.includes('Pub Date: 2026-09-29'), 'Canonical publication date must render');
   });
 
   await t.test('D-04.5: Validation error displayed if filing date is empty in date mode', async () => {
@@ -284,7 +288,7 @@ test('ExploreView Public Inspection Workflow Suite (D-04 / D-W2)', async (t) => 
     assert.ok(html.includes('Please specify a valid filing date (YYYY-MM-DD).'), 'Validation error message must render');
   });
 
-  await t.test('D-04.6: Upstream failure displays human-readable ErrorState', async () => {
+  await t.test('D-04.6: Upstream failure displays human-readable ErrorState without raw codes', async () => {
     mockFailure = true;
 
     const dateInput = rootContainer.querySelector('input');
@@ -302,7 +306,8 @@ test('ExploreView Public Inspection Workflow Suite (D-04 / D-W2)', async (t) => 
     });
 
     const html = rootContainer.innerHTML;
-    assert.ok(html.includes('Public Inspection docket feed temporarily unavailable'), 'Human-readable error must render');
+    assert.ok(html.includes("We couldn't complete this Federal Register request"), 'Human-readable error must render');
+    assert.ok(!html.includes('PI_SERVICE_UNAVAILABLE'), 'Raw error code must not be exposed');
 
     mockFailure = false;
   });

@@ -153,7 +153,7 @@ test('ExploreView Documents Search Workflow Suite (D-03 / D-W1)', async (t) => {
     assert.ok(html.includes('Publication Date'), 'Publication date filter label must render');
   });
 
-  await t.test('D-03.2: User edits search inputs and triggers document search', async () => {
+  await t.test('D-03.2: User edits search inputs and triggers document search with exact SDK consumer params', async () => {
     const inputs = Array.from(rootContainer.querySelectorAll('input'));
     const selects = Array.from(rootContainer.querySelectorAll('select'));
 
@@ -177,7 +177,7 @@ test('ExploreView Documents Search Workflow Suite (D-03 / D-W1)', async (t) => {
     assert.ok(dateInput, 'Date input must exist');
     await triggerChange(dateInput, '2026-09-28');
 
-    // Submit search (target submit button specifically)
+    // Submit search
     const searchBtn = Array.from(rootContainer.querySelectorAll('button')).find(
       (btn) => btn.className.includes('bg-cyan-600') && btn.textContent.includes('Search Documents')
     );
@@ -188,17 +188,17 @@ test('ExploreView Documents Search Workflow Suite (D-03 / D-W1)', async (t) => {
       await new Promise((resolve) => setTimeout(resolve, 50));
     });
 
-    // Assert gateway call mapping
+    // Assert gateway call mapping with exact SDK consumer keys
     assert.ok(lastGatewayCall, 'Gateway must have been invoked');
     assert.equal(lastGatewayCall.body.operationId, 'DOC-001');
     assert.deepEqual(lastGatewayCall.body.params, {
       conditions: {
         term: 'critical minerals trade',
-        type: ['RULE'],
+        types: ['RULE'],
         agencies: ['international-trade-administration'],
-        publication_date: { is: '2026-09-28' },
+        publicationDate: { is: '2026-09-28' },
       },
-      per_page: 10,
+      perPage: 10,
     });
   });
 
@@ -238,7 +238,7 @@ test('ExploreView Documents Search Workflow Suite (D-03 / D-W1)', async (t) => {
     mockEmptyResults = false;
   });
 
-  await t.test('D-03.5: Gateway error displays human-friendly ErrorState without raw stack', async () => {
+  await t.test('D-03.5: Gateway error displays stable human-friendly ErrorState without raw stack', async () => {
     mockFailure = true;
 
     const searchBtn = Array.from(rootContainer.querySelectorAll('button')).find(
@@ -252,8 +252,12 @@ test('ExploreView Documents Search Workflow Suite (D-03 / D-W1)', async (t) => {
     });
 
     const html = rootContainer.innerHTML;
-    assert.ok(html.includes('Simulated Federal Register upstream search failure'), 'Human readable error message must render');
+    assert.ok(
+      html.includes("We couldn't complete this Federal Register request"),
+      'Stable human readable error message must render'
+    );
     assert.ok(!html.includes('TypeError:'), 'Raw stack trace must not be exposed');
+    assert.ok(!html.includes('DOCUMENT_SEARCH_UPSTREAM_ERROR'), 'Raw error code must not be exposed');
 
     mockFailure = false;
   });
