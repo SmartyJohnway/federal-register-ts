@@ -410,7 +410,7 @@ export function ExploreView({ onNavigateTab, onOpenInWorkbench }: ExploreViewPro
                 </div>
 
                 <Button
-                  onClick={handleDocumentsSearch}
+                  onClick={() => handleDocumentsSearch()}
                   disabled={isLoading}
                   className="bg-cyan-600 hover:bg-cyan-500 text-white flex items-center gap-2 px-5 py-2 text-sm"
                 >
