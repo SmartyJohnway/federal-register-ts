@@ -847,16 +847,28 @@ export function TradeExamplesView({
 
                   {/* Facet Summary / Object Breakdown */}
                   {!resultData.results && !Array.isArray(resultData) && typeof resultData === 'object' && (
-                    <div className="space-y-2 max-h-[400px] overflow-y-auto font-mono text-xs">
-                      {Object.entries(resultData).map(([k, v], idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between p-2 rounded bg-slate-950 border border-slate-800"
-                        >
-                          <span className="text-slate-300">{k}</span>
-                          <Badge variant="trade">{String(v)}</Badge>
-                        </div>
-                      ))}
+                    <div className="space-y-2 max-h-[400px] overflow-y-auto text-xs" data-testid="facet-results-container">
+                      {Object.entries(resultData).map(([k, v]: [string, any], idx) => {
+                        const isEntryObj = typeof v === 'object' && v !== null;
+                        const displayName = isEntryObj && 'name' in v ? String(v.name) : k;
+                        const displayCount = isEntryObj && 'count' in v ? Number(v.count) : (typeof v === 'number' ? v : String(v));
+                        const hasDistinctSlug = isEntryObj && 'name' in v && k !== displayName;
+
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800 hover:border-slate-700 transition-colors"
+                          >
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-slate-200 font-medium">{displayName}</span>
+                              {hasDistinctSlug && (
+                                <span className="text-[10px] text-slate-500 font-mono">{k}</span>
+                              )}
+                            </div>
+                            <Badge variant="trade" className="font-mono">{displayCount}</Badge>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

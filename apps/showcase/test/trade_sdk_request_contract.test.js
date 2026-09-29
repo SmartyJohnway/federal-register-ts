@@ -43,8 +43,14 @@ test('Trade Exact-SDK Request Contract Verification Suite', async (t) => {
       if (url.pathname.includes('/facets/')) {
         return new Response(
           JSON.stringify({
-            'International Trade Administration': 42,
-            'Bureau of Industry and Security': 18,
+            'international-trade-administration': {
+              name: 'International Trade Administration',
+              count: 42,
+            },
+            'bureau-of-industry-and-security': {
+              name: 'Bureau of Industry and Security',
+              count: 18,
+            },
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } }
         );
@@ -210,10 +216,14 @@ test('Trade Exact-SDK Request Contract Verification Suite', async (t) => {
     capturedRequest = null;
     const agencyFacetParams = buildFacetedTradeParams({ dimension: 'agency', term: 'tariff' });
     const agencyExecutor = STATIC_EXECUTOR_MAP['DOC-FACET-001'];
-    await agencyExecutor(client, agencyFacetParams);
+    const res = await agencyExecutor(client, agencyFacetParams);
     assert.ok(capturedRequest);
     assert.equal(capturedRequest.pathname, '/api/v1/documents/facets/agency');
     assert.equal(capturedRequest.searchParams.get('conditions[term]'), 'tariff');
+    assert.ok(typeof res === 'object');
+    assert.equal(res['international-trade-administration'].count, 42);
+    assert.equal(res['international-trade-administration'].name, 'International Trade Administration');
+    assert.ok(!JSON.stringify(res).includes('[object Object]'));
 
     // Doc Type facet
     capturedRequest = null;
