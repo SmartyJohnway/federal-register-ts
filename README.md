@@ -7,6 +7,12 @@ Independent, type-safe TypeScript SDK for the [FederalRegister.gov](https://www.
 
 > **Disclaimer:** This project is an independent open-source library and is **not** endorsed by, maintained by, or officially affiliated with the National Archives and Records Administration (NARA), the Office of the Federal Register (OFR), or the United States Government.
 
+## Live Demo
+
+Interactive browser showcase and API developer workbench:
+
+👉 **[https://federal-register-ts.netlify.app](https://federal-register-ts.netlify.app)**
+
 ---
 
 ## Installation
