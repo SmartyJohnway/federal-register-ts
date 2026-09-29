@@ -76,12 +76,12 @@ describe('R3-10E R4 Migration Reference Mapping & Semantic Contract', () => {
     assert.deepEqual(transformed[3].canonical_sdk_operation_ids, ['SUGGEST-001', 'SUGGEST-003']);
   });
 
-  // Governed Evidence Integration Test (executes when file exists at specified or default location)
-  const envMapPath = process.env.R3_10E_MAP_JSON || 'G:/我的雲端硬碟/ChatGPT-Workspace/Federal-Register-TS/15-R3-10-SDK-Showcase/R3-10E-C1-Evidence/e-c1_06_r4_migration_reference_corrected.json';
+  // Governed Evidence Integration Test (executes when R3_10E_MAP_JSON is explicitly supplied via environment)
+  const governedMapPath = process.env.R3_10E_MAP_JSON || null;
   
-  if (fs.existsSync(envMapPath)) {
+  if (governedMapPath && fs.existsSync(governedMapPath)) {
     describe('Governed 53-row Evidence Integrity Verification', () => {
-      const r4Rows = JSON.parse(fs.readFileSync(envMapPath, 'utf8'));
+      const r4Rows = JSON.parse(fs.readFileSync(governedMapPath, 'utf8'));
       const validOpIds = new Set(canonicalRegistry.map((op) => op.id));
 
       it('contains exactly 53 rows with unique reference IDs 1..53', () => {
