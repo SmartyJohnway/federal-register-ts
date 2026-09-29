@@ -78,7 +78,7 @@ describe('R3-10E R4 Migration Reference Mapping & Semantic Contract', () => {
 
   // Governed Evidence Integration Test (executes when R3_10E_MAP_JSON is explicitly supplied via environment)
   const governedMapPath = process.env.R3_10E_MAP_JSON || null;
-  
+
   if (governedMapPath && fs.existsSync(governedMapPath)) {
     describe('Governed 53-row Evidence Integrity Verification', () => {
       const r4Rows = JSON.parse(fs.readFileSync(governedMapPath, 'utf8'));

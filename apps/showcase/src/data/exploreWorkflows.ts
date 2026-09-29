@@ -1,9 +1,9 @@
 /**
  * Explore Workflows Presentation Configuration
- * 
+ *
  * Non-authoritative human-oriented workflow definitions.
  * Maps high-level user tasks to canonical SDK operation IDs.
- * 
+ *
  * Invariants:
  * - Every operation ID referenced here MUST exist in canonicalRegistry.json.
  * - Every executable operation ID MUST exist in STATIC_EXECUTOR_MAP.

@@ -1,9 +1,9 @@
 /**
  * Non-authoritative Presentation Overlay for Federal Register SDK Showcase
- * 
+ *
  * Provides developer-friendly UI hints, non-authoritative sample parameters,
  * and example values for interactive exploration and TypeScript code generation.
- * 
+ *
  * Invariants:
  * - Overlay keys MUST be a subset of the 54 canonical operation IDs.
  * - MUST NOT redefine canonical truth (Tier, path, signatures, return contracts).

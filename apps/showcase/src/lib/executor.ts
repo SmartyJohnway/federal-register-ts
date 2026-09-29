@@ -4,7 +4,7 @@ export type OperationExecutorFn = (client: FederalRegisterClient, params?: any) 
 
 /**
  * Static 42-operation Executor Map
- * 
+ *
  * Invariants:
  * - Exactly 42 runnable operations (9 Tier A + 33 Tier B).
  * - Zero Tier C operations (Tier C are Documented Only).
